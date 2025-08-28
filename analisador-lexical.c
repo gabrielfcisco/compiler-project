@@ -106,7 +106,7 @@ token trata_identificador(char c, FILE* file){
     return t;
 }
 
-token trata_aritmetico(char c, FILE* file){
+token trata_aritmetico(char c){
 
     token t;
 
@@ -216,6 +216,44 @@ token trata_atribuicao(char c, FILE* file){
     return t;
 }
 
+token trata_pontuacao(char c){
+    token t;
+
+    if(c == '.'){
+        t.lexema = malloc(2);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, ".\0");
+        }
+        strcpy(t.simbolo, "sponto");
+    } else if(c == ';'){
+        t.lexema = malloc(2);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, ";\0");
+        }
+        strcpy(t.simbolo, "sponto_virgula");
+    } else if(c == ','){
+        t.lexema = malloc(2);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, ",\0");
+        }
+        strcpy(t.simbolo, "svirgula");
+    } else if(c == '('){
+        t.lexema = malloc(2);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, "(\0");
+        }
+        strcpy(t.simbolo, "sabre_parenteses");
+    } else if(c == ')'){
+        t.lexema = malloc(2);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, ")\0");
+        }
+        strcpy(t.simbolo, "sfecha_parenteses");
+    }
+
+    return t;
+}
+
 void pega_token(char c, FILE* file){
     if (isdigit(c)){
         token t = trata_digito(c, file);
@@ -230,7 +268,7 @@ void pega_token(char c, FILE* file){
         printf("\n%s", t.lexema);
         printf("\n%s", t.simbolo);
     } else if (c == '+' || c == '-' || c == '*'){
-        token t = trata_aritmetico(c, file);
+        token t = trata_aritmetico(c);
         printf("\n%s", t.lexema);
         printf("\n%s", t.simbolo);
     } else if (c == '!' || c == '<' || c == '>' || c == '='){
@@ -238,7 +276,9 @@ void pega_token(char c, FILE* file){
         printf("\n%s", t.lexema);
         printf("\n%s", t.simbolo);
     } else if (c == '.' || c == ';' || c == ',' || c == '(' || c == ')'){
-        printf("\nis pontuation");
+        token t = trata_pontuacao(c);
+        printf("\n%s", t.lexema);
+        printf("\n%s", t.simbolo);
     } else {
         printf("\nis ERROR");
     }
