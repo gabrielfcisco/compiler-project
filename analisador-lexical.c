@@ -22,6 +22,8 @@ token trata_digito(char c, FILE* file){
 
     buffer[i] = '\0';
 
+    ungetc(c, file);
+
     token t;
     strcpy(t.simbolo, "snumero");
     t.lexema = malloc(i + 1);
@@ -46,6 +48,8 @@ token trata_identificador(char c, FILE* file){
     }
 
     buffer[i] = '\0';
+
+    ungetc(c, file);
 
     token t;
     t.lexema = malloc(i + 1);
@@ -102,6 +106,33 @@ token trata_identificador(char c, FILE* file){
     return t;
 }
 
+token trata_aritmetico(char c, FILE* file){
+
+    token t;
+
+    if(c == '+'){
+        t.lexema = malloc(2);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, "+\0");
+        }
+        strcpy(t.simbolo, "smais");
+    } else if(c == '-'){
+        t.lexema = malloc(2);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, "-\0");
+        }
+        strcpy(t.simbolo, "smenos");
+    } else if (c == '*'){
+        t.lexema = malloc(2);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, "*\0");
+        }
+        strcpy(t.simbolo, "smult");
+    }
+
+    return t;
+}
+
 void pega_token(char c, FILE* file){
     if (isdigit(c)){
         token t = trata_digito(c, file);
@@ -114,7 +145,9 @@ void pega_token(char c, FILE* file){
     } else if (c == ':'){
         printf("\nis atribution");
     } else if (c == '+' || c == '-' || c == '*'){
-        printf("\nis operation");
+        token t = trata_aritmetico(c, file);
+        printf("\n%s", t.lexema);
+        printf("\n%s", t.simbolo);
     } else if (c == '!' || c == '<' || c == '>' || c == '='){
         printf("\nis logical");
     } else if (c == '.' || c == ';' || c == ',' || c == '(' || c == ')'){
