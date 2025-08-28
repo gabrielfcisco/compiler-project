@@ -193,6 +193,29 @@ token trata_relacional(char c, FILE* file){
 
 }
 
+token trata_atribuicao(char c, FILE* file){
+    char c = fgetc(c, file);
+
+    token t;
+
+    if(c == '='){
+        t.lexema = malloc(3);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, ":=\0");
+        }
+        strcpy(t.simbolo, "satribuicao");
+    } else {
+        t.lexema = malloc(2);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, ":\0");
+        }
+        strcpy(t.simbolo, "sdoispontos");
+        ungetc(c, file);
+    }
+
+    return t;
+}
+
 void pega_token(char c, FILE* file){
     if (isdigit(c)){
         token t = trata_digito(c, file);
@@ -203,7 +226,9 @@ void pega_token(char c, FILE* file){
         printf("\n%s", t.lexema);
         printf("\n%s", t.simbolo);
     } else if (c == ':'){
-        printf("\nis atribution");
+        token t = trata_atribuicao(c, file);
+        printf("\n%s", t.lexema);
+        printf("\n%s", t.simbolo);
     } else if (c == '+' || c == '-' || c == '*'){
         token t = trata_aritmetico(c, file);
         printf("\n%s", t.lexema);
