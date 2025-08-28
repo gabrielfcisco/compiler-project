@@ -254,34 +254,35 @@ token trata_pontuacao(char c){
     return t;
 }
 
-void pega_token(char c, FILE* file){
+token pega_token(char c, FILE* file){
     if (isdigit(c)){
-        token t = trata_digito(c, file);
-        printf("\n%s", t.lexema);
-        printf("\n%s", t.simbolo);
+        return trata_digito(c, file);
     } else if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122)){
-        token t = trata_identificador(c, file);
-        printf("\n%s", t.lexema);
-        printf("\n%s", t.simbolo);
+        return trata_identificador(c, file);
     } else if (c == ':'){
-        token t = trata_atribuicao(c, file);
-        printf("\n%s", t.lexema);
-        printf("\n%s", t.simbolo);
+        return trata_atribuicao(c, file);
     } else if (c == '+' || c == '-' || c == '*'){
-        token t = trata_aritmetico(c);
-        printf("\n%s", t.lexema);
-        printf("\n%s", t.simbolo);
+        return trata_aritmetico(c);
     } else if (c == '!' || c == '<' || c == '>' || c == '='){
-        token t = trata_relacional(c, file);
-        printf("\n%s", t.lexema);
-        printf("\n%s", t.simbolo);
+        return trata_relacional(c, file);
     } else if (c == '.' || c == ';' || c == ',' || c == '(' || c == ')'){
-        token t = trata_pontuacao(c);
-        printf("\n%s", t.lexema);
-        printf("\n%s", t.simbolo);
+        return trata_pontuacao(c);
     } else {
-        printf("\nis ERROR");
+        token t;
+        t.lexema = malloc(13);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, "Erro lexical\0");
+        }
+        strcpy(t.simbolo, "serro");
+        return t;
     }
+}
+
+void salva_tabela_simbolos(FILE* out, token t) {
+    if (!out) {
+        return;
+    }
+    fprintf(out, "%-20s | %-20s\n", t.lexema, t.simbolo);
 }
 
 int main() {
@@ -300,6 +301,14 @@ int main() {
 
     char ch = fgetc(file);
 
+    FILE* out = fopen("tabela_simbolos.txt", "w");
+    if (!out) {
+        printf("Erro ao criar arquivo da tabela de símbolos!\n");
+    }
+    fprintf(out, "Tabela de Símbolos:\n");
+    fprintf(out, "%-20s | %-20s\n","Lexema", "Simbolo");
+    fprintf(out, "--------------------+-----------------------\n");
+
     while(ch != EOF){
         while((ch == '{' || ch == ' ' || ch == '\n' || ch == '\t' || ch == '\b' || ch == 10) && ch != EOF){
             if(ch == '{'){
@@ -314,12 +323,15 @@ int main() {
         }
         if(ch != EOF){
             // printf("\n%c\n", ch);
-            pega_token(ch, file);
+            token t = pega_token(ch, file);
+            salva_tabela_simbolos(out, t);
+            if (t.lexema) free(t.lexema);
             ch = fgetc(file);
         }
     }
 
     fclose(file);
+    fclose(out);
 
     return 0;
 }
