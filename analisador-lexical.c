@@ -194,7 +194,7 @@ token trata_relacional(char c, FILE* file){
 }
 
 token trata_atribuicao(char c, FILE* file){
-    char c = fgetc(c, file);
+    c = fgetc(file);
 
     token t;
 
