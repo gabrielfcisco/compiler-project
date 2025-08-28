@@ -133,6 +133,66 @@ token trata_aritmetico(char c, FILE* file){
     return t;
 }
 
+token trata_relacional(char c, FILE* file){
+    token t;
+
+    if(c == '='){
+        t.lexema = malloc(2);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, "=\0");
+        }
+        strcpy(t.simbolo, "sig");
+        return t;
+    }
+
+    char operator = fgetc(file);
+
+    if(c == '!' && operator == '='){
+        t.lexema = malloc(3);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, "!=\0");
+        }
+        strcpy(t.simbolo, "sdif");
+    } else if(c == '<' && operator == '='){
+        t.lexema = malloc(3);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, "<=\0");
+        }
+        strcpy(t.simbolo, "smenorig");
+    } else if(c == '<'){
+        t.lexema = malloc(2);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, "<\0");
+        }
+        strcpy(t.simbolo, "smenor");
+        ungetc(operator, file);
+    } else if(c == '>' && operator == '='){
+        t.lexema = malloc(3);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, ">=\0");
+        }
+        strcpy(t.simbolo, "smaiorig");
+    } else if(c == '>'){
+        t.lexema = malloc(2);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, ">\0");
+        }
+        strcpy(t.simbolo, "smaior");
+        ungetc(operator, file);
+    } else {
+        t.lexema = malloc(13);
+        if (t.lexema != NULL) {
+            strcpy(t.lexema, "Erro lexical\0");
+        }
+        strcpy(t.simbolo, "serro");
+        ungetc(operator, file);
+        return t;
+    }
+
+    return t;
+
+}
+
 void pega_token(char c, FILE* file){
     if (isdigit(c)){
         token t = trata_digito(c, file);
@@ -149,7 +209,9 @@ void pega_token(char c, FILE* file){
         printf("\n%s", t.lexema);
         printf("\n%s", t.simbolo);
     } else if (c == '!' || c == '<' || c == '>' || c == '='){
-        printf("\nis logical");
+        token t = trata_relacional(c, file);
+        printf("\n%s", t.lexema);
+        printf("\n%s", t.simbolo);
     } else if (c == '.' || c == ';' || c == ',' || c == '(' || c == ')'){
         printf("\nis pontuation");
     } else {
