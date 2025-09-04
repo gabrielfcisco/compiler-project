@@ -219,6 +219,7 @@ token trata_atribuicao(){
 }
 
 token trata_pontuacao(){
+
     token t;
 
     if(ch == '.'){
@@ -298,7 +299,7 @@ int main() {
 
     file = fopen(file_name, "r");
 
-    if (file !=0 ){
+    if (file != 0 ){
         printf("File opening successful !\n");
     } else {
         fprintf(stderr, "%s\n", "File opening unsuccessful !");
@@ -312,7 +313,7 @@ int main() {
     }
     fprintf(out, "Tabela de Tokens:\n");
     fprintf(out, "%-20s | %-20s\n","Lexema", "Simbolo");
-    fprintf(out, "--------------------+-----------------------\n");
+    fprintf(out, "---------------------+-----------------------\n");
 
     while(ch != EOF){
         while((ch == '{' || ch == ' ' || ch == '\n' || ch == '\t' || ch == '\b' || ch == 10) && ch != EOF){
