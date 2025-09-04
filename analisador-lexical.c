@@ -3,26 +3,26 @@
 #include <string.h>
 #include <ctype.h>
 
+char ch;
+FILE* file;
 typedef struct token {
     char* lexema;
     char simbolo[20];
 } token;
 
-token trata_digito(char c, FILE* file){
+token trata_digito(){
     char buffer[256];
     int i = 0;
 
-    buffer[i++] = c;
+    buffer[i++] = ch;
 
-    c = fgetc(file);
-    while (isdigit(c)) {
-        buffer[i++] = c;
-        c = fgetc(file);
+    ch = fgetc(file);
+    while (isdigit(ch)) {
+        buffer[i++] = ch;
+        ch = fgetc(file);
     }
 
     buffer[i] = '\0';
-
-    ungetc(c, file);
 
     token t;
     strcpy(t.simbolo, "snumero");
@@ -34,22 +34,20 @@ token trata_digito(char c, FILE* file){
     return t;
 }
 
-token trata_identificador(char c, FILE* file){
-    char buffer[20];
+token trata_identificador(){
+    char buffer[256];
     int i = 0;
 
-    buffer[i++] = c;
+    buffer[i++] = ch;
 
-    c = fgetc(file);
+    ch = fgetc(file);
 
-    while(isdigit(c) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c == '_'){
-        buffer[i++] = c;
-        c = fgetc(file);
+    while(isdigit(ch) || (ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122) || ch == '_'){
+        buffer[i++] = ch;
+        ch = fgetc(file);
     }
 
     buffer[i] = '\0';
-
-    ungetc(c, file);
 
     token t;
     t.lexema = malloc(i + 1);
@@ -106,23 +104,23 @@ token trata_identificador(char c, FILE* file){
     return t;
 }
 
-token trata_aritmetico(char c){
+token trata_aritmetico(){
 
     token t;
 
-    if(c == '+'){
+    if(ch == '+'){
         t.lexema = malloc(2);
         if (t.lexema != NULL) {
             strcpy(t.lexema, "+\0");
         }
         strcpy(t.simbolo, "smais");
-    } else if(c == '-'){
+    } else if(ch == '-'){
         t.lexema = malloc(2);
         if (t.lexema != NULL) {
             strcpy(t.lexema, "-\0");
         }
         strcpy(t.simbolo, "smenos");
-    } else if (c == '*'){
+    } else if (ch == '*'){
         t.lexema = malloc(2);
         if (t.lexema != NULL) {
             strcpy(t.lexema, "*\0");
@@ -130,62 +128,66 @@ token trata_aritmetico(char c){
         strcpy(t.simbolo, "smult");
     }
 
+    ch = fgetc(file);
+
     return t;
 }
 
-token trata_relacional(char c, FILE* file){
+token trata_relacional(){
     token t;
 
-    if(c == '='){
+    if(ch == '='){
         t.lexema = malloc(2);
         if (t.lexema != NULL) {
             strcpy(t.lexema, "=\0");
         }
         strcpy(t.simbolo, "sig");
+        ch = fgetc(file);
         return t;
     }
 
-    char operator = fgetc(file);
+    char operator = ch;
+    ch = fgetc(file);
 
-    if(c == '!' && operator == '='){
+    if(operator == '!' && ch == '='){
         t.lexema = malloc(3);
         if (t.lexema != NULL) {
             strcpy(t.lexema, "!=\0");
         }
         strcpy(t.simbolo, "sdif");
-    } else if(c == '<' && operator == '='){
+        ch = fgetc(file);
+    } else if(operator == '<' && ch == '='){
         t.lexema = malloc(3);
         if (t.lexema != NULL) {
             strcpy(t.lexema, "<=\0");
         }
         strcpy(t.simbolo, "smenorig");
-    } else if(c == '<'){
+        ch = fgetc(file);
+    } else if(operator == '<'){
         t.lexema = malloc(2);
         if (t.lexema != NULL) {
             strcpy(t.lexema, "<\0");
         }
         strcpy(t.simbolo, "smenor");
-        ungetc(operator, file);
-    } else if(c == '>' && operator == '='){
+    } else if(operator == '>' && ch == '='){
         t.lexema = malloc(3);
         if (t.lexema != NULL) {
             strcpy(t.lexema, ">=\0");
         }
         strcpy(t.simbolo, "smaiorig");
-    } else if(c == '>'){
+        ch = fgetc(file);
+    } else if(operator == '>'){
         t.lexema = malloc(2);
         if (t.lexema != NULL) {
             strcpy(t.lexema, ">\0");
         }
         strcpy(t.simbolo, "smaior");
-        ungetc(operator, file);
     } else {
         t.lexema = malloc(13);
         if (t.lexema != NULL) {
             strcpy(t.lexema, "Erro lexical\0");
         }
         strcpy(t.simbolo, "serro");
-        ungetc(operator, file);
         return t;
     }
 
@@ -193,57 +195,57 @@ token trata_relacional(char c, FILE* file){
 
 }
 
-token trata_atribuicao(char c, FILE* file){
-    c = fgetc(file);
+token trata_atribuicao(){
+    ch = fgetc(file);
 
     token t;
 
-    if(c == '='){
+    if(ch == '='){
         t.lexema = malloc(3);
         if (t.lexema != NULL) {
             strcpy(t.lexema, ":=\0");
         }
         strcpy(t.simbolo, "satribuicao");
+        ch = fgetc(file);
     } else {
         t.lexema = malloc(2);
         if (t.lexema != NULL) {
             strcpy(t.lexema, ":\0");
         }
         strcpy(t.simbolo, "sdoispontos");
-        ungetc(c, file);
     }
 
     return t;
 }
 
-token trata_pontuacao(char c){
+token trata_pontuacao(){
     token t;
 
-    if(c == '.'){
+    if(ch == '.'){
         t.lexema = malloc(2);
         if (t.lexema != NULL) {
             strcpy(t.lexema, ".\0");
         }
         strcpy(t.simbolo, "sponto");
-    } else if(c == ';'){
+    } else if(ch == ';'){
         t.lexema = malloc(2);
         if (t.lexema != NULL) {
             strcpy(t.lexema, ";\0");
         }
         strcpy(t.simbolo, "sponto_virgula");
-    } else if(c == ','){
+    } else if(ch == ','){
         t.lexema = malloc(2);
         if (t.lexema != NULL) {
             strcpy(t.lexema, ",\0");
         }
         strcpy(t.simbolo, "svirgula");
-    } else if(c == '('){
+    } else if(ch == '('){
         t.lexema = malloc(2);
         if (t.lexema != NULL) {
             strcpy(t.lexema, "(\0");
         }
         strcpy(t.simbolo, "sabre_parenteses");
-    } else if(c == ')'){
+    } else if(ch == ')'){
         t.lexema = malloc(2);
         if (t.lexema != NULL) {
             strcpy(t.lexema, ")\0");
@@ -251,22 +253,24 @@ token trata_pontuacao(char c){
         strcpy(t.simbolo, "sfecha_parenteses");
     }
 
+    ch = fgetc(file);
+
     return t;
 }
 
-token pega_token(char c, FILE* file){
-    if (isdigit(c)){
-        return trata_digito(c, file);
-    } else if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122)){
-        return trata_identificador(c, file);
-    } else if (c == ':'){
-        return trata_atribuicao(c, file);
-    } else if (c == '+' || c == '-' || c == '*'){
-        return trata_aritmetico(c);
-    } else if (c == '!' || c == '<' || c == '>' || c == '='){
-        return trata_relacional(c, file);
-    } else if (c == '.' || c == ';' || c == ',' || c == '(' || c == ')'){
-        return trata_pontuacao(c);
+token pega_token(){
+    if (isdigit(ch)){
+        return trata_digito();
+    } else if ((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122)){
+        return trata_identificador();
+    } else if (ch == ':'){
+        return trata_atribuicao();
+    } else if (ch == '+' || ch == '-' || ch == '*'){
+        return trata_aritmetico();
+    } else if (ch == '!' || ch == '<' || ch == '>' || ch == '='){
+        return trata_relacional();
+    } else if (ch == '.' || ch == ';' || ch == ',' || ch == '(' || ch == ')'){
+        return trata_pontuacao();
     } else {
         token t;
         t.lexema = malloc(13);
@@ -274,6 +278,7 @@ token pega_token(char c, FILE* file){
             strcpy(t.lexema, "Erro lexical\0");
         }
         strcpy(t.simbolo, "serro");
+        ch = fgetc(file);
         return t;
     }
 }
@@ -291,7 +296,7 @@ int main() {
     printf("Digite o nome do arquivo a ser analisado: ");
     scanf("%s", file_name);
 
-    FILE* file = fopen(file_name, "r");
+    file = fopen(file_name, "r");
 
     if (file !=0 ){
         printf("File opening successful !\n");
@@ -299,13 +304,13 @@ int main() {
         fprintf(stderr, "%s\n", "File opening unsuccessful !");
     }
 
-    char ch = fgetc(file);
+    ch = fgetc(file);
 
-    FILE* out = fopen("tabela_simbolos.txt", "w");
+    FILE* out = fopen("tabela_tokens.txt", "w");
     if (!out) {
         printf("Erro ao criar arquivo da tabela de símbolos!\n");
     }
-    fprintf(out, "Tabela de Símbolos:\n");
+    fprintf(out, "Tabela de Tokens:\n");
     fprintf(out, "%-20s | %-20s\n","Lexema", "Simbolo");
     fprintf(out, "--------------------+-----------------------\n");
 
@@ -322,11 +327,9 @@ int main() {
             }
         }
         if(ch != EOF){
-            // printf("\n%c\n", ch);
-            token t = pega_token(ch, file);
+            token t = pega_token();
             salva_tabela_simbolos(out, t);
             if (t.lexema) free(t.lexema);
-            ch = fgetc(file);
         }
     }
 
