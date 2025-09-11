@@ -5,6 +5,7 @@
 
 char ch;
 FILE* file;
+int line = 0;
 typedef struct token {
     char* lexema;
     char simbolo[20];
@@ -183,9 +184,9 @@ token trata_relacional(){
         }
         strcpy(t.simbolo, "smaior");
     } else {
-        t.lexema = malloc(13);
+        t.lexema = malloc(30);
         if (t.lexema != NULL) {
-            strcpy(t.lexema, "Erro lexical\0");
+            sprintf(t.lexema, "Erro lexical: linha %d", line + 1);
         }
         strcpy(t.simbolo, "serro");
         return t;
@@ -274,9 +275,9 @@ token pega_token(){
         return trata_pontuacao();
     } else {
         token t;
-        t.lexema = malloc(13);
+        t.lexema = malloc(30);
         if (t.lexema != NULL) {
-            strcpy(t.lexema, "Erro lexical\0");
+            sprintf(t.lexema, "Erro lexical: linha %d", line + 1);
         }
         strcpy(t.simbolo, "serro");
         ch = fgetc(file);
@@ -288,7 +289,7 @@ void salva_tabela_simbolos(FILE* out, token t) {
     if (!out) {
         return;
     }
-    fprintf(out, "%-20s | %-20s\n", t.lexema, t.simbolo);
+    fprintf(out, "%-21s | %-20s\n", t.lexema, t.simbolo);
 }
 
 int main() {
@@ -309,28 +310,51 @@ int main() {
 
     FILE* out = fopen("tabela_tokens.txt", "w");
     if (!out) {
-        printf("Erro ao criar arquivo da tabela de símbolos!\n");
+        printf("Erro ao criar arquivo da tabela de tokens!\n");
     }
     fprintf(out, "Tabela de Tokens:\n");
-    fprintf(out, "%-20s | %-20s\n","Lexema", "Simbolo");
-    fprintf(out, "---------------------+-----------------------\n");
+    fprintf(out, "%-21s | %-20s\n","Lexema", "Símbolo");
+    fprintf(out, "----------------------+-----------------------\n");
 
     while(ch != EOF){
         while((ch == '{' || ch == ' ' || ch == '\n' || ch == '\t' || ch == '\b' || ch == 10) && ch != EOF){
+            if(ch == '\n' || ch == 13){
+                line++;
+            }
             if(ch == '{'){
                 while(ch != '}' && ch != EOF){
+                    if(ch == '\n' || ch == 13){
+                        line++;
+                    }
                     ch = fgetc(file);
+                }
+                if(ch == EOF){
+                    token t;
+                    t.lexema = malloc(30);
+                    if (t.lexema != NULL) {
+                        sprintf(t.lexema, "Erro lexical: linha %d", line + 1);
+                    }
+                    strcpy(t.simbolo, "serro");
+                    salva_tabela_simbolos(out, t);
+                    if (t.lexema){
+                        free(t.lexema);
+                    }
                 }
             }
             ch = fgetc(file);
             while((ch == ' ' || ch == '\n' || ch == '\t' || ch == '\b' || ch == 10) && ch != EOF){
+                if(ch == '\n' || ch == 13){
+                    line++;
+                }
                 ch = fgetc(file);
             }
         }
         if(ch != EOF){
             token t = pega_token();
             salva_tabela_simbolos(out, t);
-            if (t.lexema) free(t.lexema);
+            if (t.lexema){
+                free(t.lexema);
+            }
         }
     }
 

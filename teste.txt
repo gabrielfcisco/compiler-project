@@ -1,1 +1,4 @@
-{ gjkfhskghfskgkgh } oi +-=67h(gjka)*hj.gha:=kl ZIU 89 :, =! . var<id_9 entao>=fim
+se contador > 10 { exemplo de comentário }
+    entao escreva (contador) ! == :
+senao escreva (x);
+{ggdjkah
