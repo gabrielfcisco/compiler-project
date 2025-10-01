@@ -1,6 +1,6 @@
 {este programa e o primeiro teste}
 programa teste;
-{}}
+{}
 var x,y,total: inteiro;
 
 funcao soma:inteiro;
