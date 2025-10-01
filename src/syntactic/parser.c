@@ -62,7 +62,70 @@ void analisa_et_variaveis(FILE* file, FILE* out, token t){
         exit(1);
     }
 }
-void analisa_subrotinas();
+
+void analisa_declaracao_procedimento(FILE* file, FILE* out, token t){
+    t = lexer(file,out);
+
+    if(strcmp(t.simbolo,"sidentificador")){
+        t = lexer(file,out);
+        if(strcmp(t.simbolo,"sponto_virgula")){
+            analisa_bloco(file,out);
+        }else{
+            printf("ERRO");
+            exit(1);
+        }
+    }else{
+        printf("ERRO");
+        exit(1);
+    }
+
+}
+
+void analisa_declaracao_funcao(FILE* file, FILE* out, token t){
+    t = lexer(file,out);
+
+    if(strcmp(t.simbolo,"sidentificador")){
+        t = lexer(file,out);
+        if(strcmp(t.simbolo,"sdoispontos")){
+            t = lexer(file,out);
+            if((strcmp(t.simbolo,"sinteiro")) || strcmp(t.simbolo,"sbooleano")){
+                t = lexer(file,out);
+                if(t.simbolo,"sponto_virgula"){
+                    analisa_bloco(file,out);
+                }
+
+            }else{
+                printf("ERRO");
+                exit(1);
+            }
+        }else{
+            printf("ERRO");
+            exit(1);
+        }
+    }else{
+        printf("ERRO");
+        exit(1);
+    }
+}
+
+void analisa_subrotinas(FILE* file, FILE* out, token t){
+
+    while((strcmp(t.simbolo,"sprocedimento")) || (strcmp(t.simbolo,"sfuncao"))){
+        if(strcmp(t.simbolo, "sprocedimento")){
+            analisa_declaracao_procedimento(file,out,t);
+        }else{
+            analisa_declaracao_funcao(file,out,t);
+        }
+
+        if(strcmp(t.simbolo,"sponto_virgula")){
+            t = lexer(file,out);
+        }else{
+            printf("ERRO");
+            exit(1);
+        }
+    }
+}
+
 void analisa_comandos();
 
 void analisa_bloco(FILE* file, FILE* out){
