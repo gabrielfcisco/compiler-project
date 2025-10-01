@@ -6,9 +6,10 @@
 #include "../lexical/token.h"
 
 token analisa_tipo(FILE* file, FILE* out, token t){
+    printf("analisa tipo");
     if(strcmp(t.simbolo, "sinteiro") != 0 && strcmp(t.simbolo, "sbooleano") != 0){
-        print("\n%s", t.simbolo);
-        printf("ERRO");
+        printf("\n%s", t.simbolo);
+        printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
         exit(1);
     }
     return lexer(file, out);
@@ -17,24 +18,22 @@ token analisa_tipo(FILE* file, FILE* out, token t){
 token analisa_variaveis(FILE* file, FILE* out, token t){
     while(strcmp(t.simbolo, "sdoispontos") != 0){
         if(strcmp(t.simbolo, "sidentificador") == 0){
+            printf("\n%s", t.lexema);
             t = lexer(file, out);
             if(strcmp(t.simbolo, "svirgula") == 0 || strcmp(t.simbolo, "sdoispontos") == 0){
                 if(strcmp(t.simbolo, "svirgula") == 0){
                     t = lexer(file, out);
                     if(strcmp(t.simbolo, "sdoispontos") == 0){
-                        printf("ERRO");
+                        printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
                         exit(1);
                     }
-                }else{
-                    printf("ERRO");
-                    exit(1);
                 }
             }else{
-                printf("ERRO");
+                printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
                 exit(1);
             }
         }else{
-            printf("ERRO");
+            printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
             exit(1);
         }
     }
@@ -47,21 +46,22 @@ token analisa_et_variaveis(FILE* file, FILE* out, token t){
     if(strcmp(t.simbolo, "svar") == 0){
         t = lexer(file, out);
         if(strcmp(t.simbolo, "sidentificador") == 0){
-            t = analisa_variaveis(file, out, t);
-            if(strcmp(t.simbolo, "sponto_virgula") == 0){
-                return lexer(file, out);
-            } else {
-                printf("ERRO");
-                exit(1);
+            printf("\n%s", t.lexema);
+            while(strcmp(t.simbolo, "sidentificador") == 0){
+                t = analisa_variaveis(file, out, t);
+                if(strcmp(t.simbolo, "sponto_virgula") == 0){
+                    t = lexer(file, out);
+                } else {
+                    printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+                    exit(1);
+                }
             }
         }else{
-            printf("ERRO");
+            printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
             exit(1);
         }
-    }else{
-        printf("ERRO");
-        exit(1);
     }
+    return t;
 }
 void analisa_subrotinas();
 void analisa_comandos();
@@ -116,23 +116,23 @@ int main(){
                     if(file == EOF){
                         printf("\nSucesso");
                     }else{
-                        printf("ERRO");
+                        printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
                         exit(1);
                     }
                 }else{
-                    printf("ERRO");
+                    printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
                     exit(1);
                 }
             }else{
-                printf("ERRO");
+                printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
                 exit(1);
             }
         }else{
-            printf("ERRO");
+            printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
             exit(1);
         }
     }else{
-        printf("ERRO");
+        printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
         exit(1);
     }
 
