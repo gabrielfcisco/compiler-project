@@ -6,7 +6,6 @@
 #include "../lexical/token.h"
 
 token analisa_tipo(FILE* file, FILE* out, token t){
-    printf("analisa tipo");
     if(strcmp(t.simbolo, "sinteiro") != 0 && strcmp(t.simbolo, "sbooleano") != 0){
         printf("\n%s", t.simbolo);
         printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
