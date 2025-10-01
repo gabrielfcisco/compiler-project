@@ -1,0 +1,7 @@
+programa teste2;
+var x:inteiro;
+inicio
+  
+       x= 1;
+fim.
+

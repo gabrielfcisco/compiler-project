@@ -1,0 +1,7 @@
+
+Teste2;
+                                   :=9+999999-*
+                                   if var > program entao se
+                                   enquanto != /
+                                    faca x: booleano;;;;
+

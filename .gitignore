@@ -1,0 +1,27 @@
+# Binários
+bin/
+*.o
+*.out
+compilador
+analisador
+
+# Saídas
+output/tokens/*
+output/symbols/*
+output/code/*
+output/ast/*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Mantenha diretórios vazios
+!output/tokens/.gitkeep
+!output/symbols/.gitkeep
+!output/code/.gitkeep
+!output/ast/.gitkeep

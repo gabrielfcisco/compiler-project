@@ -1,0 +1,6 @@
+progran teste2;
+inicio
+  se (x <= y) ou (x>=z) e (x!=a) ou (x=t)
+  entao {teste}
+       x:= 1;%
+fim.

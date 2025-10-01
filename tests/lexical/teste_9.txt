@@ -1,0 +1,18 @@
+  programa teste1;
+                                           var x, y: integer;
+
+                                            procedimento p;
+                                               var z: integer;
+                                            inicio
+                                                   z:= x; 
+                                                   x:=x-1;
+                                                   se  z>1 entao p  
+                                                               senao  y:=1;
+                                                   y:=y*z
+                                                fim ;
+                                    inicio
+                                         leia(x);
+                                         p;  
+                                         escreva (y);
+                                         escreva (x)
+                                    fim.  

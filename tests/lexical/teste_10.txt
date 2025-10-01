@@ -1,0 +1,45 @@
+procedimento p4;
+var i:inteiro;
+inicio
+	i:=0;
+	val:=i;
+	escreva(val);
+	p1;
+	escreva(val)
+fim;
+
+inicio
+   i:=0;
+   enquanto i < 3 faca
+   inicio
+      leia(n); {leitura do valor
+
+
+
+		para o qual se quer
+
+
+
+		calcular o fatorial
+    } i:= i+1;
+      j:=fat;
+      												
+      escreva(j);
+   fim
+
+   {agora comeca a chamada dos proce
+			dimentos
+							};
+
+   p4; {que vai chamar p1 
+	que vai chamar p2
+	que vai chamar p3
+	que vai chamar p1
+	que vai chamar p2
+	que vai chamar p3
+	que vai chamar p1
+	que vai chamar p2
+	que vai chamar p3
+	que vai chamar p1}
+
+fim.

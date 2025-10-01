@@ -1,0 +1,2 @@
+Este teste apenas verifica pontuacao
+{}().,:;[]

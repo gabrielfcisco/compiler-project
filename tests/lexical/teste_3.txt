@@ -1,0 +1,22 @@
+
+% teste 3%
+programa leitura;
+var x,r:booleano;
+    a,b:booleano;
+procedimento ver;
+var i: inteiro;
+inicio
+  i:= 0;
+  enquanto a
+  faca inicio
+       i:= 1+1;
+       se i = 2
+       entao a:= b
+     fim;
+fim;
+
+inicio
+  x:= verdadeiro;
+  y:= falso;
+  ver;
+fim./
