@@ -66,9 +66,9 @@ void analisa_et_variaveis(FILE* file, FILE* out, token t){
 void analisa_declaracao_procedimento(FILE* file, FILE* out, token t){
     t = lexer(file,out);
 
-    if(strcmp(t.simbolo,"sidentificador")){
+    if(strcmp(t.simbolo,"sidentificador") == 0){
         t = lexer(file,out);
-        if(strcmp(t.simbolo,"sponto_virgula")){
+        if(strcmp(t.simbolo,"sponto_virgula") == 0){
             analisa_bloco(file,out);
         }else{
             printf("ERRO");
@@ -84,13 +84,13 @@ void analisa_declaracao_procedimento(FILE* file, FILE* out, token t){
 void analisa_declaracao_funcao(FILE* file, FILE* out, token t){
     t = lexer(file,out);
 
-    if(strcmp(t.simbolo,"sidentificador")){
+    if(strcmp(t.simbolo,"sidentificador") == 0){
         t = lexer(file,out);
-        if(strcmp(t.simbolo,"sdoispontos")){
+        if(strcmp(t.simbolo,"sdoispontos") == 0){
             t = lexer(file,out);
-            if((strcmp(t.simbolo,"sinteiro")) || strcmp(t.simbolo,"sbooleano")){
+            if((strcmp(t.simbolo,"sinteiro") == 0) || strcmp(t.simbolo,"sbooleano") == 0){
                 t = lexer(file,out);
-                if(t.simbolo,"sponto_virgula"){
+                if(strcmp(t.simbolo,"sponto_virgula") == 0){
                     analisa_bloco(file,out);
                 }
 
@@ -110,14 +110,14 @@ void analisa_declaracao_funcao(FILE* file, FILE* out, token t){
 
 void analisa_subrotinas(FILE* file, FILE* out, token t){
 
-    while((strcmp(t.simbolo,"sprocedimento")) || (strcmp(t.simbolo,"sfuncao"))){
-        if(strcmp(t.simbolo, "sprocedimento")){
+    while((strcmp(t.simbolo,"sprocedimento") == 0) || (strcmp(t.simbolo,"sfuncao") == 0)){
+        if(strcmp(t.simbolo, "sprocedimento") == 0){
             analisa_declaracao_procedimento(file,out,t);
         }else{
             analisa_declaracao_funcao(file,out,t);
         }
 
-        if(strcmp(t.simbolo,"sponto_virgula")){
+        if(strcmp(t.simbolo,"sponto_virgula") == 0){
             t = lexer(file,out);
         }else{
             printf("ERRO");
@@ -131,7 +131,7 @@ void analisa_comandos();
 void analisa_bloco(FILE* file, FILE* out){
     token t = lexer(file, out);
     analisa_et_variaveis(file, out, t);
-    analisa_subrotinas();
+    analisa_subrotinas(file,out,t);
     analisa_comandos();
 }
 
@@ -167,11 +167,17 @@ int main(){
     token t = lexer(file, out);
     if(strcmp(t.simbolo, "sprograma") == 0){
         t = lexer(file, out);
-        if(strcmp(t.simbolo, "sponto_virgula") == 0){
-            analisa_bloco(file, out);
-            if(strcmp(t.simbolo, "sponto") == 0){
-                if(file == EOF){
-                    printf("\nSucesso");
+        if(strcmp(t.simbolo,"sidentificador") == 0){
+            t = lexer(file,out);
+            if(strcmp(t.simbolo, "sponto_virgula") == 0){
+                analisa_bloco(file, out);
+                if(strcmp(t.simbolo, "sponto") == 0){
+                    if(file == EOF){
+                        printf("\nSucesso");
+                    }else{
+                        printf("ERRO");
+                        exit(1);
+                    }
                 }else{
                     printf("ERRO");
                     exit(1);
