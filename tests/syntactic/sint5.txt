@@ -1,0 +1,14 @@
+
+{Teste sem procedimentos - deve compilar}
+programa test1;
+
+var a,b,c: inteiro;
+
+
+inicio
+   se b > (c+ a*a)
+    entao escreva(b)
+    senao escreva(c)
+fim.
+
+{fim}   

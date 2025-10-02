@@ -1,0 +1,35 @@
+{Teste sem variaveis - deve compilar}
+programa test1;
+
+
+{proc 1}
+procedimento analisa1;
+var a, x: inteiro;
+       z: booleano;
+inicio
+  se x>1  entao
+      x:= 0;
+  leia(z) ;
+  enquanto (a != 89) e (a<= 1000)  {condicao de parada}
+  faca inicio
+           a:= x+z
+       fim;
+  escreva(a)
+fim;
+
+
+procedimento analisa2;
+inicio
+  leia(a);
+  b:= a*a+(c div b) 
+fim;
+
+inicio
+    analisa1;
+    analisa2;
+    se b > (c+ a*a)
+    entao escreva(b)
+    senao escreva(c)
+fim.
+
+{fim}   

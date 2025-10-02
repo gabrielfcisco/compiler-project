@@ -455,7 +455,8 @@ int main(){
                 t = analisa_bloco(file, out);
                 printf("\n%s", t.lexema);
                 if(strcmp(t.simbolo, "sponto") == 0){
-                    if(file == EOF){
+                    char ch = fgetc(file);
+                    if(ch == EOF){
                         printf("\nSucesso");
                     }else{
                         printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
