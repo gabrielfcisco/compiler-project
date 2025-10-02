@@ -7,6 +7,7 @@
 
 token analisa_bloco(FILE* file, FILE* out);
 token analisa_comandos_simples(FILE* file, FILE* out, token t);
+token analisa_comandos(FILE* file, FILE* out, token t);
 token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t);
 token analisa_atribuicao(FILE* file, FILE* out, token t);
 token analisa_escreva(FILE* file, FILE* out, token t);
@@ -16,10 +17,10 @@ token analisa_se(FILE* file, FILE* out, token t);
 token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t);
 token analisa_expressao_simples(FILE* file, FILE* out, token t);
 token analisa_expressao(FILE* file, FILE* out, token t);
-token analisa_atribuicao(FILE* file, FILE* out, token t);
 token analisa_termo(FILE* file, FILE* out, token t);
 token analisa_chamada_funcao(FILE* file, FILE* out, token t);
 token analisa_chamada_procedimento(FILE* file, FILE* out, token t);
+token analisa_fator(FILE* file, FILE* out, token t);
 
 token analisa_tipo(FILE* file, FILE* out, token t){
     if(strcmp(t.simbolo, "sinteiro") != 0 && strcmp(t.simbolo, "sbooleano") != 0){
@@ -61,21 +62,22 @@ token analisa_et_variaveis(FILE* file, FILE* out, token t){
     if(strcmp(t.simbolo, "svar") == 0){
         t = lexer(file, out);
         if(strcmp(t.simbolo, "sidentificador") == 0){
-            analisa_variaveis(file, out, t);
-            if(strcmp(t.simbolo, "sponto_virgula") == 0){
-                t = lexer(file, out);
-            } else {
-                printf("ERRO");
-                exit(1);
+            printf("\n%s", t.lexema);
+            while(strcmp(t.simbolo, "sidentificador") == 0){
+                t = analisa_variaveis(file, out, t);
+                if(strcmp(t.simbolo, "sponto_virgula") == 0){
+                    t = lexer(file, out);
+                } else {
+                    printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+                    exit(1);
+                }
             }
         }else{
-            printf("ERRO");
+            printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
             exit(1);
         }
-    }else{
-        printf("ERRO");
-        exit(1);
     }
+    return t;
 }
 
 token analisa_declaracao_procedimento(FILE* file, FILE* out, token t){
@@ -142,7 +144,7 @@ token analisa_subrotinas(FILE* file, FILE* out, token t){
 }
 
 token analisa_comandos_simples(FILE* file, FILE* out, token t){
-
+    printf("\nanalisando comando simples");
     if(strcmp(t.simbolo, "sidentificador") == 0){
         t = analisa_atrib_chprocedimento(file, out, t);
     }else if (strcmp(t.simbolo, "sse") == 0){
@@ -247,7 +249,8 @@ token analisa_escreva(FILE* file, FILE* out, token t){
     return t;
 }
 
-token analisa_atribuicao(FILE* file, FILE* out, token t){
+token analisa_atribuicao(FILE* file, FILE* out, token t){ //o problema está nessa aqui Enzo, o token é satribuicao, ele tá tratando como
+    //se atribuicao fossem dois tokens, : e  =
     t = lexer(file, out);
     if (strcmp(t.simbolo, "sdoispontos") == 0){
         t = lexer(file, out);
@@ -277,6 +280,7 @@ token analisa_expressao(FILE* file, FILE* out, token t){
 }
 
 token analisa_expressao_simples(FILE* file, FILE* out, token t){
+    printf("analisando expressao");
     if (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0){
         t = lexer(file, out);
     }
@@ -297,24 +301,19 @@ token analisa_comandos(FILE* file, FILE* out, token t){
         while (strcmp(t.simbolo, "sfim") != 0){
             if (strcmp(t.simbolo, "sponto_virgula") == 0){
                 t = lexer(file, out);
-                t = analisa_comandos_simples(file, out, t);
+                if(strcmp(t.simbolo, "sfim") != 0){
+                    t = analisa_comandos_simples(file, out, t);
+                }
             } else {
-                printf("ERRO");
+                printf("ERRO: ponto e virgula esperado");
                 exit(1);
             }
-        }
-        if (strcmp(t.simbolo, "sfim") == 0){
             t = lexer(file, out);
-        } else {
-            printf("ERRO");
-            exit(1);
         }
-
     } else {
         printf("ERRO");
         exit(1);
     }
-
     return t;
 }
 
@@ -366,6 +365,13 @@ token analisa_fator(FILE* file, FILE* out, token t){
 }
 
 token analisa_chamada_funcao(FILE* file, FILE* out, token t){
+    if(strcmp(t.simbolo, "sidentificador") == 0){
+        t = lexer(file, out);
+    }
+    return t;
+}
+
+token analisa_chamada_procedimento(FILE* file, FILE* out, token t){
     if(strcmp(t.simbolo, "sidentificador") == 0){
         t = lexer(file, out);
     }
