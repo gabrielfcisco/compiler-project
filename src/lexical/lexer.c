@@ -4,7 +4,7 @@
 #include <ctype.h>
 
 char ch;
-int line = 1;
+int line;
 
 typedef struct token {
     char* lexema;
@@ -258,8 +258,12 @@ void salva_tabela_simbolos(FILE* out, token t) {
     fprintf(out, "%-21s | %-20s\n", t.lexema, t.simbolo);
 }
 
-token lexer(FILE* file, FILE* out) {
+void lexer_init(FILE* file){
     ch = fgetc(file);
+    line = 1;
+}
+
+token lexer(FILE* file, FILE* out) {
 
     while((ch == '{' || ch == ' ' || ch == '\n' || ch == '\t' || ch == '\b' || ch == 10 || ch == '\r') && ch != EOF){
         if(ch == '\r'){

@@ -19,6 +19,7 @@ output/ast/*
 # Sistema
 .DS_Store
 Thumbs.db
+parser.dSYM/
 
 # Mantenha diretórios vazios
 !output/tokens/.gitkeep
