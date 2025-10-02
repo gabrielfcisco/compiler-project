@@ -17,8 +17,9 @@ token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t);
 token analisa_expressao_simples(FILE* file, FILE* out, token t);
 token analisa_expressao(FILE* file, FILE* out, token t);
 token analisa_atribuicao(FILE* file, FILE* out, token t);
-token chamada_procedimento();
 token analisa_termo(FILE* file, FILE* out, token t);
+token analisa_chamada_funcao(FILE* file, FILE* out, token t);
+token analisa_chamada_procedimento(FILE* file, FILE* out, token t);
 
 token analisa_tipo(FILE* file, FILE* out, token t){
     if(strcmp(t.simbolo, "sinteiro") != 0 && strcmp(t.simbolo, "sbooleano") != 0){
@@ -164,7 +165,7 @@ token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t){
     if (strcmp(t.simbolo, "satribuicao") == 0){
         t = analisa_atribuicao(file, out, t);
     } else{
-        t = chamada_procedimento(file, out, t);
+        t = analisa_chamada_procedimento(file, out, t);
     }
     return t;
 }
@@ -264,8 +265,6 @@ token analisa_atribuicao(FILE* file, FILE* out, token t){
     return t;
 }
 
-token chamada_procedimento();  // implementar
-
 token analisa_expressao(FILE* file, FILE* out, token t){
     t = analisa_expressao_simples(file, out, t);
     while (strcmp(t.simbolo, "smaior") == 0 || strcmp(t.simbolo, "smaiorrig") == 0 ||
@@ -289,8 +288,6 @@ token analisa_expressao_simples(FILE* file, FILE* out, token t){
 
     return t;
 }
-
-token analisa_termo(FILE* file, FILE* out, token t); // implementar
 
 token analisa_comandos(FILE* file, FILE* out, token t){
 
@@ -321,38 +318,35 @@ token analisa_comandos(FILE* file, FILE* out, token t){
     return t;
 }
 
-void analisa_termo(FILE* file, FILE* out, token t){
-    analisa_fator(file, out, t); // Primeiro analisa um fator
+token analisa_termo(FILE* file, FILE* out, token t){
+    t = analisa_fator(file, out, t); // Primeiro analisa um fator
 
     while(strcmp(t.simbolo, "smult") == 0 ||
           strcmp(t.simbolo, "sdiv") == 0 ||
           strcmp(t.simbolo, "se") == 0){
 
-      
         t = lexer(file, out);
 
-        analisa_fator(file, out, t);
+        t = analisa_fator(file, out, t);
     }
+
+    return t;
 }
 
-void analisa_fator(FILE* file, FILE* out, token t){
+token analisa_fator(FILE* file, FILE* out, token t){
     if(strcmp(t.simbolo, "sidentificador") == 0){
-        
-        analisa_chamada_funcao(file, out, t);
+        t = analisa_chamada_funcao(file, out, t);
     }
     else if(strcmp(t.simbolo, "snumero") == 0){
-       
         t = lexer(file, out);
     }
     else if(strcmp(t.simbolo, "snao") == 0){
-       
         t = lexer(file, out);
-        analisa_fator(file, out, t);
+        t = analisa_fator(file, out, t);
     }
     else if(strcmp(t.simbolo, "sabre_parenteses") == 0){
-        
         t = lexer(file, out);
-        analisa_expressao(file, out, t);  
+        t = analisa_expressao(file, out, t);
         if(strcmp(t.simbolo, "sfecha_parenteses") == 0){
             t = lexer(file, out);
         } else {
@@ -362,13 +356,18 @@ void analisa_fator(FILE* file, FILE* out, token t){
     }
     else if(strcmp(t.lexema, "verdadeiro") == 0 ||
             strcmp(t.lexema, "falso") == 0){
-       
         t = lexer(file, out);
     }
     else{
         printf("ERRO: fator inválido\n");
         exit(1);
     }
+    return t;
+}
+
+token analisa_chamada_funcao(FILE* file, FILE* out, token t){
+
+    return t;
 }
 
 
