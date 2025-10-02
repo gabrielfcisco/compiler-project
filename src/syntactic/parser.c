@@ -366,7 +366,9 @@ token analisa_fator(FILE* file, FILE* out, token t){
 }
 
 token analisa_chamada_funcao(FILE* file, FILE* out, token t){
-
+    if(strcmp(t.simbolo, "sidentificador") == 0){
+        t = lexer(file, out);
+    }
     return t;
 }
 
