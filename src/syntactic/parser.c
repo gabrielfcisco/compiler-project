@@ -65,6 +65,62 @@ token analisa_et_variaveis(FILE* file, FILE* out, token t){
 }
 void analisa_subrotinas();
 void analisa_comandos();
+void analisa_ declaração_procedimento();
+void analisa_ declaração_função();
+void analisa_expressão(); 
+void analisa_expressão_simples();
+
+
+void analisa_termo(FILE* file, FILE* out, token t){
+    analisa_fator(file, out, t); // Primeiro analisa um fator
+
+    while(strcmp(t.simbolo, "smult") == 0 ||
+          strcmp(t.simbolo, "sdiv") == 0 ||
+          strcmp(t.simbolo, "se") == 0){
+
+      
+        t = lexer(file, out);
+
+        analisa_fator(file, out, t);
+    }
+}
+
+void analisa_fator(FILE* file, FILE* out, token t){
+    if(strcmp(t.simbolo, "sidentificador") == 0){
+        
+        analisa_chamada_funcao(file, out, t);
+    }
+    else if(strcmp(t.simbolo, "snumero") == 0){
+       
+        t = lexer(file, out);
+    }
+    else if(strcmp(t.simbolo, "snao") == 0){
+       
+        t = lexer(file, out);
+        analisa_fator(file, out, t);
+    }
+    else if(strcmp(t.simbolo, "sabre_parenteses") == 0){
+        
+        t = lexer(file, out);
+        analisa_expressao(file, out, t);  
+        if(strcmp(t.simbolo, "sfecha_parenteses") == 0){
+            t = lexer(file, out);
+        } else {
+            printf("ERRO: esperado fecha parênteses\n");
+            exit(1);
+        }
+    }
+    else if(strcmp(t.lexema, "verdadeiro") == 0 ||
+            strcmp(t.lexema, "falso") == 0){
+       
+        t = lexer(file, out);
+    }
+    else{
+        printf("ERRO: fator inválido\n");
+        exit(1);
+    }
+}
+
 
 token analisa_bloco(FILE* file, FILE* out){
     token t = lexer(file, out);
