@@ -34,7 +34,7 @@ void imprimir_token(token t) {
 
 token analisa_tipo(FILE* file, FILE* out, token t){
     if(strcmp(t.simbolo, "sinteiro") != 0 && strcmp(t.simbolo, "sbooleano") != 0){
-        printf("\n%s", t.simbolo);
+        // printf("\n%s", t.simbolo);
         printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
         exit(1);
     }
@@ -44,12 +44,12 @@ token analisa_tipo(FILE* file, FILE* out, token t){
 token analisa_variaveis(FILE* file, FILE* out, token t){
     while(strcmp(t.simbolo, "sdoispontos") != 0){
         if(strcmp(t.simbolo, "sidentificador") == 0){
-            printf("\n%s", t.lexema);
+            // printf("\n%s", t.lexema);
             t = lexer(file, out);
             if(strcmp(t.simbolo, "svirgula") == 0 || strcmp(t.simbolo, "sdoispontos") == 0){
                 if(strcmp(t.simbolo, "svirgula") == 0){
                     t = lexer(file, out);
-                    printf("\naqui");
+                    // printf("\naqui");
                     if(strcmp(t.simbolo, "sdoispontos") == 0){
                         printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
                         exit(1);
@@ -73,7 +73,7 @@ token analisa_et_variaveis(FILE* file, FILE* out, token t){
     if(strcmp(t.simbolo, "svar") == 0){
         t = lexer(file, out);
         if(strcmp(t.simbolo, "sidentificador") == 0){
-            printf("\n%s", t.lexema);
+            // printf("\n%s", t.lexema);
             while(strcmp(t.simbolo, "sidentificador") == 0){
                 t = analisa_variaveis(file, out, t);
                 if(strcmp(t.simbolo, "sponto_virgula") == 0){
@@ -155,7 +155,7 @@ token analisa_subrotinas(FILE* file, FILE* out, token t){
 }
 
 token analisa_comandos_simples(FILE* file, FILE* out, token t){
-    printf("\nanalisando comando simples");
+    // printf("\nanalisando comando simples");
     if(strcmp(t.simbolo, "sidentificador") == 0){
         t = analisa_atrib_chprocedimento(file, out, t);
     }else if (strcmp(t.simbolo, "sse") == 0){
@@ -176,6 +176,7 @@ token analisa_comandos_simples(FILE* file, FILE* out, token t){
 token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t){
     t = lexer(file, out);
     if (strcmp(t.simbolo, "satribuicao") == 0){
+        // imprimir_token(t);
         t = analisa_atribuicao(file, out, t);
     } else{
         t = analisa_chamada_procedimento(file, out, t);
@@ -186,7 +187,7 @@ token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t){
 
 token analisa_se(FILE* file, FILE* out, token t){
     t = lexer(file, out);
-    analisa_expressao(file, out, t);
+    t = analisa_expressao(file, out, t);
     if (strcmp(t.simbolo, "sentao") == 0){
         t = lexer(file, out);
         t = analisa_comandos_simples(file, out, t);
@@ -195,7 +196,7 @@ token analisa_se(FILE* file, FILE* out, token t){
             t = analisa_comandos_simples(file, out, t);
         }
     } else {
-        printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+        printf("\nERRO entao: linha %d, token: %s", t.linha, t.lexema);
         exit(1);
     }
     return t;
@@ -282,7 +283,7 @@ token analisa_escreva(FILE* file, FILE* out, token t){
 // }
 
 token analisa_atribuicao(FILE* file, FILE* out, token t){
-
+    // printf("\nanalisa atribuicao");
     if (strcmp(t.simbolo, "satribuicao") == 0) {
         t = lexer(file, out);
         t = analisa_expressao(file, out, t);
@@ -295,9 +296,10 @@ token analisa_atribuicao(FILE* file, FILE* out, token t){
 
 
 token analisa_expressao(FILE* file, FILE* out, token t){
+    // printf("\nanalisando expressao");
     t = analisa_expressao_simples(file, out, t);
-    while (strcmp(t.simbolo, "smaior") == 0 || strcmp(t.simbolo, "smaiorrig") == 0 ||
-           strcmp(t.simbolo, "smenor") == 0 || strcmp(t.simbolo, "smenorrig") == 0 ||
+    if(strcmp(t.simbolo, "smaior") == 0 || strcmp(t.simbolo, "smaiorig") == 0 ||
+           strcmp(t.simbolo, "smenor") == 0 || strcmp(t.simbolo, "smenorig") == 0 ||
            strcmp(t.simbolo, "sdif") == 0){
         t = lexer(file, out);
         t = analisa_expressao_simples(file, out, t);
@@ -306,7 +308,7 @@ token analisa_expressao(FILE* file, FILE* out, token t){
 }
 
 token analisa_expressao_simples(FILE* file, FILE* out, token t){
-    printf("analisando expressao");
+    // printf("\nanalisando expressao simples");
     if (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0){
         t = lexer(file, out);
     }
@@ -337,13 +339,14 @@ token analisa_comandos(FILE* file, FILE* out, token t){
         }
         t = lexer(file, out);
     } else {
-        printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+        printf("\nERRO analisa comandos: linha %d, token: %s", t.linha, t.lexema);
         exit(1);
     }
     return t;
 }
 
 token analisa_termo(FILE* file, FILE* out, token t){
+    // printf("\nanalisando termo");
     t = analisa_fator(file, out, t); // Primeiro analisa um fator
 
     while(strcmp(t.simbolo, "smult") == 0 ||
@@ -359,6 +362,7 @@ token analisa_termo(FILE* file, FILE* out, token t){
 }
 
 token analisa_fator(FILE* file, FILE* out, token t){
+    // printf("\nanalisando fator");
     if(strcmp(t.simbolo, "sidentificador") == 0){
         t = analisa_chamada_funcao(file, out, t);
     }
@@ -375,7 +379,7 @@ token analisa_fator(FILE* file, FILE* out, token t){
         if(strcmp(t.simbolo, "sfecha_parenteses") == 0){
             t = lexer(file, out);
         } else {
-            printf("ERRO: esperado fecha parênteses\n");
+            printf("\nERRO: esperado fecha parênteses\nLinha %d, Token: %s", t.linha, t.lexema);
             exit(1);
         }
     }
@@ -384,7 +388,7 @@ token analisa_fator(FILE* file, FILE* out, token t){
         t = lexer(file, out);
     }
     else{
-        printf("ERRO: fator inválido\n");
+        printf("\nERRO: fator inválido\nLinha %d, Token: %s", t.linha, t.lexema);
         exit(1);
     }
     return t;
@@ -455,6 +459,7 @@ int main(){
                 t = analisa_bloco(file, out);
                 printf("\n%s", t.lexema);
                 if(strcmp(t.simbolo, "sponto") == 0){
+                    t = lexer(file, out);
                     char ch = fgetc(file);
                     if(ch == EOF){
                         printf("\nSucesso");
