@@ -300,11 +300,11 @@ token lexer(FILE* file, FILE* out) {
             }
             if(ch == EOF){
                 token t;
-                t.lexema = malloc(30);
+                t.lexema = malloc(16);
                 if (t.lexema != NULL) {
-                    sprintf(t.lexema, "Erro lexical: linha %d", line + 1);
+                    sprintf(t.lexema, "Fim do arquivo!");
                 }
-                strcpy(t.simbolo, "serro");
+                strcpy(t.simbolo, "seof");
                 salva_tabela_simbolos(out, t);
                 if (t.lexema){
                     free(t.lexema);

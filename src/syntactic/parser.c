@@ -130,6 +130,9 @@ token analisa_declaracao_funcao(FILE* file, FILE* out, token t){
             printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
             exit(1);
         }
+    }else{
+        printf("ERRO: linha %d, token: %s", t.linha, t.lexema);
+        exit(1);
     }
     return t;
 }
@@ -142,7 +145,7 @@ token analisa_subrotinas(FILE* file, FILE* out, token t){
         } else {
             t = analisa_declaracao_funcao(file, out, t);
         }
-        printf("\n%s", t.lexema);
+        // printf("\n%s", t.lexema);
         if(strcmp(t.simbolo, "sponto_virgula") == 0){
             t = lexer(file, out);
         }else{
@@ -247,11 +250,11 @@ token analisa_escreva(FILE* file, FILE* out, token t){
             if (strcmp(t.simbolo, "sfecha_parenteses") == 0){
                 t = lexer(file, out);
             }else {
-                printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+                printf("\nERRO: token sfecha_parenteses esperado\nLinha %d, Token: %s", t.linha, t.lexema);
                 exit(1);
             }
         }else {
-            printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+            printf("\nERRO: token sidentificador esperado\n Linha %d, token: %s", t.linha, t.lexema);
             exit(1);
         }
     }else {
@@ -283,7 +286,6 @@ token analisa_escreva(FILE* file, FILE* out, token t){
 // }
 
 token analisa_atribuicao(FILE* file, FILE* out, token t){
-    // printf("\nanalisa atribuicao");
     if (strcmp(t.simbolo, "satribuicao") == 0) {
         t = lexer(file, out);
         t = analisa_expressao(file, out, t);
@@ -296,7 +298,6 @@ token analisa_atribuicao(FILE* file, FILE* out, token t){
 
 
 token analisa_expressao(FILE* file, FILE* out, token t){
-    // printf("\nanalisando expressao");
     t = analisa_expressao_simples(file, out, t);
     if(strcmp(t.simbolo, "smaior") == 0 || strcmp(t.simbolo, "smaiorig") == 0 ||
            strcmp(t.simbolo, "smenor") == 0 || strcmp(t.simbolo, "smenorig") == 0 ||
@@ -308,7 +309,6 @@ token analisa_expressao(FILE* file, FILE* out, token t){
 }
 
 token analisa_expressao_simples(FILE* file, FILE* out, token t){
-    // printf("\nanalisando expressao simples");
     if (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0){
         t = lexer(file, out);
     }
@@ -333,20 +333,19 @@ token analisa_comandos(FILE* file, FILE* out, token t){
                     t = analisa_comandos_simples(file, out, t);
                 }
             } else {
-                printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+                printf("\nERRO: token sponto_virgula esperado\nLinha %d, Token: %s", t.linha, t.lexema);
                 exit(1);
             }
         }
         t = lexer(file, out);
     } else {
-        printf("\nERRO analisa comandos: linha %d, token: %s", t.linha, t.lexema);
+        printf("\nERRO: token sinicio esperado\nLinha %d, Token: %s", t.linha, t.lexema);
         exit(1);
     }
     return t;
 }
 
 token analisa_termo(FILE* file, FILE* out, token t){
-    // printf("\nanalisando termo");
     t = analisa_fator(file, out, t); // Primeiro analisa um fator
 
     while(strcmp(t.simbolo, "smult") == 0 ||
@@ -362,7 +361,6 @@ token analisa_termo(FILE* file, FILE* out, token t){
 }
 
 token analisa_fator(FILE* file, FILE* out, token t){
-    // printf("\nanalisando fator");
     if(strcmp(t.simbolo, "sidentificador") == 0){
         t = analisa_chamada_funcao(file, out, t);
     }
@@ -448,16 +446,12 @@ int main(){
     fprintf(out, "----------------------+-----------------------\n");
 
     token t = lexer(file, out);
-    printf("\n%s", t.lexema);
     if(strcmp(t.simbolo, "sprograma") == 0){
         t = lexer(file, out);
-        printf("\n%s", t.lexema);
         if(strcmp(t.simbolo, "sidentificador") == 0){
             t = lexer(file, out);
-            printf("\n%s", t.lexema);
             if(strcmp(t.simbolo, "sponto_virgula") == 0){
                 t = analisa_bloco(file, out);
-                printf("\n%s", t.lexema);
                 if(strcmp(t.simbolo, "sponto") == 0){
                     t = lexer(file, out);
                     char ch = fgetc(file);
