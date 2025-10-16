@@ -37,6 +37,8 @@ token analisa_tipo(FILE* file, FILE* out, token t){
         // printf("\n%s", t.simbolo);
         printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
         exit(1);
+    }else{
+        coloca_tipo_tabela(t.lexema);                               //semantico
     }
     return lexer(file, out);
 }
@@ -44,19 +46,25 @@ token analisa_tipo(FILE* file, FILE* out, token t){
 token analisa_variaveis(FILE* file, FILE* out, token t){
     while(strcmp(t.simbolo, "sdoispontos") != 0){
         if(strcmp(t.simbolo, "sidentificador") == 0){
-            // printf("\n%s", t.lexema);
-            t = lexer(file, out);
-            if(strcmp(t.simbolo, "svirgula") == 0 || strcmp(t.simbolo, "sdoispontos") == 0){
-                if(strcmp(t.simbolo, "svirgula") == 0){
-                    t = lexer(file, out);
-                    // printf("\naqui");
-                    if(strcmp(t.simbolo, "sdoispontos") == 0){
-                        printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
-                        exit(1);
+            
+            if(pesquisa_duplicacvar_tabela(t.lexema) == 0){ //0 = false and 1 == true  //semantico
+                insere_tabela(t.lexema,"variavel","","");                              //semantico
+                t = lexer(file, out);
+                if(strcmp(t.simbolo, "svirgula") == 0 || strcmp(t.simbolo, "sdoispontos") == 0){
+                    if(strcmp(t.simbolo, "svirgula") == 0){
+                        t = lexer(file, out);
+                        // printf("\naqui");
+                        if(strcmp(t.simbolo, "sdoispontos") == 0){
+                            printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+                            exit(1);
+                        }
                     }
+                }else{
+                    printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+                    exit(1);
                 }
             }else{
-                printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+                printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);   //semantico
                 exit(1);
             }
         }else{
@@ -223,10 +231,16 @@ token analisa_leia(FILE* file, FILE* out, token t){
     if (strcmp(t.simbolo, "sabre_parenteses") == 0){
         t = lexer(file, out);
         if (strcmp(t.simbolo, "sidentificador") == 0){
-            t = lexer(file, out);
-            if (strcmp(t.simbolo, "sfecha_parenteses") == 0){
+
+            if(pesquisa_declvar_tabela(t.lexema) == 0 ){ // 0 = false , 1 = true  //semantico
                 t = lexer(file, out);
-            }else {
+                if (strcmp(t.simbolo, "sfecha_parenteses") == 0){
+                    t = lexer(file, out);
+                }else {
+                    printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+                    exit(1);
+                }
+            }else{
                 printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
                 exit(1);
             }
@@ -246,11 +260,16 @@ token analisa_escreva(FILE* file, FILE* out, token t){
     if (strcmp(t.simbolo, "sabre_parenteses") == 0){
         t = lexer(file, out);
         if (strcmp(t.simbolo, "sidentificador") == 0){
-            t = lexer(file, out);
-            if (strcmp(t.simbolo, "sfecha_parenteses") == 0){
+            if (pesquisa_declvarfunc_tabela(t.lexema) == 0){ // 0 == false ;; 1 = true //semantico
                 t = lexer(file, out);
-            }else {
-                printf("\nERRO: token sfecha_parenteses esperado\nLinha %d, Token: %s", t.linha, t.lexema);
+                if (strcmp(t.simbolo, "sfecha_parenteses") == 0){
+                    t = lexer(file, out);
+                }else {
+                    printf("\nERRO: token sfecha_parenteses esperado\nLinha %d, Token: %s", t.linha, t.lexema);
+                    exit(1);
+                }
+            }else{
+                printf("\nERRO: token sidentificador esperado\n Linha %d, token: %s", t.linha, t.lexema);
                 exit(1);
             }
         }else {
@@ -415,6 +434,39 @@ token analisa_bloco(FILE* file, FILE* out){
     return t;
 }
 
+void insere_tabela(char *lexema, char *tipo, char *escopo, char *mem){
+    //todo
+    // inserir no topo da tabela de simbolos
+    //inserir na tabela de simbolos
+}
+
+int pesquisa_duplicacvar_tabela(char *lexema){ //boolean
+    //todo:
+    //verificar se o lexema do identificador nao está duplicada na tabela de smbolos
+}
+
+void coloca_tipo_tabela(char *lexema){
+    //todo:
+    //não sei mt o que fazer aqui, dar uma olhada melhor kk
+    // pagina 47 do livro dele
+}
+
+int pesquisa_declvar_tabela(char *lexema){  //boolean
+    //todo:
+    // no caso, se nao estiver duplicado =  false
+}
+
+int pesquisa_declvarfunc_tabela(char *lexema){ // boolean
+    //todo
+}
+
+/* todos os booleans são nesse formato:
+     0 = falso
+     1 =  true
+*/
+
+
+
 int main(){
     int rotulo = 1;
 
@@ -449,6 +501,7 @@ int main(){
     if(strcmp(t.simbolo, "sprograma") == 0){
         t = lexer(file, out);
         if(strcmp(t.simbolo, "sidentificador") == 0){
+            insere_tabela(t.lexema, "nomedeprograma","",""); //semantico
             t = lexer(file, out);
             if(strcmp(t.simbolo, "sponto_virgula") == 0){
                 t = analisa_bloco(file, out);
