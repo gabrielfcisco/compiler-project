@@ -233,6 +233,10 @@ token trata_pontuacao(FILE* file){
 token pega_token(FILE* file){
     int linha_inicio = line;
 
+    if (ch == EOF) {
+        return token_create("EOF", "seof", linha_inicio);
+    }
+
     if (isdigit(ch)){
         return trata_digito(file);
     } else if ((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122)){
