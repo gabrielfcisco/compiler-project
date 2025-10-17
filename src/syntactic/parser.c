@@ -15,12 +15,14 @@ token analisa_leia(FILE* file, FILE* out, token t);
 token analisa_enquanto(FILE* file, FILE* out, token t);
 token analisa_se(FILE* file, FILE* out, token t);
 token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t);
-token analisa_expressao_simples(FILE* file, FILE* out, token t);
-token analisa_expressao(FILE* file, FILE* out, token t);
-token analisa_termo(FILE* file, FILE* out, token t);
+token analisa_expressao_simples(FILE* file, FILE* out, token t, token *in_fixa, int *pos);
+token analisa_expressao(FILE* file, FILE* out, token t, token *in_fixa, int *pos);
+token analisa_termo(FILE* file, FILE* out, token t, token *in_fixa, int *pos);
 token analisa_chamada_funcao(FILE* file, FILE* out, token t);
 token analisa_chamada_procedimento(FILE* file, FILE* out, token t);
-token analisa_fator(FILE* file, FILE* out, token t);
+token analisa_fator(FILE* file, FILE* out, token t, token *in_fixa, int *pos);
+
+
 
 
 void imprimir_token(token t) {
@@ -30,6 +32,19 @@ void imprimir_token(token t) {
     printf("Linha: %d\n", t.linha);
     printf("Erro: %d (%s)\n", t.erro, t.erro == 0 ? "ok" : "erro");
     printf("-------------------------\n\n");
+}
+
+void atualiza_in_fixa(token *in_fixa, int *pos, token t) {
+    in_fixa[*pos] = t;
+    (*pos)++;
+}
+
+void print_in_fixa(token *in_fixa, int pos) {
+    printf("Expressão em notação infixa: ");
+    for (int i = 0; i < pos; i++) {
+        printf("%s ", in_fixa[i].lexema);
+    }
+    printf("\n");
 }
 
 token analisa_tipo(FILE* file, FILE* out, token t){
@@ -190,7 +205,12 @@ token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t){
 
 token analisa_se(FILE* file, FILE* out, token t){
     t = lexer(file, out);
-    t = analisa_expressao(file, out, t);
+    token in_fixa[100]; //vetor que armazena a expressao em notacao in_fixa
+    int pos = 0;    // necessario para a pos do vetor in_fixa
+    t = analisa_expressao(file, out, t, in_fixa, &pos);
+
+    print_in_fixa(in_fixa, pos); // Imprime a expressão em notação infixa
+
     if (strcmp(t.simbolo, "sentao") == 0){
         t = lexer(file, out);
         t = analisa_comandos_simples(file, out, t);
@@ -207,7 +227,12 @@ token analisa_se(FILE* file, FILE* out, token t){
 
 token analisa_enquanto(FILE* file, FILE* out, token t){
     t = lexer(file, out);
-    t = analisa_expressao(file, out, t);
+    token in_fixa[100]; //vetor que armazena a expressao em notacao in_fixa
+    int pos = 0;    // necessario para a pos do vetor in_fixa
+    t = analisa_expressao(file, out, t, in_fixa, &pos);
+
+    print_in_fixa(in_fixa, pos); // Imprime a expressão em notação infixa
+
     if (strcmp(t.simbolo, "sfaca") == 0){
         t = lexer(file, out);
         t = analisa_comandos_simples(file, out, t);
@@ -288,36 +313,16 @@ token analisa_escreva(FILE* file, FILE* out, token t){
 token analisa_atribuicao(FILE* file, FILE* out, token t){
     if (strcmp(t.simbolo, "satribuicao") == 0) {
         t = lexer(file, out);
-        t = analisa_expressao(file, out, t);
+        token in_fixa[100]; //vetor que armazena a expressao em notacao in_fixa
+        int pos = 0;    // necessario para a pos do vetor in_fixa
+        t = analisa_expressao(file, out, t, in_fixa, &pos);
+
+        print_in_fixa(in_fixa, pos); // Imprime a expressão em notação infixa
+
     } else {
         printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
         exit(1);
     }
-    return t;
-}
-
-
-token analisa_expressao(FILE* file, FILE* out, token t){
-    t = analisa_expressao_simples(file, out, t);
-    if(strcmp(t.simbolo, "smaior") == 0 || strcmp(t.simbolo, "smaiorig") == 0 ||
-           strcmp(t.simbolo, "smenor") == 0 || strcmp(t.simbolo, "smenorig") == 0 ||
-           strcmp(t.simbolo, "sdif") == 0){
-        t = lexer(file, out);
-        t = analisa_expressao_simples(file, out, t);
-    }
-    return t;
-}
-
-token analisa_expressao_simples(FILE* file, FILE* out, token t){
-    if (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0){
-        t = lexer(file, out);
-    }
-    t = analisa_termo(file, out, t);
-    while (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0 || strcmp(t.simbolo, "sou") == 0){
-        t = lexer(file, out);
-        t = analisa_termo(file, out, t);
-    }
-
     return t;
 }
 
@@ -345,36 +350,73 @@ token analisa_comandos(FILE* file, FILE* out, token t){
     return t;
 }
 
-token analisa_termo(FILE* file, FILE* out, token t){
-    t = analisa_fator(file, out, t); // Primeiro analisa um fator
+
+token analisa_expressao(FILE* file, FILE* out, token t, token *in_fixa, int *pos){
+
+    t = analisa_expressao_simples(file, out, t, in_fixa, pos);
+    if(strcmp(t.simbolo, "smaior") == 0 || strcmp(t.simbolo, "smaiorig") == 0 ||
+           strcmp(t.simbolo, "smenor") == 0 || strcmp(t.simbolo, "smenorig") == 0 ||
+           strcmp(t.simbolo, "sdif") == 0){
+        atualiza_in_fixa(in_fixa, pos, t); //atualiza o vetor in_fixa
+        t = lexer(file, out);
+        t = analisa_expressao_simples(file, out, t, in_fixa, pos);
+    }
+    return t;
+}
+
+token analisa_expressao_simples(FILE* file, FILE* out, token t, token *in_fixa, int *pos){
+    if (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0){              //Se o token da expressao for + ou - e o unario (maior prioridade)
+        atualiza_in_fixa(in_fixa, pos, t); //atualiza o vetor in_fixa
+        t = lexer(file, out);
+    }
+    t = analisa_termo(file, out, t, in_fixa, pos); 
+    while (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0 || strcmp(t.simbolo, "sou") == 0){
+        atualiza_in_fixa(in_fixa, pos, t);
+        t = lexer(file, out);
+        t = analisa_termo(file, out, t, in_fixa, pos);
+    }
+    
+    return t;
+}
+
+
+token analisa_termo(FILE* file, FILE* out, token t, token *in_fixa, int *pos){
+    t = analisa_fator(file, out, t, in_fixa, pos); // Primeiro analisa um fator
 
     while(strcmp(t.simbolo, "smult") == 0 ||
           strcmp(t.simbolo, "sdiv") == 0 ||
           strcmp(t.simbolo, "se") == 0){
 
-        t = lexer(file, out);
+        atualiza_in_fixa(in_fixa, pos, t); 
 
-        t = analisa_fator(file, out, t);
+        t = lexer(file, out);
+        t = analisa_fator(file, out, t, in_fixa, pos); // Depois analisa outro fator
     }
 
     return t;
 }
 
-token analisa_fator(FILE* file, FILE* out, token t){
+token analisa_fator(FILE* file, FILE* out, token t, token *in_fixa, int *pos){
     if(strcmp(t.simbolo, "sidentificador") == 0){
+        atualiza_in_fixa(in_fixa, pos, t); 
         t = analisa_chamada_funcao(file, out, t);
     }
     else if(strcmp(t.simbolo, "snumero") == 0){
+        atualiza_in_fixa(in_fixa, pos, t);
         t = lexer(file, out);
     }
     else if(strcmp(t.simbolo, "snao") == 0){
+        atualiza_in_fixa(in_fixa, pos, t);
         t = lexer(file, out);
-        t = analisa_fator(file, out, t);
+        t = analisa_fator(file, out, t, in_fixa, pos);
     }
     else if(strcmp(t.simbolo, "sabre_parenteses") == 0){
+        atualiza_in_fixa(in_fixa, pos, t);
         t = lexer(file, out);
-        t = analisa_expressao(file, out, t);
+
+        t = analisa_expressao(file, out, t, in_fixa, pos);
         if(strcmp(t.simbolo, "sfecha_parenteses") == 0){
+            atualiza_in_fixa(in_fixa, pos, t);
             t = lexer(file, out);
         } else {
             printf("\nERRO: esperado fecha parênteses\nLinha %d, Token: %s", t.linha, t.lexema);
@@ -383,7 +425,8 @@ token analisa_fator(FILE* file, FILE* out, token t){
     }
     else if(strcmp(t.lexema, "verdadeiro") == 0 ||
             strcmp(t.lexema, "falso") == 0){
-        t = lexer(file, out);
+            atualiza_in_fixa(in_fixa, pos, t);
+            t = lexer(file, out);
     }
     else{
         printf("\nERRO: fator inválido\nLinha %d, Token: %s", t.linha, t.lexema);

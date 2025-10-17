@@ -4,6 +4,8 @@ bin/
 *.out
 compilador
 analisador
+parser
+parser.exe
 
 # Saídas
 output/tokens/*

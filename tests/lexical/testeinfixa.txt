@@ -1,0 +1,16 @@
+{este programa e o primeiro teste}
+programa teste;
+{}
+var x,y,total: inteiro;
+
+funcao soma:inteiro;
+inicio
+  soma:= (x + 7 * 5 div (30+y) <= (x*y+2))e(x>0);
+fim;
+
+inicio
+  leia(x);
+  leia(y);
+  total:= soma;
+  escreva(total)
+fim.
