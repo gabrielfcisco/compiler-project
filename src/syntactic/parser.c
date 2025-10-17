@@ -64,7 +64,7 @@ token analisa_variaveis(FILE* file, FILE* out, token t){
                     exit(1);
                 }
             }else{
-                printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);   //semantico
+                printf("\nERRO semantico: linha %d, token: %s", t.linha, t.lexema);   //semantico
                 exit(1);
             }
         }else{
@@ -101,57 +101,79 @@ token analisa_et_variaveis(FILE* file, FILE* out, token t){
 
 token analisa_declaracao_procedimento(FILE* file, FILE* out, token t){
     t = lexer(file, out);
-
+    char nivel = 'L'; //semantico    (marca o novo gatilho)
     if(strcmp(t.simbolo, "sidentificador") == 0){
-        t = lexer(file, out);
-        if(strcmp(t.simbolo, "sponto_virgula") == 0){
-            t = analisa_bloco(file, out);
-        }else{
-            printf("ERRO: linha %d, token: %s", t.linha, t.lexema);
-            exit(1);
-        }
-    }else{
-        printf("ERRO: linha %d, token: %s", t.linha, t.lexema);
-        exit(1);
-    }
 
-    return t;
-}
-
-token analisa_declaracao_funcao(FILE* file, FILE* out, token t){
-    t = lexer(file, out);
-
-    if(strcmp(t.simbolo, "sidentificador") == 0){
-        t = lexer(file, out);
-        if(strcmp(t.simbolo, "sdoispontos") == 0){
+        if (pesquisa_declproc_tabela(t.lexema) == 0 ){
+            insere_tabela(t.lexema,"procedimento",nivel,""/*rotulo*/); // semantico ,  adicionar rotulo quando faer geração de codigo
             t = lexer(file, out);
-            if((strcmp(t.simbolo, "sinteiro") == 0) || strcmp(t.simbolo, "sbooleano") == 0){
-                t = lexer(file, out);
-                if(strcmp(t.simbolo, "sponto_virgula") == 0){
-                    t = analisa_bloco(file, out);
-                }
-            } else {
+            if(strcmp(t.simbolo, "sponto_virgula") == 0){
+                t = analisa_bloco(file, out);
+            }else{
                 printf("ERRO: linha %d, token: %s", t.linha, t.lexema);
                 exit(1);
             }
         }else{
-            printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+            printf("ERRO semantico: linha %d, token: %s", t.linha, t.lexema);
+            exit(1);
+        }
+        
+    }else{
+        printf("ERRO: linha %d, token: %s", t.linha, t.lexema);
+        exit(1);
+    }
+    desempilha_ou_voltanivel(); // semantico
+    return t;
+}
+
+token analisa_declaracao_funcao(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos, int *pc){
+    t = lexer(file, out);
+    char nivel = 'L'; //semantico
+
+    if(strcmp(t.simbolo, "sidentificador") == 0){
+        if(pesquisa_declfunc_tabela(t.lexema) == 0){
+            insere_tabela(t.lexema,"",nivel,""/*rotulo*/); // semantico
+            t = lexer(file, out);
+            if(strcmp(t.simbolo, "sdoispontos") == 0){
+                t = lexer(file, out);
+                if((strcmp(t.simbolo, "sinteiro") == 0) || strcmp(t.simbolo, "sbooleano") == 0){
+                    if(t.simbolo == "sinteiro"){ 
+                        strcpy(tabela_simbolos[*pc].tipo, "funcao inteiro");  //semantico
+                    }else{
+                        strcpy(tabela_simbolos[*pc].tipo, "funcao booleano"); //semantico
+                    }
+                    t = lexer(file, out);
+                    if(strcmp(t.simbolo, "sponto_virgula") == 0){
+                        t = analisa_bloco(file, out);
+                    }
+                } else {
+                    printf("ERRO: linha %d, token: %s", t.linha, t.lexema);
+                    exit(1);
+                }
+            }else{
+                printf("\nERRO: linha %d, token: %s", t.linha, t.lexema); // semantico
+                exit(1);
+            }
+        }else{
+            printf("\nERRO semantico: linha %d, token: %s", t.linha, t.lexema);
             exit(1);
         }
     }else{
         printf("ERRO: linha %d, token: %s", t.linha, t.lexema);
         exit(1);
     }
+
+    desempilha_ou_voltanivel();
     return t;
 }
 
-token analisa_subrotinas(FILE* file, FILE* out, token t){
+token analisa_subrotinas(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos,int *pc){
 
     while((strcmp(t.simbolo, "sprocedimento") == 0) || (strcmp(t.simbolo, "sfuncao") == 0)) {
         if(strcmp(t.simbolo, "sprocedimento") == 0) {
             t = analisa_declaracao_procedimento(file, out, t);
         } else {
-            t = analisa_declaracao_funcao(file, out, t);
+            t = analisa_declaracao_funcao(file, out, t, tabela_simbolos, pc);
         }
         // printf("\n%s", t.lexema);
         if(strcmp(t.simbolo, "sponto_virgula") == 0){
@@ -241,7 +263,7 @@ token analisa_leia(FILE* file, FILE* out, token t){
                     exit(1);
                 }
             }else{
-                printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+                printf("\nERRO semantico: linha %d, token: %s", t.linha, t.lexema);
                 exit(1);
             }
         }else {
@@ -273,7 +295,7 @@ token analisa_escreva(FILE* file, FILE* out, token t){
                 exit(1);
             }
         }else {
-            printf("\nERRO: token sidentificador esperado\n Linha %d, token: %s", t.linha, t.lexema);
+            printf("\nERRO semantico: Linha %d, token: %s", t.linha, t.lexema);
             exit(1);
         }
     }else {
@@ -379,16 +401,30 @@ token analisa_termo(FILE* file, FILE* out, token t){
     return t;
 }
 
-token analisa_fator(FILE* file, FILE* out, token t){
+token analisa_fator(FILE* file, FILE* out, token t, int nivel,TABSIMB *tabela_simbolos){
+
     if(strcmp(t.simbolo, "sidentificador") == 0){
-        t = analisa_chamada_funcao(file, out, t);
+        int ind;
+
+        if (pesquisa_tabela(t.lexema,nivel,&ind) == 1){ // semantico, verifica se é true e atribui o valor de ind no endereço passado para a função
+
+            if (strcmp(tabela_simbolos[ind].tipo, "funcao inteiro") || strcmp(tabela_simbolos[ind].tipo == "funcao booleano")){
+                t = analisa_chamada_funcao(file, out, t);
+            }else{
+                t = lexer(file,out);
+            }
+        }else{
+            printf("\nERRO semantico:       Linha %d, Token: %s", t.linha, t.lexema);
+            exit(1);
+        }
+        
     }
     else if(strcmp(t.simbolo, "snumero") == 0){
         t = lexer(file, out);
     }
     else if(strcmp(t.simbolo, "snao") == 0){
         t = lexer(file, out);
-        t = analisa_fator(file, out, t);
+        t = analisa_fator(file, out, t,nivel,tabela_simbolos);
     }
     else if(strcmp(t.simbolo, "sabre_parenteses") == 0){
         t = lexer(file, out);
@@ -426,10 +462,10 @@ token analisa_chamada_procedimento(FILE* file, FILE* out, token t){
 }
 
 
-token analisa_bloco(FILE* file, FILE* out){
+token analisa_bloco(FILE* file, FILE* out,TABSIMB *tabela_simbolos, int *pc){
     token t = lexer(file, out);
     t = analisa_et_variaveis(file, out, t);
-    t = analisa_subrotinas(file, out, t);
+    t = analisa_subrotinas(file, out, t,tabela_simbolos,pc);
     t = analisa_comandos(file, out, t);
     return t;
 }
@@ -460,14 +496,37 @@ int pesquisa_declvarfunc_tabela(char *lexema){ // boolean
     //todo
 }
 
+int pesquisa_declproc_tabela(char *lexema){
+    //todo: pagina 50 livro dele
+}
+
+desempilha_ou_voltanivel(){
+    // todo : pagina 50 do livro dele
+}
+
 /* todos os booleans são nesse formato:
      0 = falso
      1 =  true
 */
 
+#define TAMANHO_TAB_SIMB 100 // EXEMPLO SÓ PRA NAO DAR ERRO
+
+typedef struct {
+    char lexema[10]; //nome do identificador
+    char escopo[10]; //nivel de declaração
+    char tipo[10]; //padrao do identificador
+    char memoria[10]; //endereço de memoria alocada
+}TABSIMB;
 
 
 int main(){
+    TABSIMB tabela_simbolos[TAMANHO_TAB_SIMB];// lista de struct de para simbolos da tabela
+    int pc = 0; //ponteiro para o topo da pilha da tabela de simbolos (= 0 porque inicia o ponteiro em 0 da pilha)
+    //somente para ilustrar, depois troca pelo certo
+
+    //repare que tem um tratamento de ponteiro com TABSIMB e pc, analisar antes de alterações
+
+
     int rotulo = 1;
 
     FILE* file;
@@ -504,7 +563,7 @@ int main(){
             insere_tabela(t.lexema, "nomedeprograma","",""); //semantico
             t = lexer(file, out);
             if(strcmp(t.simbolo, "sponto_virgula") == 0){
-                t = analisa_bloco(file, out);
+                t = analisa_bloco(file, out,tabela_simbolos, &pc);
                 if(strcmp(t.simbolo, "sponto") == 0){
                     t = lexer(file, out);
                     char ch = fgetc(file);
