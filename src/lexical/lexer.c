@@ -79,7 +79,7 @@ token trata_identificador(FILE* file){
     buffer[i] = '\0';
 
     // Determina o símbolo baseado na palavra reservada
-    const char* simbolo = "sidentificador";
+    char* simbolo = "sidentificador";
 
     if(strcmp(buffer, "programa") == 0){
         simbolo = "sprograma";
@@ -131,7 +131,7 @@ token trata_identificador(FILE* file){
 token trata_aritmetico(FILE* file){
     char lexema[2];
     int linha_inicio = line;
-    const char* simbolo;
+    char* simbolo;
 
     lexema[0] = ch;
     lexema[1] = '\0';
@@ -155,7 +155,7 @@ token trata_aritmetico(FILE* file){
 token trata_relacional(FILE* file){
     char buffer[3];
     int linha_inicio = line;
-    const char* simbolo;
+    char* simbolo;
 
     if(ch == '='){
         ch = fgetc(file);
@@ -205,7 +205,7 @@ token trata_atribuicao(FILE* file){
 token trata_pontuacao(FILE* file){
     char lexema[2];
     int linha_inicio = line;
-    const char* simbolo;
+    char* simbolo;
 
     lexema[0] = ch;
     lexema[1] = '\0';
@@ -265,113 +265,69 @@ void lexer_init(FILE* file){
 
 token lexer(FILE* file, FILE* out) {
 
-    while((ch == '{' || ch == ' ' || ch == '\n' || ch == '\t' || ch == '\b' || ch == 10 || ch == '\r') && ch != EOF){
-        if(ch == '\r'){
+    while (1) {
+
+        if (ch == ' ' || ch == '\t' || ch == '\b' || ch == 10) {
+            ch = fgetc(file); 
+            continue;
+
+        } else if (ch == '\r' || ch == 13) { 
             ch = fgetc(file);
-            if(ch == '\n'){
-                // \r\n encontrado, conta só uma linha
-                line++;
-            } else {
-                // Só \r, conta linha e devolve o próximo caractere
-                line++;
+            if (ch == '\n') {
+                ch = fgetc(file);
             }
-        } else if (ch == '\n'){
+            line++;
+            continue;
+
+        } else if (ch == '\n') {
             ch = fgetc(file);
             line++;
-        }
-        if(ch == '{'){
-            while(ch != '}' && ch != EOF){
-                if(ch == '\r'){
+            continue; 
+
+        } else if (ch == '{') {
+            ch = fgetc(file);
+
+            while (ch != '}' && ch != EOF) {
+              
+                if (ch == '\r') {
                     ch = fgetc(file);
-                    if(ch == '\n'){
-                        // \r\n encontrado, conta só uma linha
+                    if (ch == '\n') {
                         ch = fgetc(file);
-                        line++;
-                    } else {
-                        // Só \r, conta linha e devolve o próximo caractere
-                        line++;
                     }
-                } else if (ch == '\n'){
+                    line++;
+                } else if (ch == '\n') {
                     ch = fgetc(file);
                     line++;
                 } else {
+                    
                     ch = fgetc(file);
                 }
             }
-            if(ch == EOF){
-                token t;
-                t.lexema = malloc(16);
-                if (t.lexema != NULL) {
-                    sprintf(t.lexema, "Fim do arquivo!");
-                }
-                strcpy(t.simbolo, "seof");
-                salva_tabela_simbolos(out, t);
-                if (t.lexema){
-                    free(t.lexema);
-                }
+
+        if (ch == EOF) {
+            token t;
+            t.lexema = malloc(16);
+            if (t.lexema != NULL) {
+                sprintf(t.lexema, "Fim do arquivo!");
+            }
+            strcpy(t.simbolo, "seof");
+            salva_tabela_simbolos(out, t);
+            if (t.lexema){
+                free(t.lexema);
             }
         }
-        ch = fgetc(file);
-        while((ch == ' ' || ch == '\n' || ch == '\t' || ch == '\b' || ch == 10 || ch == 13) && ch != EOF){
-            if(ch == '\r'){
-                ch = fgetc(file);
-                if(ch == '\n'){
-                    // \r\n encontrado, conta só uma linha
-                    ch = fgetc(file);
-                    line++;
-                } else {
-                    // Só \r, conta linha e devolve o próximo caractere
-                    line++;
-                }
-            } else if (ch == '\n'){
-                ch = fgetc(file);
-                line++;
-            } else {
-                ch = fgetc(file);
-            }
+
+            // Consome o '}' final
+            ch = fgetc(file); 
+            continue; 
+        //Não é lixo
+        } else {
+            break;
         }
     }
+
     token t = pega_token(file);
     salva_tabela_simbolos(out, t);
     return t;
 }
 
-// token lexer(FILE* file, FILE* out) {
-//     // pula espaços e comentários até encontrar um caractere significativo
-//     while (ch != EOF) {
-//         if (ch == '{') {
-//             // pula comentário até '}' (ou EOF), atualizando número de linhas
-//             ch = fgetc(file);
-//             while (ch != '}' && ch != EOF) {
-//                 if (ch == '\n') line++;
-//                 ch = fgetc(file);
-//             }
-//             if (ch == '}') {
-//                 // consome o '}' e pega o próximo caractere
-//                 ch = fgetc(file);
-//             }
-//         } else if (ch == '\r') {
-//             ch = fgetc(file);
-//             if (ch == '\n') ch = fgetc(file); // trata CRLF
-//             line++;
-//         } else if (ch == '\n') {
-//             ch = fgetc(file);
-//             line++;
-//         } else if (isspace((unsigned char)ch)) {
-//             ch = fgetc(file);
-//         } else {
-//             break; // encontrou caractere significativo
-//         }
-//     }
-
-//     if (ch == EOF) {
-//         // opcional: retornar token EOF/erro
-//         token t = token_create("", "seof", line);
-//         salva_tabela_simbolos(out, t);
-//         return t;
-//     }
-
-//     token t = pega_token(file);
-//     salva_tabela_simbolos(out, t);
-//     return t;
-// }
