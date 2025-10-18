@@ -5,22 +5,31 @@
 #include "../lexical/lexer.h"
 #include "../lexical/token.h"
 
-token analisa_bloco(FILE* file, FILE* out);
-token analisa_comandos_simples(FILE* file, FILE* out, token t);
-token analisa_comandos(FILE* file, FILE* out, token t);
-token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t);
-token analisa_atribuicao(FILE* file, FILE* out, token t);
+#define TAMANHO_TAB_SIMB 100 // EXEMPLO SÓ PRA NAO DAR ERRO
+
+typedef struct {
+    char lexema[10]; //nome do identificador
+    char escopo[10]; //nivel de declaração
+    char tipo[10]; //padrao do identificador
+    char memoria[10]; //endereço de memoria alocada
+}TABSIMB;
+
+token analisa_bloco(FILE* file, FILE* out,TABSIMB *tabela_simbolos,int *pc);
+token analisa_comandos_simples(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
+token analisa_comandos(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
+token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
+token analisa_atribuicao(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
 token analisa_escreva(FILE* file, FILE* out, token t);
 token analisa_leia(FILE* file, FILE* out, token t);
-token analisa_enquanto(FILE* file, FILE* out, token t);
-token analisa_se(FILE* file, FILE* out, token t);
-token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t);
-token analisa_expressao_simples(FILE* file, FILE* out, token t);
-token analisa_expressao(FILE* file, FILE* out, token t);
-token analisa_termo(FILE* file, FILE* out, token t);
+token analisa_enquanto(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
+token analisa_se(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
+token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
+token analisa_expressao_simples(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
+token analisa_expressao(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
+token analisa_termo(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
 token analisa_chamada_funcao(FILE* file, FILE* out, token t);
 token analisa_chamada_procedimento(FILE* file, FILE* out, token t);
-token analisa_fator(FILE* file, FILE* out, token t);
+token analisa_fator(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
 
 
 void imprimir_token(token t) {
@@ -99,7 +108,7 @@ token analisa_et_variaveis(FILE* file, FILE* out, token t){
     return t;
 }
 
-token analisa_declaracao_procedimento(FILE* file, FILE* out, token t){
+token analisa_declaracao_procedimento(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos, int *pc){
     t = lexer(file, out);
     char nivel = 'L'; //semantico    (marca o novo gatilho)
     if(strcmp(t.simbolo, "sidentificador") == 0){
@@ -108,7 +117,7 @@ token analisa_declaracao_procedimento(FILE* file, FILE* out, token t){
             insere_tabela(t.lexema,"procedimento",nivel,""/*rotulo*/); // semantico ,  adicionar rotulo quando faer geração de codigo
             t = lexer(file, out);
             if(strcmp(t.simbolo, "sponto_virgula") == 0){
-                t = analisa_bloco(file, out);
+                t = analisa_bloco(file, out,tabela_simbolos,pc);
             }else{
                 printf("ERRO: linha %d, token: %s", t.linha, t.lexema);
                 exit(1);
@@ -137,14 +146,14 @@ token analisa_declaracao_funcao(FILE* file, FILE* out, token t,TABSIMB *tabela_s
             if(strcmp(t.simbolo, "sdoispontos") == 0){
                 t = lexer(file, out);
                 if((strcmp(t.simbolo, "sinteiro") == 0) || strcmp(t.simbolo, "sbooleano") == 0){
-                    if(t.simbolo == "sinteiro"){ 
+                    if(strcmp(t.simbolo, "sinteiro") == 0){ 
                         strcpy(tabela_simbolos[*pc].tipo, "funcao inteiro");  //semantico
                     }else{
                         strcpy(tabela_simbolos[*pc].tipo, "funcao booleano"); //semantico
                     }
                     t = lexer(file, out);
                     if(strcmp(t.simbolo, "sponto_virgula") == 0){
-                        t = analisa_bloco(file, out);
+                        t = analisa_bloco(file, out,tabela_simbolos,pc);
                     }
                 } else {
                     printf("ERRO: linha %d, token: %s", t.linha, t.lexema);
@@ -171,7 +180,7 @@ token analisa_subrotinas(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos
 
     while((strcmp(t.simbolo, "sprocedimento") == 0) || (strcmp(t.simbolo, "sfuncao") == 0)) {
         if(strcmp(t.simbolo, "sprocedimento") == 0) {
-            t = analisa_declaracao_procedimento(file, out, t);
+            t = analisa_declaracao_procedimento(file, out, t,tabela_simbolos,pc);
         } else {
             t = analisa_declaracao_funcao(file, out, t, tabela_simbolos, pc);
         }
@@ -187,30 +196,30 @@ token analisa_subrotinas(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos
     return t;
 }
 
-token analisa_comandos_simples(FILE* file, FILE* out, token t){
+token analisa_comandos_simples(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
     // printf("\nanalisando comando simples");
     if(strcmp(t.simbolo, "sidentificador") == 0){
-        t = analisa_atrib_chprocedimento(file, out, t);
+        t = analisa_atrib_chprocedimento(file, out, t,tabela_simbolos);
     }else if (strcmp(t.simbolo, "sse") == 0){
-        t = analisa_se(file, out, t);
+        t = analisa_se(file, out, t,tabela_simbolos);
     } else if (strcmp(t.simbolo, "senquanto") == 0){
-        t = analisa_enquanto(file, out, t);
+        t = analisa_enquanto(file, out, t,tabela_simbolos);
     } else if (strcmp(t.simbolo, "sleia") == 0){
         t = analisa_leia(file, out, t);
     } else if (strcmp(t.simbolo, "sescreva") == 0){
         t = analisa_escreva(file, out, t);
     } else {
-        t = analisa_comandos(file, out, t);
+        t = analisa_comandos(file, out, t,tabela_simbolos);
     }
 
     return t;
 }
 
-token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t){
+token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
     t = lexer(file, out);
     if (strcmp(t.simbolo, "satribuicao") == 0){
         // imprimir_token(t);
-        t = analisa_atribuicao(file, out, t);
+        t = analisa_atribuicao(file, out, t,tabela_simbolos);
     } else{
         t = analisa_chamada_procedimento(file, out, t);
     }
@@ -218,15 +227,15 @@ token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t){
 }
 
 
-token analisa_se(FILE* file, FILE* out, token t){
+token analisa_se(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
     t = lexer(file, out);
-    t = analisa_expressao(file, out, t);
+    t = analisa_expressao(file, out, t,tabela_simbolos);
     if (strcmp(t.simbolo, "sentao") == 0){
         t = lexer(file, out);
-        t = analisa_comandos_simples(file, out, t);
+        t = analisa_comandos_simples(file, out, t,tabela_simbolos);
         if (strcmp(t.simbolo, "ssenao") == 0){
             t = lexer(file, out);
-            t = analisa_comandos_simples(file, out, t);
+            t = analisa_comandos_simples(file, out, t,tabela_simbolos);
         }
     } else {
         printf("\nERRO entao: linha %d, token: %s", t.linha, t.lexema);
@@ -235,12 +244,12 @@ token analisa_se(FILE* file, FILE* out, token t){
     return t;
 }
 
-token analisa_enquanto(FILE* file, FILE* out, token t){
+token analisa_enquanto(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
     t = lexer(file, out);
-    t = analisa_expressao(file, out, t);
+    t = analisa_expressao(file, out, t,tabela_simbolos);
     if (strcmp(t.simbolo, "sfaca") == 0){
         t = lexer(file, out);
-        t = analisa_comandos_simples(file, out, t);
+        t = analisa_comandos_simples(file, out, t,tabela_simbolos);
     } else {
         printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
         exit(1);
@@ -326,10 +335,10 @@ token analisa_escreva(FILE* file, FILE* out, token t){
 //     return t;
 // }
 
-token analisa_atribuicao(FILE* file, FILE* out, token t){
+token analisa_atribuicao(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
     if (strcmp(t.simbolo, "satribuicao") == 0) {
         t = lexer(file, out);
-        t = analisa_expressao(file, out, t);
+        t = analisa_expressao(file, out, t,tabela_simbolos);
     } else {
         printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
         exit(1);
@@ -338,40 +347,40 @@ token analisa_atribuicao(FILE* file, FILE* out, token t){
 }
 
 
-token analisa_expressao(FILE* file, FILE* out, token t){
-    t = analisa_expressao_simples(file, out, t);
+token analisa_expressao(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
+    t = analisa_expressao_simples(file, out, t,tabela_simbolos);
     if(strcmp(t.simbolo, "smaior") == 0 || strcmp(t.simbolo, "smaiorig") == 0 ||
            strcmp(t.simbolo, "smenor") == 0 || strcmp(t.simbolo, "smenorig") == 0 ||
            strcmp(t.simbolo, "sdif") == 0){
         t = lexer(file, out);
-        t = analisa_expressao_simples(file, out, t);
+        t = analisa_expressao_simples(file, out, t,tabela_simbolos);
     }
     return t;
 }
 
-token analisa_expressao_simples(FILE* file, FILE* out, token t){
+token analisa_expressao_simples(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
     if (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0){
         t = lexer(file, out);
     }
-    t = analisa_termo(file, out, t);
+    t = analisa_termo(file, out, t,tabela_simbolos);
     while (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0 || strcmp(t.simbolo, "sou") == 0){
         t = lexer(file, out);
-        t = analisa_termo(file, out, t);
+        t = analisa_termo(file, out, t,tabela_simbolos);
     }
 
     return t;
 }
 
-token analisa_comandos(FILE* file, FILE* out, token t){
+token analisa_comandos(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
 
     if(strcmp(t.simbolo, "sinicio") == 0){
         t = lexer(file, out);
-        t = analisa_comandos_simples(file, out, t);
+        t = analisa_comandos_simples(file, out, t,tabela_simbolos);
         while (strcmp(t.simbolo, "sfim") != 0){
             if (strcmp(t.simbolo, "sponto_virgula") == 0){
                 t = lexer(file, out);
                 if(strcmp(t.simbolo, "sfim") != 0){
-                    t = analisa_comandos_simples(file, out, t);
+                    t = analisa_comandos_simples(file, out, t,tabela_simbolos);
                 }
             } else {
                 printf("\nERRO: token sponto_virgula esperado\nLinha %d, Token: %s", t.linha, t.lexema);
@@ -386,8 +395,8 @@ token analisa_comandos(FILE* file, FILE* out, token t){
     return t;
 }
 
-token analisa_termo(FILE* file, FILE* out, token t){
-    t = analisa_fator(file, out, t); // Primeiro analisa um fator
+token analisa_termo(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
+    t = analisa_fator(file, out, t,tabela_simbolos); // Primeiro analisa um fator
 
     while(strcmp(t.simbolo, "smult") == 0 ||
           strcmp(t.simbolo, "sdiv") == 0 ||
@@ -395,20 +404,21 @@ token analisa_termo(FILE* file, FILE* out, token t){
 
         t = lexer(file, out);
 
-        t = analisa_fator(file, out, t);
+        t = analisa_fator(file, out, t,tabela_simbolos);
     }
 
     return t;
 }
 
-token analisa_fator(FILE* file, FILE* out, token t, int nivel,TABSIMB *tabela_simbolos){
+token analisa_fator(FILE* file, FILE* out, token t, TABSIMB *tabela_simbolos){
 
     if(strcmp(t.simbolo, "sidentificador") == 0){
-        int ind;
 
-        if (pesquisa_tabela(t.lexema,nivel,&ind) == 1){ // semantico, verifica se é true e atribui o valor de ind no endereço passado para a função
+        int ind; // semantico
+    
+        if (pesquisa_tabela(t.lexema,&ind,tabela_simbolos) == 1){ // semantico, verifica se é true e atribui o valor de ind no endereço passado para a função
 
-            if (strcmp(tabela_simbolos[ind].tipo, "funcao inteiro") || strcmp(tabela_simbolos[ind].tipo == "funcao booleano")){
+            if (strcmp(tabela_simbolos[ind].tipo, "funcao inteiro") == 0 || strcmp(tabela_simbolos[ind].tipo, "funcao booleano") == 0){
                 t = analisa_chamada_funcao(file, out, t);
             }else{
                 t = lexer(file,out);
@@ -424,11 +434,11 @@ token analisa_fator(FILE* file, FILE* out, token t, int nivel,TABSIMB *tabela_si
     }
     else if(strcmp(t.simbolo, "snao") == 0){
         t = lexer(file, out);
-        t = analisa_fator(file, out, t,nivel,tabela_simbolos);
+        t = analisa_fator(file, out, t,tabela_simbolos);
     }
     else if(strcmp(t.simbolo, "sabre_parenteses") == 0){
         t = lexer(file, out);
-        t = analisa_expressao(file, out, t);
+        t = analisa_expressao(file, out, t,tabela_simbolos);
         if(strcmp(t.simbolo, "sfecha_parenteses") == 0){
             t = lexer(file, out);
         } else {
@@ -466,7 +476,7 @@ token analisa_bloco(FILE* file, FILE* out,TABSIMB *tabela_simbolos, int *pc){
     token t = lexer(file, out);
     t = analisa_et_variaveis(file, out, t);
     t = analisa_subrotinas(file, out, t,tabela_simbolos,pc);
-    t = analisa_comandos(file, out, t);
+    t = analisa_comandos(file, out, t,tabela_simbolos);
     return t;
 }
 
@@ -504,19 +514,35 @@ desempilha_ou_voltanivel(){
     // todo : pagina 50 do livro dele
 }
 
-/* todos os booleans são nesse formato:
+int pesquisa_tabela(char *lexema, int *ind,TABSIMB *tabela_simbolos){
+    // TODO : 
+    /*
+    nesse caso tera que pegar o lexema que foi passado e procurar se existe na tabela, se existir:
+     retorna 1,(true)
+     senao retorna 0 (false)
+
+    lembrando que tem um detalhe do nivel, nao lembro muito bem esses conceitos se é ate a marca que procura ou se é ate o final
+    imagino que seja ate o final, mas seria bom revisar.
+
+    lembrando que o endereço de ind foi passado então estaremos manipulando diretamente o valor de ind de dentro da função "analisa_fator"
+    entao deveremos depositar o valor do indice da variavel encontrada pela função para o valor de ind, exemplo:
+
+     *ind = posição_do_lexema_procurado_na_lista_de_tabela_de_simbolos
+     ^
+     (com o asterisco)
+
+    */
+}
+
+int pesquisa_declfunc_tabela(char *lexema){
+    //TODO : declaração de função ne
+}
+
+
+/* todos os booleans (declarados com int) são nesse formato:
      0 = falso
      1 =  true
 */
-
-#define TAMANHO_TAB_SIMB 100 // EXEMPLO SÓ PRA NAO DAR ERRO
-
-typedef struct {
-    char lexema[10]; //nome do identificador
-    char escopo[10]; //nivel de declaração
-    char tipo[10]; //padrao do identificador
-    char memoria[10]; //endereço de memoria alocada
-}TABSIMB;
 
 
 int main(){
@@ -592,3 +618,6 @@ int main(){
 
     return 0;
 }
+
+// DETALHE A FUNÇÃO : "ANALISA_FATOR" TINHA UM TRATAMENTO DIFERENTE PARA PESQUISA_TABELA, ACHO QUE NAO TINHA NECESSIDADE ENTAO FIZ DIFERENTE,
+// MAS SERIA BOM CONFERIR
