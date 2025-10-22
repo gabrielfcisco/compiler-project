@@ -24,12 +24,14 @@ token analisa_leia(FILE* file, FILE* out, token t);
 token analisa_enquanto(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
 token analisa_se(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
 token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
-token analisa_expressao_simples(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
-token analisa_expressao(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
-token analisa_termo(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
+token analisa_expressao_simples(FILE* file, FILE* out, token t, token *in_fixa, int *pos,TABSIMB *tabela_simbolos);
+token analisa_expressao(FILE* file, FILE* out, token t, token *in_fixa, int *pos,TABSIMB *tabela_simbolos);
+token analisa_termo(FILE* file, FILE* out, token t, token *in_fixa, int *pos,TABSIMB *tabela_simbolos);
 token analisa_chamada_funcao(FILE* file, FILE* out, token t);
 token analisa_chamada_procedimento(FILE* file, FILE* out, token t);
-token analisa_fator(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos);
+token analisa_fator(FILE* file, FILE* out, token t, token *in_fixa, int *pos,TABSIMB *tabela_simbolos);
+
+
 
 
 void imprimir_token(token t) {
@@ -41,26 +43,43 @@ void imprimir_token(token t) {
     printf("-------------------------\n\n");
 }
 
+void atualiza_in_fixa(token *in_fixa, int *pos, token t) {
+    in_fixa[*pos] = token_create(t.lexema, t.simbolo, t.linha);
+    (*pos)++;
+}
+
+void print_in_fixa(token *in_fixa, int pos) {
+    printf("Expressão em notação infixa: ");
+    for (int i = 0; i < pos; i++) {
+        printf("%s ", in_fixa[i].lexema);
+    }
+    printf("\n");
+}
+
 token analisa_tipo(FILE* file, FILE* out, token t){
     if(strcmp(t.simbolo, "sinteiro") != 0 && strcmp(t.simbolo, "sbooleano") != 0){
         // printf("\n%s", t.simbolo);
-        printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+        printf("\nERRO: linha %d, token: %s\n", t.linha, t.lexema);
+        token_free(&t);
         exit(1);
     }else{
         coloca_tipo_tabela(t.lexema);                               //semantico
     }
+    token_free(&t);
     return lexer(file, out);
 }
 
 token analisa_variaveis(FILE* file, FILE* out, token t){
     while(strcmp(t.simbolo, "sdoispontos") != 0){
         if(strcmp(t.simbolo, "sidentificador") == 0){
-            
+
             if(pesquisa_duplicacvar_tabela(t.lexema) == 0){ //0 = false and 1 == true  //semantico
                 insere_tabela(t.lexema,"variavel","","");                              //semantico
+                token_free(&t);
                 t = lexer(file, out);
                 if(strcmp(t.simbolo, "svirgula") == 0 || strcmp(t.simbolo, "sdoispontos") == 0){
                     if(strcmp(t.simbolo, "svirgula") == 0){
+                        token_free(&t);
                         t = lexer(file, out);
                         // printf("\naqui");
                         if(strcmp(t.simbolo, "sdoispontos") == 0){
@@ -77,31 +96,33 @@ token analisa_variaveis(FILE* file, FILE* out, token t){
                 exit(1);
             }
         }else{
-            printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+            printf("\nERRO: linha %d, token: %s\n", t.linha, t.lexema);
             exit(1);
         }
     }
-
+    token_free(&t);
     t = lexer(file, out);
     return analisa_tipo(file, out, t);
 }
 
 token analisa_et_variaveis(FILE* file, FILE* out, token t){
     if(strcmp(t.simbolo, "svar") == 0){
+        token_free(&t);
         t = lexer(file, out);
         if(strcmp(t.simbolo, "sidentificador") == 0){
             // printf("\n%s", t.lexema);
             while(strcmp(t.simbolo, "sidentificador") == 0){
                 t = analisa_variaveis(file, out, t);
                 if(strcmp(t.simbolo, "sponto_virgula") == 0){
+                    token_free(&t);
                     t = lexer(file, out);
                 } else {
-                    printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+                    printf("\nERRO: linha %d, token: %s\n", t.linha, t.lexema);
                     exit(1);
                 }
             }
         }else{
-            printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+            printf("\nERRO: linha %d, token: %s\n", t.linha, t.lexema);
             exit(1);
         }
     }
@@ -109,10 +130,10 @@ token analisa_et_variaveis(FILE* file, FILE* out, token t){
 }
 
 token analisa_declaracao_procedimento(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos, int *pc){
+    token_free(&t);
     t = lexer(file, out);
     char nivel = 'L'; //semantico    (marca o novo gatilho)
     if(strcmp(t.simbolo, "sidentificador") == 0){
-
         if (pesquisa_declproc_tabela(t.lexema) == 0 ){
             insere_tabela(t.lexema,"procedimento",nivel,""/*rotulo*/); // semantico ,  adicionar rotulo quando faer geração de codigo
             t = lexer(file, out);
@@ -136,6 +157,7 @@ token analisa_declaracao_procedimento(FILE* file, FILE* out, token t,TABSIMB *ta
 }
 
 token analisa_declaracao_funcao(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos, int *pc){
+    token_free(&t);
     t = lexer(file, out);
     char nivel = 'L'; //semantico
 
@@ -168,7 +190,7 @@ token analisa_declaracao_funcao(FILE* file, FILE* out, token t,TABSIMB *tabela_s
             exit(1);
         }
     }else{
-        printf("ERRO: linha %d, token: %s", t.linha, t.lexema);
+        printf("ERRO: linha %d, token: %s\n", t.linha, t.lexema);
         exit(1);
     }
 
@@ -186,9 +208,10 @@ token analisa_subrotinas(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos
         }
         // printf("\n%s", t.lexema);
         if(strcmp(t.simbolo, "sponto_virgula") == 0){
+            token_free(&t);
             t = lexer(file, out);
         }else{
-            printf("ERRO: linha %d, token: %s", t.linha, t.lexema);
+            printf("ERRO: linha %d, token: %s\n", t.linha, t.lexema);
             exit(1);
         }
     }
@@ -216,6 +239,7 @@ token analisa_comandos_simples(FILE* file, FILE* out, token t,TABSIMB *tabela_si
 }
 
 token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
+    token_free(&t);
     t = lexer(file, out);
     if (strcmp(t.simbolo, "satribuicao") == 0){
         // imprimir_token(t);
@@ -228,44 +252,68 @@ token analisa_atrib_chprocedimento(FILE* file, FILE* out, token t,TABSIMB *tabel
 
 
 token analisa_se(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
+    token_free(&t);
     t = lexer(file, out);
-    t = analisa_expressao(file, out, t,tabela_simbolos);
+    token in_fixa[100]; //vetor que armazena a expressao em notacao in_fixa
+    int pos = 0;    // necessario para a pos do vetor in_fixa
+    t = analisa_expressao(file, out, t, in_fixa, &pos,tabela_simbolos);
+
+    print_in_fixa(in_fixa, pos); // Imprime a expressão em notação infixa
+
+    for (int i = 0; i < pos; i++) { // libera a memória usada pelo vetor 'in_fixa'
+        token_free(&in_fixa[i]);
+    }
     if (strcmp(t.simbolo, "sentao") == 0){
+        token_free(&t);
         t = lexer(file, out);
         t = analisa_comandos_simples(file, out, t,tabela_simbolos);
         if (strcmp(t.simbolo, "ssenao") == 0){
+            token_free(&t);
             t = lexer(file, out);
             t = analisa_comandos_simples(file, out, t,tabela_simbolos);
         }
     } else {
-        printf("\nERRO entao: linha %d, token: %s", t.linha, t.lexema);
+        printf("\nERRO entao: linha %d, token: %s\n", t.linha, t.lexema);
         exit(1);
     }
     return t;
 }
 
 token analisa_enquanto(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
+    token_free(&t);
     t = lexer(file, out);
-    t = analisa_expressao(file, out, t,tabela_simbolos);
+    token in_fixa[100]; //vetor que armazena a expressao em notacao in_fixa
+    int pos = 0;    // necessario para a pos do vetor in_fixa
+    t = analisa_expressao(file, out, t, in_fixa, &pos,tabela_simbolos);
+
+    print_in_fixa(in_fixa, pos); // Imprime a expressão em notação infixa
+
+    for (int i = 0; i < pos; i++) { // libera a memória usada pelo vetor 'in_fixa'
+        token_free(&in_fixa[i]);
+    }
     if (strcmp(t.simbolo, "sfaca") == 0){
+        token_free(&t);
         t = lexer(file, out);
         t = analisa_comandos_simples(file, out, t,tabela_simbolos);
     } else {
-        printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+        printf("\nERRO: linha %d, token: %s\n", t.linha, t.lexema);
         exit(1);
     }
     return t;
 }
 
 token analisa_leia(FILE* file, FILE* out, token t){
+    token_free(&t);
     t = lexer(file, out);
     if (strcmp(t.simbolo, "sabre_parenteses") == 0){
+        token_free(&t);
         t = lexer(file, out);
         if (strcmp(t.simbolo, "sidentificador") == 0){
-
             if(pesquisa_declvar_tabela(t.lexema) == 0 ){ // 0 = false , 1 = true  //semantico
+                token_free(&t);
                 t = lexer(file, out);
                 if (strcmp(t.simbolo, "sfecha_parenteses") == 0){
+                    token_free(&t);
                     t = lexer(file, out);
                 }else {
                     printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
@@ -276,24 +324,28 @@ token analisa_leia(FILE* file, FILE* out, token t){
                 exit(1);
             }
         }else {
-            printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+            printf("\nERRO: linha %d, token: %s\n", t.linha, t.lexema);
             exit(1);
         }
     }else {
-        printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+        printf("\nERRO: linha %d, token: %s\n", t.linha, t.lexema);
         exit(1);
     }
     return t;
 }
 
 token analisa_escreva(FILE* file, FILE* out, token t){
+    token_free(&t);
     t = lexer(file, out);
     if (strcmp(t.simbolo, "sabre_parenteses") == 0){
+        token_free(&t);
         t = lexer(file, out);
         if (strcmp(t.simbolo, "sidentificador") == 0){
             if (pesquisa_declvarfunc_tabela(t.lexema) == 0){ // 0 == false ;; 1 = true //semantico
+                token_free(&t);
                 t = lexer(file, out);
                 if (strcmp(t.simbolo, "sfecha_parenteses") == 0){
+                    token_free(&t);
                     t = lexer(file, out);
                 }else {
                     printf("\nERRO: token sfecha_parenteses esperado\nLinha %d, Token: %s", t.linha, t.lexema);
@@ -308,112 +360,112 @@ token analisa_escreva(FILE* file, FILE* out, token t){
             exit(1);
         }
     }else {
-        printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+        printf("\nERRO: linha %d, token: %s\n", t.linha, t.lexema);
         exit(1);
     }
     return t;
 }
-
-// token analisa_atribuicao(FILE* file, FILE* out, token t){ //o problema está nessa aqui Enzo, o token é satribuicao, ele tá tratando como
-//     //se atribuicao fossem dois tokens, : e  =
-//     t = lexer(file, out);
-//     imprimir_token(t);
-//     if (strcmp(t.simbolo, "sdoispontos") == 0){
-//         t = lexer(file, out);
-//         if(strcmp(t.simbolo, "sigual") == 0){
-//             t = lexer(file, out);
-//             t = analisa_expressao(file, out, t);
-//         }else {
-//             printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
-//             exit(1);
-//         }
-//     } else {
-//         printf("oi");
-//         printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
-//         exit(1);
-//     }
-//     return t;
-// }
 
 token analisa_atribuicao(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
     if (strcmp(t.simbolo, "satribuicao") == 0) {
+        token_free(&t);
         t = lexer(file, out);
-        t = analisa_expressao(file, out, t,tabela_simbolos);
+        token in_fixa[100]; //vetor que armazena a expressao em notacao in_fixa
+        int pos = 0;    // necessario para a pos do vetor in_fixa
+        t = analisa_expressao(file, out, t, in_fixa, &pos,tabela_simbolos);
+
+        print_in_fixa(in_fixa, pos); // Imprime a expressão em notação infixa
+
+        for (int i = 0; i < pos; i++) { // libera a memória usada pelo vetor 'in_fixa'
+        token_free(&in_fixa[i]);
+        }
     } else {
-        printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+        printf("\nERRO: linha %d, token: %s\n", t.linha, t.lexema);
         exit(1);
     }
-    return t;
-}
-
-
-token analisa_expressao(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
-    t = analisa_expressao_simples(file, out, t,tabela_simbolos);
-    if(strcmp(t.simbolo, "smaior") == 0 || strcmp(t.simbolo, "smaiorig") == 0 ||
-           strcmp(t.simbolo, "smenor") == 0 || strcmp(t.simbolo, "smenorig") == 0 ||
-           strcmp(t.simbolo, "sdif") == 0){
-        t = lexer(file, out);
-        t = analisa_expressao_simples(file, out, t,tabela_simbolos);
-    }
-    return t;
-}
-
-token analisa_expressao_simples(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
-    if (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0){
-        t = lexer(file, out);
-    }
-    t = analisa_termo(file, out, t,tabela_simbolos);
-    while (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0 || strcmp(t.simbolo, "sou") == 0){
-        t = lexer(file, out);
-        t = analisa_termo(file, out, t,tabela_simbolos);
-    }
-
     return t;
 }
 
 token analisa_comandos(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
 
     if(strcmp(t.simbolo, "sinicio") == 0){
+        token_free(&t);
         t = lexer(file, out);
         t = analisa_comandos_simples(file, out, t,tabela_simbolos);
         while (strcmp(t.simbolo, "sfim") != 0){
             if (strcmp(t.simbolo, "sponto_virgula") == 0){
+                token_free(&t);
                 t = lexer(file, out);
                 if(strcmp(t.simbolo, "sfim") != 0){
                     t = analisa_comandos_simples(file, out, t,tabela_simbolos);
                 }
             } else {
-                printf("\nERRO: token sponto_virgula esperado\nLinha %d, Token: %s", t.linha, t.lexema);
+                printf("\nERRO: token sponto_virgula esperado\nLinha %d, Token: %s\n", t.linha, t.lexema);
                 exit(1);
             }
         }
+        token_free(&t);
         t = lexer(file, out);
     } else {
-        printf("\nERRO: token sinicio esperado\nLinha %d, Token: %s", t.linha, t.lexema);
+        printf("\nERRO: token sinicio esperado\nLinha %d, Token: %s\n", t.linha, t.lexema);
         exit(1);
     }
     return t;
 }
 
-token analisa_termo(FILE* file, FILE* out, token t,TABSIMB *tabela_simbolos){
-    t = analisa_fator(file, out, t,tabela_simbolos); // Primeiro analisa um fator
+token analisa_expressao(FILE* file, FILE* out, token t, token *in_fixa, int *pos,TABSIMB *tabela_simbolos){
+
+    t = analisa_expressao_simples(file, out, t, in_fixa, pos,tabela_simbolos);
+    if(strcmp(t.simbolo, "smaior") == 0 || strcmp(t.simbolo, "smaiorig") == 0 ||
+           strcmp(t.simbolo, "smenor") == 0 || strcmp(t.simbolo, "smenorig") == 0 ||
+           strcmp(t.simbolo, "sdif") == 0){
+        atualiza_in_fixa(in_fixa, pos, t); //atualiza o vetor in_fixa
+        token_free(&t);
+        t = lexer(file, out);
+        t = analisa_expressao_simples(file, out, t, in_fixa, pos,tabela_simbolos);
+    }
+    return t;
+}
+
+token analisa_expressao_simples(FILE* file, FILE* out, token t, token *in_fixa, int *pos,TABSIMB *tabela_simbolos){
+    if (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0){              //Se o token da expressao for + ou - e o unario (maior prioridade)
+        atualiza_in_fixa(in_fixa, pos, t); //atualiza o vetor in_fixa
+        token_free(&t);
+        t = lexer(file, out);
+    }
+    t = analisa_termo(file, out, t, in_fixa, pos,tabela_simbolos); 
+    while (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0 || strcmp(t.simbolo, "sou") == 0){
+        atualiza_in_fixa(in_fixa, pos, t);
+        token_free(&t);
+        t = lexer(file, out);
+        t = analisa_termo(file, out, t, in_fixa, pos,tabela_simbolos);
+    }
+    
+    return t;
+}
+
+token analisa_termo(FILE* file, FILE* out, token t, token *in_fixa, int *pos, TABSIMB *tabela_simbolos){
+    t = analisa_fator(file, out, t, in_fixa, pos,tabela_simbolos);
 
     while(strcmp(t.simbolo, "smult") == 0 ||
           strcmp(t.simbolo, "sdiv") == 0 ||
           strcmp(t.simbolo, "se") == 0){
 
+        atualiza_in_fixa(in_fixa, pos, t); 
+        token_free(&t);
         t = lexer(file, out);
 
-        t = analisa_fator(file, out, t,tabela_simbolos);
+        t = analisa_fator(file, out, t, in_fixa, pos,tabela_simbolos);
     }
 
     return t;
 }
 
-token analisa_fator(FILE* file, FILE* out, token t, TABSIMB *tabela_simbolos){
+token analisa_fator(FILE* file, FILE* out, token t, token *in_fixa, int *pos, TABSIMB *tabela_simbolos){
 
     if(strcmp(t.simbolo, "sidentificador") == 0){
-
+        atualiza_in_fixa(in_fixa, pos, t);
+        
         int ind; // semantico
     
         if (pesquisa_tabela(t.lexema,&ind,tabela_simbolos) == 1){ // semantico, verifica se é true e atribui o valor de ind no endereço passado para a função
@@ -427,31 +479,41 @@ token analisa_fator(FILE* file, FILE* out, token t, TABSIMB *tabela_simbolos){
             printf("\nERRO semantico:       Linha %d, Token: %s", t.linha, t.lexema);
             exit(1);
         }
-        
     }
     else if(strcmp(t.simbolo, "snumero") == 0){
+        atualiza_in_fixa(in_fixa, pos, t);
+        token_free(&t);
         t = lexer(file, out);
     }
     else if(strcmp(t.simbolo, "snao") == 0){
+        atualiza_in_fixa(in_fixa, pos, t);
+        token_free(&t);
         t = lexer(file, out);
-        t = analisa_fator(file, out, t,tabela_simbolos);
+        t = analisa_fator(file, out, t, in_fixa, pos,tabela_simbolos);
     }
     else if(strcmp(t.simbolo, "sabre_parenteses") == 0){
+        atualiza_in_fixa(in_fixa, pos, t);
+        token_free(&t);
         t = lexer(file, out);
-        t = analisa_expressao(file, out, t,tabela_simbolos);
+
+        t = analisa_expressao(file, out, t, in_fixa, pos,tabela_simbolos);
         if(strcmp(t.simbolo, "sfecha_parenteses") == 0){
+            atualiza_in_fixa(in_fixa, pos, t);
+            token_free(&t);
             t = lexer(file, out);
         } else {
-            printf("\nERRO: esperado fecha parênteses\nLinha %d, Token: %s", t.linha, t.lexema);
+            printf("\nERRO: esperado fecha parênteses\nLinha %d, Token: %s\n", t.linha, t.lexema);
             exit(1);
         }
     }
     else if(strcmp(t.lexema, "verdadeiro") == 0 ||
             strcmp(t.lexema, "falso") == 0){
-        t = lexer(file, out);
+            atualiza_in_fixa(in_fixa, pos, t);
+            token_free(&t);
+            t = lexer(file, out);
     }
     else{
-        printf("\nERRO: fator inválido\nLinha %d, Token: %s", t.linha, t.lexema);
+        printf("\nERRO: fator inválido\nLinha %d, Token: %s\n", t.linha, t.lexema);
         exit(1);
     }
     return t;
@@ -459,6 +521,7 @@ token analisa_fator(FILE* file, FILE* out, token t, TABSIMB *tabela_simbolos){
 
 token analisa_chamada_funcao(FILE* file, FILE* out, token t){
     if(strcmp(t.simbolo, "sidentificador") == 0){
+        token_free(&t);
         t = lexer(file, out);
     }
     return t;
@@ -466,6 +529,7 @@ token analisa_chamada_funcao(FILE* file, FILE* out, token t){
 
 token analisa_chamada_procedimento(FILE* file, FILE* out, token t){
     if(strcmp(t.simbolo, "sidentificador") == 0){
+        token_free(&t);
         t = lexer(file, out);
     }
     return t;
@@ -553,7 +617,7 @@ int main(){
     //repare que tem um tratamento de ponteiro com TABSIMB e pc, analisar antes de alterações
 
 
-    int rotulo = 1;
+    //int rotulo = 1; *samuel que comentou essa parte, só comentei tambem
 
     FILE* file;
 
@@ -584,35 +648,40 @@ int main(){
 
     token t = lexer(file, out);
     if(strcmp(t.simbolo, "sprograma") == 0){
+        token_free(&t);
         t = lexer(file, out);
         if(strcmp(t.simbolo, "sidentificador") == 0){
             insere_tabela(t.lexema, "nomedeprograma","",""); //semantico
+            token_free(&t);
             t = lexer(file, out);
             if(strcmp(t.simbolo, "sponto_virgula") == 0){
+                token_free(&t);
                 t = analisa_bloco(file, out,tabela_simbolos, &pc);
                 if(strcmp(t.simbolo, "sponto") == 0){
+                    token_free(&t);
                     t = lexer(file, out);
                     char ch = fgetc(file);
                     if(ch == EOF){
                         printf("\nSucesso");
                     }else{
-                        printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+                        printf("\nERRO: linha %d, token: %s\n", t.linha, t.lexema);
                         exit(1);
                     }
+                    token_free(&t); // libera o token final
                 }else{
-                    printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+                    printf("\nERRO: linha %d, token: %s\n", t.linha, t.lexema);
                     exit(1);
                 }
             }else{
-                printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+                printf("\nERRO: linha %d, token: %s\n", t.linha, t.lexema);
                 exit(1);
             }
         }else{
-            printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+            printf("\nERRO: linha %d, token: %s\n", t.linha, t.lexema);
             exit(1);
         }
     }else{
-        printf("\nERRO: linha %d, token: %s", t.linha, t.lexema);
+        printf("\nERRO: linha %d, token: %s\n", t.linha, t.lexema);
         exit(1);
     }
 
