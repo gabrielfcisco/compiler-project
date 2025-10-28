@@ -4,7 +4,7 @@ bin/
 *.out
 compilador
 analisador
-parser
+/parser
 parser.exe
 
 # Saídas
