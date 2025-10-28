@@ -25,13 +25,77 @@ void atualiza_in_fixa(token *in_fixa, int *pos, token t) {
     (*pos)++;
 }
 
-void print_in_fixa(token *in_fixa, int pos) {
-
-    printf("Expressão em notação infixa: ");
-    for (int i = 0; i < pos; i++) {
-        printf("%s ", in_fixa[i].lexema);
+void print_in_and_pos_fixa(token *vetor_tokens, int pos, int fixa) {
+    if(fixa == 0){
+        printf("Expressão em notação infixa: ");
+        for (int i = 0; i < pos; i++) {
+            printf("%s ", vetor_tokens[i].lexema);
+        }
+        printf("\n");
     }
-    printf("\n");
+    else {
+        printf("Expressão em notação posfixa: ");
+        for (int i = 0; i < pos; i++) {
+            printf("%s ", vetor_tokens[i].lexema);
+        }
+        printf("\n");
+    }
+}
+
+int precedencia(token t) {
+
+    if (t.unario == 1) return 7; // maior prioridade para operadores unários   
+    if (strcmp(t.simbolo, "smult")    == 0  || strcmp(t.simbolo, "sdiv")     == 0) return 6;
+    if (strcmp(t.simbolo, "smais")    == 0  || strcmp(t.simbolo, "smenos")   == 0) return 5;
+    if (strcmp(t.simbolo, "smaior")   == 0  || strcmp(t.simbolo, "smenor")   == 0 ||
+        strcmp(t.simbolo, "smaiorig") == 0  || strcmp(t.simbolo, "smenorig") == 0 ||
+        strcmp(t.simbolo, "sdif")     == 0) return 4;
+    if (strcmp(t.simbolo, "snao") == 0) return 3;  
+    if (strcmp(t.simbolo, "se")   == 0) return 2;
+    if (strcmp(t.simbolo, "sou")  == 0) return 1;
+    return 0; // menor prioridade possível (ou token inválido)
+
+}
+
+token *pos_fixa (token *in_fixa, int pos, int *posf) {
+    // Implementação do algoritmo Shunting Yard para converter infixa para posfixa
+    token *pilha = (token *)malloc(pos * sizeof(token));
+    token *out = (token *)malloc(pos * sizeof(token));
+    int topo = -1;
+    *posf = 0;
+
+    for (int i = 0; i < pos; i++) {
+        token t = in_fixa[i];
+
+        if (strcmp(t.simbolo, "snumero") == 0 || strcmp(t.simbolo, "sidentificador") == 0) {
+            out[(*posf)++] = token_create(t.lexema, t.simbolo, t.linha);
+        } else if (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0 ||
+                   strcmp(t.simbolo, "smult") == 0 || strcmp(t.simbolo, "sdiv") == 0 ||
+                   strcmp(t.simbolo, "se") == 0 || strcmp(t.simbolo, "sou") == 0 ||
+                   strcmp(t.simbolo, "smaior") == 0 || strcmp(t.simbolo, "smenor") == 0 ||
+                   strcmp(t.simbolo, "smaiorig") == 0 || strcmp(t.simbolo, "smenorig") == 0 ||
+                   strcmp(t.simbolo, "sdif") == 0 || strcmp(t.simbolo, "snao") == 0) {
+
+            while (topo != -1 && strcmp(pilha[topo].simbolo, "sabre_parenteses") != 0 && precedencia(pilha[topo]) >= precedencia(t)) {
+                out[(*posf)++] = pilha[topo--];
+            }
+            pilha[++topo] = token_create(t.lexema, t.simbolo, t.linha);
+        } else if (strcmp(t.simbolo, "sabre_parenteses") == 0) {
+            pilha[++topo] = token_create(t.lexema, t.simbolo, t.linha);
+        } else if (strcmp(t.simbolo, "sfecha_parenteses") == 0) {
+            while (topo != -1 && strcmp(pilha[topo].simbolo, "sabre_parenteses") != 0) {
+                out[(*posf)++] = pilha[topo--];
+            }
+            if (topo != -1) {
+                token_free(&pilha[topo--]); // Remove o parêntese de abertura
+            }
+        }
+    }
+    while (topo != -1) {
+        out[(*posf)++] = pilha[topo--];
+    }
+    free(pilha);
+    return out;
 }
 
 token analisa_tipo(parser *p) {
@@ -235,13 +299,23 @@ token analisa_se(parser *p, Tabsimb *tabela_simbolos) {
     p->t = lexer(p->file, p->out);
 
     token in_fixa[100];
-    int pos = 0;
+    token *pos_fixa_vetor;
+    int pos = 0;  // numero de elementos do vetor in_fixa ao termino da expressao
+    int posf = 0; // numero de elementos do vetor pos_fixa ao termino da expressao
 
     p->t = analisa_expressao(p, in_fixa, &pos, tabela_simbolos);
-    print_in_fixa(in_fixa, pos);
+    
+    pos_fixa_vetor = pos_fixa(in_fixa, pos, &posf);
+    print_in_and_pos_fixa(in_fixa, pos, 0);
+    print_in_and_pos_fixa(pos_fixa_vetor, posf, 1);
 
     for (int i = 0; i < pos; i++)
         token_free(&in_fixa[i]);
+
+    for (int i = 0; i < posf; i++)
+        token_free(&pos_fixa_vetor[i]);
+
+    free(pos_fixa_vetor);
 
     if (strcmp(p->t.simbolo, "sentao") == 0) {
         token_free(&p->t);
@@ -267,13 +341,23 @@ token analisa_enquanto(parser *p, Tabsimb *tabela_simbolos) {
     p->t = lexer(p->file, p->out);
 
     token in_fixa[100];
-    int pos = 0;
+    token *pos_fixa_vetor;
+    int pos = 0;  // numero de elementos do vetor in_fixa ao termino da expressao
+    int posf = 0; // numero de elementos do vetor pos_fixa ao termino da expressao
 
     p->t = analisa_expressao(p, in_fixa, &pos, tabela_simbolos);
-    print_in_fixa(in_fixa, pos);
+    
+    pos_fixa_vetor = pos_fixa(in_fixa, pos, &posf);
+    print_in_and_pos_fixa(in_fixa, pos, 0);
+    print_in_and_pos_fixa(pos_fixa_vetor, posf, 1);
 
     for (int i = 0; i < pos; i++)
         token_free(&in_fixa[i]);
+
+    for (int i = 0; i < posf; i++)
+        token_free(&pos_fixa_vetor[i]);
+
+    free(pos_fixa_vetor);
 
     if (strcmp(p->t.simbolo, "sfaca") == 0) {
         token_free(&p->t);
@@ -370,13 +454,24 @@ token analisa_atribuicao(parser *p, Tabsimb *tabela_simbolos) {
         p->t = lexer(p->file, p->out);
 
         token in_fixa[100];
-        int pos = 0;
+        token *pos_fixa_vetor;
+        int pos = 0;  // numero de elementos do vetor in_fixa ao termino da expressao
+        int posf = 0; // numero de elementos do vetor pos_fixa ao termino da expressao
 
         p->t = analisa_expressao(p, in_fixa, &pos, tabela_simbolos);
-        print_in_fixa(in_fixa, pos);
+        
+        pos_fixa_vetor = pos_fixa(in_fixa, pos, &posf);
+        print_in_and_pos_fixa(in_fixa, pos, 0);
+        print_in_and_pos_fixa(pos_fixa_vetor, posf, 1);
 
         for (int i = 0; i < pos; i++)
             token_free(&in_fixa[i]);
+
+        for (int i = 0; i < posf; i++)
+            token_free(&pos_fixa_vetor[i]);
+        
+        free(pos_fixa_vetor);
+
     } else {
         printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
         exit(1);
@@ -437,6 +532,7 @@ token analisa_expressao(parser *p, token *in_fixa, int *pos, Tabsimb *tabela_sim
 token analisa_expressao_simples(parser *p, token *in_fixa, int *pos, Tabsimb *tabela_simbolos) {
 
     if (strcmp(p->t.simbolo, "smais") == 0 || strcmp(p->t.simbolo, "smenos") == 0) {
+        p->t.unario = 1; // marca como operador unário
         atualiza_in_fixa(in_fixa, pos, p->t);
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
@@ -499,6 +595,7 @@ token analisa_fator(parser *p, token *in_fixa, int *pos, Tabsimb *tabela_simbolo
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
     } else if (strcmp(p->t.simbolo, "snao") == 0) {
+        p->t.unario = 1; // marca como operador unário
         atualiza_in_fixa(in_fixa, pos, p->t);
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
@@ -555,7 +652,6 @@ token analisa_bloco(parser *p, Tabsimb *tabela_simbolos, int *pc) {
     p->t = analisa_comandos(p, tabela_simbolos);
     return p->t;
 }
-
 
 int main(){
     Tabsimb tabela_simbolos[TAMANHO_TAB_SIMB];  // lista de struct de para simbolos da tabela
