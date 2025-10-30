@@ -2,16 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
+#include "../../include/lexical/token.h"
 char ch;
 int line;
-
-typedef struct token {
-    char* lexema;
-    char simbolo[20];
-    int linha;
-    int erro;  // 0 = ok, 1 = erro
-} token;
 
 token token_create(char* lexema, char* simbolo, int linha) {
     token t;
@@ -22,6 +15,7 @@ token token_create(char* lexema, char* simbolo, int linha) {
     strcpy(t.simbolo, simbolo);
     t.linha = linha;
     t.erro = 0;
+    t.unario = 0;
     return t;
 }
 
