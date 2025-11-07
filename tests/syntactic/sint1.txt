@@ -2,6 +2,7 @@
 programa test1;
 
 var a,b,c: inteiro;
+a: booleano;
 
 {proc 1}
 procedimento analisa1;
@@ -22,7 +23,7 @@ fim;
 procedimento analisa2;
 inicio
   leia(a);
-  b:= a*a+(c div b) 
+  b:= a*a+(c div (-b)) 
 fim;
 
 inicio

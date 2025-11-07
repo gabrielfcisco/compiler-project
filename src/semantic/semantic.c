@@ -1,18 +1,84 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../../include/semantic/semantic.h"
 
 
-void insere_tabela(char *lexema, char *tipo, char escopo, char *mem){
-    (void)lexema;
-    (void)tipo;
-    (void)escopo;
-    (void)mem;
-    //todo
-    // inserir no topo da tabela de simbolos
-    //inserir na tabela de simbolos
-    return;
+int endereco_var = 0;
+
+Tabsimb symbol_table[1000];
+
+Tabsimb* sp;
+Tabsimb* init;
+
+void imprimir_simbolo(Tabsimb* sp) {
+
+    printf("--- Conteúdo do Simbolo ---\n");
+    printf("Lexema: %s\n", sp->lexema);
+    printf("Símbolo: %s\n", sp->tipo);
+    printf("Escopo: %c\n", sp->escopo);
+    printf("Endereco: %d", sp->end);
+    printf("-------------------------\n\n");
 }
+
+Tabsimb* initialize_stack(){
+    sp = symbol_table;
+    init = sp;
+
+    return sp;
+}
+
+void insere_tabela(char *lexema, char *tipo_inicial, char escopo, int rotulo){
+
+    Tabsimb aux;
+
+    aux.lexema = malloc(strlen(lexema) + 1);
+    if (aux.lexema != NULL) {
+        strcpy(aux.lexema, lexema);
+    }
+    
+    strcpy(aux.tipo, tipo_inicial);
+
+    aux.escopo = escopo;
+    
+    if(escopo == 'L'){
+        aux.end = rotulo;
+    }
+    else {
+        aux.end = endereco_var;
+        endereco_var ++;
+    }
+    
+    push(sp, aux);
+    imprimir_simbolo(sp - 1);
+}
+
+void remove_tabela(){
+    pop(sp);
+}
+
+int pesquisa_duplicvar_tabela(char* lexema){
+    Tabsimb* sp_aux = sp - 1;
+    while (sp_aux != NULL && sp_aux->escopo != 'L'){
+        printf("Lexema: %s\n", sp_aux->lexema);
+        if(strcmp(sp_aux->lexema, lexema) == 0){
+            return 1;
+        }
+        sp_aux --;
+    }
+    return 0;
+}
+
+// void insere_tabela(char *lexema, char *tipo, char escopo, char *mem){
+//     (void)lexema;
+//     (void)tipo;
+//     (void)escopo;
+//     (void)mem;
+//     //todo
+//     // inserir no topo da tabela de simbolos
+//     //inserir na tabela de simbolos
+//     return;
+// }
 
 int pesquisa_duplicacvar_tabela(char *lexema){ //boolean
     (void)lexema;

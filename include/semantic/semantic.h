@@ -1,17 +1,30 @@
 #ifndef SEMANTIC_H
 #define SEMANTIC_H
 
-typedef struct {
-    char lexema[10]; //nome do identificador
-    char escopo[10]; //nivel de declaração
-    char tipo[10]; //padrao do identificador
-    char memoria[10]; //endereço de memoria alocada
-}Tabsimb;
+// typedef struct {
+//     char lexema[10]; //nome do identificador
+//     char escopo[10]; //nivel de declaração
+//     char tipo[10]; //padrao do identificador
+//     char memoria[10]; //endereço de memoria alocada
+// }Tabsimb;
+
+typedef struct{
+    char* lexema;
+    char tipo[20];
+    char escopo;
+    int end; //alterar para endereco
+    
+} Tabsimb;
+
+
+#define push(sp, n) (*((sp)++) = (n))
+#define pop(sp) (*--(sp))
+
 
 
 //Prototype
-
-void insere_tabela(char *lexema, char *tipo, char escopo, char *mem);
+Tabsimb* initialize_stack();
+void insere_tabela(char *lexema, char *tipo_inicial, char escopo, int end);
 int pesquisa_duplicacvar_tabela(char *lexema); 
 void coloca_tipo_tabela(char *lexema);
 int pesquisa_declvar_tabela(char *lexema);  
