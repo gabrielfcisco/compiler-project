@@ -582,17 +582,17 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
         p->t = analisa_chamada_funcao(p);
      
     
-        if (pesquisa_tabela(p->t.lexema) == 1){ // semantico, verifica se é true e atribui o valor de ind no endereço passado para a função
+        // if (pesquisa_tabela(p->t.lexema) == 1){ // semantico, verifica se é true e atribui o valor de ind no endereço passado para a função  -           IMPLEMENTAR
 
-            if (strcmp(tabela_simbolos[ind].tipo, "funcao inteiro") == 0 || strcmp(tabela_simbolos[ind].tipo, "funcao booleano") == 0){
-                t = analisa_chamada_funcao(file, out, t);
-            }else{
-                t = lexer(file,out);
-            }
-        }else{
-            printf("\nERRO semantico:       Linha %d, Token: %s", t.linha, t.lexema);
-            exit(1);
-        }
+        //     if (strcmp(tabela_simbolos[ind].tipo, "funcao inteiro") == 0 || strcmp(tabela_simbolos[ind].tipo, "funcao booleano") == 0){
+        //         t = analisa_chamada_funcao(file, out, t);
+        //     }else{
+        //         t = lexer(file,out);
+        //     }
+        // }else{
+        //     printf("\nERRO semantico:       Linha %d, Token: %s", t.linha, t.lexema);
+        //     exit(1);
+        // }
      } else if (strcmp(p->t.simbolo, "snumero") == 0) {
         atualiza_in_fixa(in_fixa, pos, p->t);
         token_free(&p->t);
