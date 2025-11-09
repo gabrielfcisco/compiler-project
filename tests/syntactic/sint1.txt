@@ -2,7 +2,7 @@
 programa test1;
 
 var a,b,c: inteiro;
-a: booleano;
+f: booleano;
 
 {proc 1}
 procedimento analisa1;

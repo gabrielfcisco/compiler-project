@@ -15,7 +15,7 @@ void imprimir_simbolo(Tabsimb* sp) {
 
     printf("--- Conteúdo do Simbolo ---\n");
     printf("Lexema: %s\n", sp->lexema);
-    printf("Símbolo: %s\n", sp->tipo);
+    printf("Tipo: %s\n", sp->tipo);
     printf("Escopo: %c\n", sp->escopo);
     printf("Endereco: %d", sp->end);
     printf("-------------------------\n\n");
@@ -24,7 +24,6 @@ void imprimir_simbolo(Tabsimb* sp) {
 Tabsimb* initialize_stack(){
     sp = symbol_table;
     init = sp;
-
     return sp;
 }
 
@@ -50,18 +49,17 @@ void insere_tabela(char *lexema, char *tipo_inicial, char escopo, int rotulo){
     }
     
     push(sp, aux);
-    imprimir_simbolo(sp - 1);
+    // imprimir_simbolo(sp);
 }
 
 void remove_tabela(){
     pop(sp);
 }
 
-int pesquisa_duplicvar_tabela(char* lexema){
-    Tabsimb* sp_aux = sp - 1;
-    while (sp_aux != NULL && sp_aux->escopo != 'L'){
-        printf("Lexema: %s\n", sp_aux->lexema);
-        if(strcmp(sp_aux->lexema, lexema) == 0){
+int pesquisa_duplica_var_tabela(char *lexema){ //boolean
+    Tabsimb* sp_aux = sp;
+    while (sp_aux != init && sp_aux->escopo != 'L'){            // Agora o inicio nao possui nada, pois o push primeiro incrementa, depois atribui
+        if(strcmp(sp_aux->lexema, lexema) == 0){ 
             return 1;
         }
         sp_aux --;
@@ -69,30 +67,15 @@ int pesquisa_duplicvar_tabela(char* lexema){
     return 0;
 }
 
-// void insere_tabela(char *lexema, char *tipo, char escopo, char *mem){
-//     (void)lexema;
-//     (void)tipo;
-//     (void)escopo;
-//     (void)mem;
-//     //todo
-//     // inserir no topo da tabela de simbolos
-//     //inserir na tabela de simbolos
-//     return;
-// }
-
-int pesquisa_duplicacvar_tabela(char *lexema){ //boolean
-    (void)lexema;
-    //todo:
-    //verificar se o lexema do identificador nao está duplicada na tabela de smbolos
-    return 0;
-}
-
 void coloca_tipo_tabela(char *lexema){
-    (void)lexema;
-    //todo:
-    //não sei mt o que fazer aqui, dar uma olhada melhor kk
-    // pagina 47 do livro dele
-    return;
+    Tabsimb* sp_aux = sp;
+     while (sp_aux != init){
+        if (strcmp(sp_aux->tipo, "variavel") == 0){
+            strcpy(sp_aux->tipo, lexema);
+            // printf("Tipo %s atribuido ao lexema %s\n", lexema, sp_aux->lexema);
+        }
+        sp_aux --;
+     }
 }
 
 int pesquisa_declvar_tabela(char *lexema){  //boolean
@@ -119,10 +102,8 @@ void desempilha_ou_voltanivel(){
     return;
 }
 
-int pesquisa_tabela(char *lexema, int *ind,Tabsimb *tabela_simbolos){
-    (void)lexema;
-    (void)ind;
-    (void)tabela_simbolos;
+int pesquisa_tabela(char *lexema){
+ 
     // TODO : 
     /*
     nesse caso tera que pegar o lexema que foi passado e procurar se existe na tabela, se existir:
@@ -147,6 +128,15 @@ int pesquisa_declfunc_tabela(char *lexema){
     (void)lexema;
     //TODO : declaração de função ne
     return 0;
+}
+
+void imprimir_tabela_simbolos(){
+    Tabsimb* sp_aux = init + 1; //pula o primeiro que é vazio
+    printf("\n--- Tabela de Simbolos ---\n");
+    while (sp_aux != sp + 1){ // como o push primeiro incrementa, depois atribui, entao o sp aponta para o ultimo elemento adicionado
+        imprimir_simbolo(sp_aux);
+        sp_aux ++;
+    }
 }
 
 

@@ -6,7 +6,7 @@
 #include "../../include/lexical/lexer.h"
 #include "../../include/semantic/semantic.h"
 
-Tabsimb* sp;
+Tabsimb* sp_parser;
 int rotulo = 0;
 
 void imprimir_token(token t) {
@@ -105,6 +105,7 @@ token analisa_tipo(parser *p) {
         token_free(&p->t);
         exit(1);
     }else{
+        printf("HEEloo");
         coloca_tipo_tabela(p->t.lexema);
     }
     token_free(&p->t);
@@ -116,7 +117,7 @@ token analisa_variaveis(parser *p){
 
     while(strcmp(p->t.simbolo, "sdoispontos") != 0){
         if(strcmp(p->t.simbolo, "sidentificador") == 0){
-            if(pesquisa_duplicacvar_tabela(p->t.lexema) == 0){
+            if(pesquisa_duplica_var_tabela(p->t.lexema) == 0){
                 insere_tabela(p->t.lexema,"variavel",' ', 0);
                 token_free(&p->t);
                 p->t = lexer(p->file, p->out);
@@ -215,9 +216,9 @@ token analisa_declaracao_funcao(parser *p){
                 p->t = lexer(p->file, p->out);
                 if((strcmp(p->t.simbolo, "sinteiro") == 0) || strcmp(p->t.simbolo, "sbooleano") == 0){
                     if(strcmp(p->t.simbolo, "sinteiro") == 0){ 
-                        strcpy((sp-1)->tipo, "funcao inteiro");
+                        strcpy((sp_parser)->tipo, "funcao inteiro");
                     }else{
-                        strcpy((sp-1)->tipo, "funcao booleano");
+                        strcpy((sp_parser)->tipo, "funcao booleano");
                     }
                     p->t = lexer(p->file, p->out);
                     if(strcmp(p->t.simbolo, "sponto_virgula") == 0){
@@ -308,8 +309,8 @@ token analisa_se(parser *p) {
     p->t = analisa_expressao(p, in_fixa, &pos);
     
     pos_fixa_vetor = pos_fixa(in_fixa, pos, &posf);
-    print_in_and_pos_fixa(in_fixa, pos, 0);
-    print_in_and_pos_fixa(pos_fixa_vetor, posf, 1);
+    // print_in_and_pos_fixa(in_fixa, pos, 0);
+    // print_in_and_pos_fixa(pos_fixa_vetor, posf, 1);
 
     for (int i = 0; i < pos; i++)
         token_free(&in_fixa[i]);
@@ -350,8 +351,8 @@ token analisa_enquanto(parser *p) {
     p->t = analisa_expressao(p, in_fixa, &pos);
     
     pos_fixa_vetor = pos_fixa(in_fixa, pos, &posf);
-    print_in_and_pos_fixa(in_fixa, pos, 0);
-    print_in_and_pos_fixa(pos_fixa_vetor, posf, 1);
+    // print_in_and_pos_fixa(in_fixa, pos, 0);
+    // print_in_and_pos_fixa(pos_fixa_vetor, posf, 1);
 
     for (int i = 0; i < pos; i++)
         token_free(&in_fixa[i]);
@@ -463,8 +464,8 @@ token analisa_atribuicao(parser *p) {
         p->t = analisa_expressao(p, in_fixa, &pos);
         
         pos_fixa_vetor = pos_fixa(in_fixa, pos, &posf);
-        print_in_and_pos_fixa(in_fixa, pos, 0);
-        print_in_and_pos_fixa(pos_fixa_vetor, posf, 1);
+        // print_in_and_pos_fixa(in_fixa, pos, 0);
+        // print_in_and_pos_fixa(pos_fixa_vetor, posf, 1);
 
         for (int i = 0; i < pos; i++)
             token_free(&in_fixa[i]);
@@ -579,19 +580,19 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
     if (strcmp(p->t.simbolo, "sidentificador") == 0) {
         atualiza_in_fixa(in_fixa, pos, p->t);
         p->t = analisa_chamada_funcao(p);
-        // int ind; // semantico  /COMENTANDO POR ENQUANTO
+     
     
-        // if (pesquisa_tabela(t.lexema,&ind,tabela_simbolos) == 1){ // semantico, verifica se é true e atribui o valor de ind no endereço passado para a função
+        if (pesquisa_tabela(p->t.lexema) == 1){ // semantico, verifica se é true e atribui o valor de ind no endereço passado para a função
 
-        //     if (strcmp(tabela_simbolos[ind].tipo, "funcao inteiro") == 0 || strcmp(tabela_simbolos[ind].tipo, "funcao booleano") == 0){
-        //         t = analisa_chamada_funcao(file, out, t);
-        //     }else{
-        //         t = lexer(file,out);
-        //     }
-        // }else{
-        //     printf("\nERRO semantico:       Linha %d, Token: %s", t.linha, t.lexema);
-        //     exit(1);
-        // }
+            if (strcmp(tabela_simbolos[ind].tipo, "funcao inteiro") == 0 || strcmp(tabela_simbolos[ind].tipo, "funcao booleano") == 0){
+                t = analisa_chamada_funcao(file, out, t);
+            }else{
+                t = lexer(file,out);
+            }
+        }else{
+            printf("\nERRO semantico:       Linha %d, Token: %s", t.linha, t.lexema);
+            exit(1);
+        }
      } else if (strcmp(p->t.simbolo, "snumero") == 0) {
         atualiza_in_fixa(in_fixa, pos, p->t);
         token_free(&p->t);
@@ -662,7 +663,7 @@ int main(){
       //repare que tem um tratamento de ponteiro com Tabsimb e pc, analisar antes de alterações
       //int rotulo = 1; *samuel que comentou essa parte, só comentei tambem
 
-    sp = initialize_stack();
+    sp_parser = initialize_stack();
     parser p; // Nova struct para o parser (melhor organizacao e clareza do codigo)
 
     char file_name[100];
@@ -714,6 +715,7 @@ int main(){
                     p.t = lexer(p.file, p.out);
                     char ch = fgetc(p.file);
                     if (ch == EOF) {
+                        imprimir_tabela_simbolos();
                         printf("\nSucesso\n");
                     } else {
                         printf("\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
