@@ -7,7 +7,7 @@
 #include "../../include/semantic/semantic.h"
 
 Tabsimb* sp_parser;
-int rotulo = 0;
+int rotulo = 1;
 
 void imprimir_token(token t) {
 
@@ -180,8 +180,10 @@ token analisa_declaracao_procedimento(parser *p){
     char nivel = 'L';
     if(strcmp(p->t.simbolo, "sidentificador") == 0){
         if (pesquisa_declproc_tabela(p->t.lexema) == 0 ){
-            insere_tabela(p->t.lexema,"procedimento",nivel,rotulo);
+            insere_tabela(p->t.lexema,"procedimento",nivel,rotulo);  //{guarda tabela de simb}
+            Gera(rotulo,NULL,"","");                                 // CALL ira buscar este rotulo na tabsimb
             rotulo++;
+
             p->t = lexer(p->file, p->out);
             if(strcmp(p->t.simbolo, "sponto_virgula") == 0){
                 p->t = analisa_bloco(p);
@@ -247,6 +249,16 @@ token analisa_declaracao_funcao(parser *p){
 
 token analisa_subrotinas(parser *p){
 
+    int auxrot,flag;
+
+    flag = 0;
+    if((strcmp(p->t.simbolo, "sprocedimento") == 0) || (strcmp(p->t.simbolo, "sfuncao") == 0)){
+        auxrot = rotulo;
+        Gera("","JMP",rotulo,""); //{salta sub-rotinas}
+        rotulo++;
+        flag = 1;
+    }
+
     while((strcmp(p->t.simbolo, "sprocedimento") == 0) || (strcmp(p->t.simbolo, "sfuncao") == 0)) {
         if(strcmp(p->t.simbolo, "sprocedimento") == 0) {
             p->t = analisa_declaracao_procedimento(p);
@@ -261,6 +273,11 @@ token analisa_subrotinas(parser *p){
             exit(1);
         }
     }
+
+    if (flag == 1){
+        Gera(auxrot,NULL,"","");    // {inicio do principal}
+    }
+
     return p->t;
 }
 
@@ -340,6 +357,12 @@ token analisa_se(parser *p) {
 
 token analisa_enquanto(parser *p) {
 
+    int auxrot1,auxrot2;
+
+    auxrot1 = rotulo;
+    Gera(rotulo,NULL,"","");    // {inicio do while}
+    rotulo++;
+
     token_free(&p->t);
     p->t = lexer(p->file, p->out);
 
@@ -363,9 +386,16 @@ token analisa_enquanto(parser *p) {
     free(pos_fixa_vetor);
 
     if (strcmp(p->t.simbolo, "sfaca") == 0) {
+        auxrot2 = rotulo;
+        Gera("","JMPF",rotulo,""); // {salta se falso}
+        rotulo++;
+
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
         p->t = analisa_comandos_simples(p);
+
+        Gera("","JMP",auxrot1,""); // {retorna inicio do loop}
+        Gera(auxrot2,NULL,"","");       //{fim do while}
     } else {
         printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
         exit(1);
@@ -698,6 +728,9 @@ int main(){
     fprintf(p.out, "----------------------+-----------------------\n");
 
     // --- Início da análise ---
+    // "def" rotulo integer -> essa parte a gente declarou no semantico
+    //      declarado como variavel global
+
     p.t = lexer(p.file, p.out);
     if (strcmp(p.t.simbolo, "sprograma") == 0) {
         token_free(&p.t);
