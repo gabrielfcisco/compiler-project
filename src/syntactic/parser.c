@@ -5,6 +5,7 @@
 #include "../../include/parser/parser.h"
 #include "../../include/lexical/lexer.h"
 #include "../../include/semantic/semantic.h"
+#include "../../include/code_generator/generator.h"
 
 Tabsimb* sp_parser;
 int rotulo = 1;
@@ -181,7 +182,10 @@ token analisa_declaracao_procedimento(parser *p){
     if(strcmp(p->t.simbolo, "sidentificador") == 0){
         if (pesquisa_declproc_tabela(p->t.lexema) == 0 ){
             insere_tabela(p->t.lexema,"procedimento",nivel,rotulo);  //{guarda tabela de simb}
-            Gera(rotulo,NULL,"","");                                 // CALL ira buscar este rotulo na tabsimb
+            Gera(convert_integer_to_string(rotulo)
+                ,"NULL"
+                ,""
+                ,"");                                 // CALL ira buscar este rotulo na tabsimb
             rotulo++;
 
             p->t = lexer(p->file, p->out);
@@ -254,7 +258,10 @@ token analisa_subrotinas(parser *p){
     flag = 0;
     if((strcmp(p->t.simbolo, "sprocedimento") == 0) || (strcmp(p->t.simbolo, "sfuncao") == 0)){
         auxrot = rotulo;
-        Gera("","JMP",rotulo,""); //{salta sub-rotinas}
+        Gera(""
+             ,"JMP"
+             ,convert_integer_to_string(rotulo)
+             ,""); //{salta sub-rotinas}
         rotulo++;
         flag = 1;
     }
@@ -275,7 +282,10 @@ token analisa_subrotinas(parser *p){
     }
 
     if (flag == 1){
-        Gera(auxrot,NULL,"","");    // {inicio do principal}
+        Gera(convert_integer_to_string(auxrot)
+            ,"NULL"
+            ,""
+            ,"");    // {inicio do principal}
     }
 
     return p->t;
@@ -360,7 +370,10 @@ token analisa_enquanto(parser *p) {
     int auxrot1,auxrot2;
 
     auxrot1 = rotulo;
-    Gera(rotulo,NULL,"","");    // {inicio do while}
+    Gera(convert_integer_to_string(rotulo)
+        ,"NULL"
+        ,""
+        ,"");    // {inicio do while}
     rotulo++;
 
     token_free(&p->t);
@@ -387,15 +400,24 @@ token analisa_enquanto(parser *p) {
 
     if (strcmp(p->t.simbolo, "sfaca") == 0) {
         auxrot2 = rotulo;
-        Gera("","JMPF",rotulo,""); // {salta se falso}
+        Gera(""
+            ,"JMPF"
+            ,convert_integer_to_string(rotulo)
+            ,""); // {salta se falso}
         rotulo++;
 
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
         p->t = analisa_comandos_simples(p);
 
-        Gera("","JMP",auxrot1,""); // {retorna inicio do loop}
-        Gera(auxrot2,NULL,"","");       //{fim do while}
+        Gera(""
+            ,"JMP"
+            ,convert_integer_to_string(auxrot1)
+            ,""); // {retorna inicio do loop}
+        Gera(convert_integer_to_string(auxrot2)
+            ,"NULL"
+            ,""
+            ,"");       //{fim do while}
     } else {
         printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
         exit(1);
@@ -697,6 +719,7 @@ int main(){
 
     sp_parser = initialize_stack();
     parser p; // Nova struct para o parser (melhor organizacao e clareza do codigo)
+    new_program_code();
 
     char file_name[100];
     printf("Digite o nome do arquivo a ser analisado: ");
