@@ -582,7 +582,7 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
         p->t = analisa_chamada_funcao(p);
      
     
-        if (pesquisa_tabela(p->t.lexema) == 1){ // semantico, verifica se é true e atribui o valor de ind no endereço passado para a função
+        if (pesquisa_tabela(p->t.lexema) == 1){ // semantico, verifica se é true e atribui o valor de ind no endereço passado para a função  -           IMPLEMENTAR
 
             strcpy((sp_parser)->tipo, "funcao booleano");
 
