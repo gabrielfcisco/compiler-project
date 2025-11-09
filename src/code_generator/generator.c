@@ -43,7 +43,6 @@ int gera_comando(generator_struct g){
 void print_if_not_empty(FILE *arquivo, char *string){
     if (string && *string) {                 // só imprime se não for NULL e não for ""
         fprintf(arquivo, "%s ", string);
-        fprintf(arquivo," ");
     }
 }
 
