@@ -7,6 +7,7 @@
 void instrucao(char *instrucao, char *operando1, char *operando2) {
     (void)operando2; // nao usa o segundo operador por enquanto
 
+    printf("\n Instrucao '%s': \n", instrucao);
 
     if(strcmp(instrucao,"inicia_prog") == 0){
         Gera("","START","","");

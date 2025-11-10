@@ -15,7 +15,7 @@ void Gera(char* rotulo, char *instrucao, char *operando1, char *operando2){
     g.operando2 = operando2;
 
     if (gera_comando(g) == 1){
-        printf("Não foi possivel gerar o comando: '%s %s %s %s'",g.rotulo,g.instrucao,g.operando1,g.operando2);
+        printf("Não foi possivel gerar o codigo: '%s %s %s %s'",g.rotulo,g.instrucao,g.operando1,g.operando2);
     }
 }
 
@@ -35,14 +35,15 @@ int gera_comando(generator_struct g){
     print_if_not_empty(arquivo,g.operando2);
     fprintf(arquivo,"\n");
 
-    printf(" Instrução '%s %s %s %s' foi gerada ! \n",g.rotulo,g.instrucao,g.operando1,g.operando2);
+    printf(" Codigo '%s %s %s %s' gerado ! \n",g.rotulo,g.instrucao,g.operando1,g.operando2);
     fclose(arquivo);
     return 0;
 }
 
 void print_if_not_empty(FILE *arquivo, char *string){
     if (string && *string) {                 // só imprime se não for NULL e não for ""
-        fprintf(arquivo, "%s ", string);
+        fprintf(arquivo, "%s", string);
+        fprintf(arquivo," ");
     }
 }
 
