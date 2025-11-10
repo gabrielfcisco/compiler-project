@@ -115,12 +115,14 @@ token analisa_tipo(parser *p) {
     return p->t;
 }
 
-token analisa_variaveis(parser *p){
+token analisa_variaveis(parser *p, int *counter_var){
 
     while(strcmp(p->t.simbolo, "sdoispontos") != 0){
         if(strcmp(p->t.simbolo, "sidentificador") == 0){
             if(pesquisa_duplica_var_tabela(p->t.lexema) == 0){
                 insere_tabela(p->t.lexema,"variavel",' ', 0);
+                (*counter_var)++; // conta cada variavel dentro do bloco ex: var a,b,c inteiro;
+
                 token_free(&p->t);
                 p->t = lexer(p->file, p->out);
                 if(strcmp(p->t.simbolo, "svirgula") == 0 || strcmp(p->t.simbolo, "sdoispontos") == 0){
@@ -150,14 +152,15 @@ token analisa_variaveis(parser *p){
     return analisa_tipo(p);
 }
 
-token analisa_et_variaveis(parser *p){
+token analisa_et_variaveis(parser *p,int *counter_var){
 
     if(strcmp(p->t.simbolo, "svar") == 0){
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
         if(strcmp(p->t.simbolo, "sidentificador") == 0){
             while(strcmp(p->t.simbolo, "sidentificador") == 0){
-                p->t = analisa_variaveis(p);
+                p->t = analisa_variaveis(p,counter_var);         // passa o ponteiro do contador de variaveis para contar
+
                 if(strcmp(p->t.simbolo, "sponto_virgula") == 0){
                     token_free(&p->t);
                     p->t = lexer(p->file, p->out);
@@ -709,9 +712,25 @@ token analisa_chamada_procedimento(parser *p) {
 
 token analisa_bloco(parser *p) {
     p->t = lexer(p->file, p->out);
-    p->t = analisa_et_variaveis(p);
+
+    int counter_var = 0;
+    p->t = analisa_et_variaveis(p,&counter_var);
+
+    if(counter_var > 0){
+        char *aux = convert_integer_to_string(counter_var);
+        instrucao("var","",aux);                             //aloca as variaveis conforme a quantidade
+        free(aux);
+    }
+    
     p->t = analisa_subrotinas(p);
     p->t = analisa_comandos(p);
+
+    if (counter_var > 0){
+        char *aux = convert_integer_to_string(counter_var);
+        instrucao("var_dalloc","",aux);                         //terminando o bloco desaloca as variaveis
+        free(aux);
+    }
+    
     return p->t;
 }
 

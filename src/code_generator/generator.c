@@ -56,6 +56,11 @@ char *convert_integer_to_string(int input){
     return output;
 }
 
+int convert_string_to_integer(const char *input) {
+    if (input == NULL) return 0;  
+    return atoi(input);           // converte string → int
+}
+
 void new_program_code(){
     FILE *arquivo = fopen("codigo_maquina_virtual.txt", "w");
 
@@ -64,5 +69,6 @@ void new_program_code(){
         exit(1);
     }
 
+    fclose(arquivo);
     printf("Arquivo 'codigo_maquina_virtual.txt' criado com sucesso.\n");
 }

@@ -4,8 +4,9 @@
 #include "../../include/code_generator/generator.h"
 #include "../../include/code_generator/instructions.h"
 
+int endereco_var_gerador = 1; // inicia em 1 por que o endereço 1 é reservado para retorno de funcoes
+
 void instrucao(char *instrucao, char *operando1, char *operando2) {
-    (void)operando2; // nao usa o segundo operador por enquanto
 
     printf("\n Instrucao '%s': \n", instrucao);
 
@@ -19,8 +20,7 @@ void instrucao(char *instrucao, char *operando1, char *operando2) {
         return;
     }
 
-    if (!operando1) return; // só fazendo pequena validação quando tiver sem o primeiro operador
-    //(só dará erro se o programador escrever errado!)
+    if (!instrucao) return; // só fazendo pequena validação quando tiver sem a instrucao
 
     //caso quando for só para marcar a linha para um jmp
     if (strcmp(instrucao, "label") == 0) {
@@ -55,6 +55,23 @@ void instrucao(char *instrucao, char *operando1, char *operando2) {
     if (strcmp(instrucao, "escreva") == 0) {
         Gera("", "LDV", operando1, "");
         Gera("", "PRN", "", "");
+        return;
+    }
+
+
+    if(strcmp(instrucao,"var") == 0){
+        char *aux = convert_integer_to_string(endereco_var_gerador);
+        Gera("","ALLOC",aux,operando2);
+        free(aux);
+        endereco_var_gerador = endereco_var_gerador + convert_string_to_integer(operando2);
+        return;
+    }
+
+    if(strcmp(instrucao,"var_dalloc") == 0){
+        char *aux = convert_integer_to_string(endereco_var_gerador);
+        Gera("","DALLOC",aux,operando2);
+        free(aux);
+        endereco_var_gerador = endereco_var_gerador - convert_string_to_integer(operando2);
         return;
     }
 

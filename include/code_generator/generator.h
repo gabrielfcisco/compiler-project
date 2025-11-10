@@ -15,8 +15,11 @@ typedef struct{
 void Gera(char *rotulo, char *instrucao, char *operando1, char *operando2);
 
 char *convert_integer_to_string(int input);
+int convert_string_to_integer(const char *input);
 
 void new_program_code();
+
+
 
 
 #endif
