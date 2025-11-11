@@ -441,6 +441,19 @@ token analisa_leia(parser *p) {
                 if (strcmp(p->t.simbolo, "sfecha_parenteses") == 0) {
                     token_free(&p->t);
                     p->t = lexer(p->file, p->out);
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    int result_end = busca_var(operando_1); // essa funcao ainda nao existe, mas será uma função que pesquisará na tabela de simbolos(até o nivel atual)
+                    // e retornará o ENDEREÇO da variavel pesquisada (ex 1(para x),2(para y),3(para z) para "var x,y,z")
+
+                    //operando_1 => endereço de um vetor de tamanho definido de caracteres(string) que é passado o endereço para "busca_var"
+                    
+                    // na funcao busca_var():
+                    //1.usa um buffer para pegar o tamanho real da string passada
+                    //2.procura por essa string nos t->lexema na tabela de simbolos(********até o fim do nivel atual(se nao procura var globais)*********)
+                    //3.retorna o endereço dessa variavel
+
+                    //instrucao("leia",result_end,"")  ****trocar e colocar essa funcao depois de fazer "busca_var" no semantico
+                    //apagar essa debaixo
 
                     instrucao("leia", operando_1, ""); // GERACODIGO cria a instrução se realmente for um operando da funcao leia
 
@@ -485,6 +498,20 @@ token analisa_escreva(parser *p) {
                 if (strcmp(p->t.simbolo, "sfecha_parenteses") == 0) {
                     token_free(&p->t);
                     p->t = lexer(p->file, p->out);
+
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    int result_end = busca_var(operando_1); // essa funcao ainda nao existe, mas será uma função que pesquisará na tabela de simbolos(até o nivel atual)
+                    // e retornará o ENDEREÇO da variavel pesquisada (ex 1(para x),2(para y),3(para z) para "var x,y,z")
+
+                    //operando_1 => endereço de um vetor de tamanho definido de caracteres(string) que é passado o endereço para "busca_var"
+                    
+                    // na funcao busca_var():
+                    //1.usa um buffer para pegar o tamanho real da string passada
+                    //2.procura por essa string nos t->lexema na tabela de simbolos(********até o fim do nivel atual(se nao procura var globais)*********)
+                    //3.retorna o endereço dessa variavel
+
+                    //instrucao("escreva",result_end,"")  ****trocar e colocar essa funcao depois de fazer "busca_var" no semantico
+                    //apagar essa debaixo
 
                     instrucao("escreva", operando_1, NULL); // GERACODIGO cria a instrução se realmente for um operando da funcao leia
 

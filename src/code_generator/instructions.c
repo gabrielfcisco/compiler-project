@@ -21,6 +21,7 @@ void instrucao(char *instrucao, char *operando1, char *operando2) {
     }
 
     if (!instrucao) return; // só fazendo pequena validação quando tiver sem a instrucao
+    //se der erro aqui é erro do programador e nao do usuario( em uma chamada da funcao instrucao())
 
     //caso quando for só para marcar a linha para um jmp
     if (strcmp(instrucao, "label") == 0) {
