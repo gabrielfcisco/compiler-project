@@ -1,0 +1,31 @@
+START
+ALLOC 2      ; 0:n  1:soma
+
+RD           ; leia(n)
+STR 0
+
+LDC 0
+STR 1        ; soma = 0
+
+L1:
+LDV 0
+LDC 1
+CMAQ         ; se n >= 1 ?
+JMPF L2
+
+LDV 1
+LDV 0
+ADD
+STR 1        ; soma = soma + n
+
+LDV 0
+LDC 1
+SUB
+STR 0        ; n = n - 1
+
+JMP L1
+L2:
+LDV 1
+PRN          ; imprime soma
+DALLOC 2
+HLT

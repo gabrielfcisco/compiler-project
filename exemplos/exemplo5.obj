@@ -1,0 +1,59 @@
+START
+ALLOC 5          ; 0:n, 1:k, 2:f1, 3:f2, 4:f3
+
+; leia(n)
+RD
+STR 0
+
+; f1 := 0
+LDC 0
+STR 2
+
+; f2 := 1
+LDC 1
+STR 3
+
+; k := 1
+LDC 1
+STR 1
+
+L1:
+; enquanto k <= n faca
+LDV 1          ; k
+LDV 0          ; n
+CMEQ           ; k <= n ?  (1 se sim, 0 se não)
+JMPF L2        ; se falso, sai do while
+
+; f3 := f1 + f2
+LDV 2          ; f1
+LDV 3          ; f2
+ADD
+STR 4          ; f3
+
+; f1 := f2
+LDV 3
+STR 2
+
+; f2 := f3
+LDV 4
+STR 3
+
+; k := k + 1
+LDV 1
+LDC 1
+ADD
+STR 1
+
+JMP L1         ; volta pro teste
+
+L2:
+; escreva(n)
+LDV 0
+PRN
+
+; escreva(f1)
+LDV 2
+PRN
+
+DALLOC 5
+HLT
