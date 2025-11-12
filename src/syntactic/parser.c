@@ -5,9 +5,11 @@
 #include "../../include/parser/parser.h"
 #include "../../include/lexical/lexer.h"
 #include "../../include/semantic/semantic.h"
+#include "../../include/code_generator/generator.h"
+#include "../../include/code_generator/instructions.h"
 
 Tabsimb* sp_parser;
-int rotulo = 0;
+int rotulo = 1;
 
 void imprimir_token(token t) {
 
@@ -112,12 +114,14 @@ token analisa_tipo(parser *p) {
     return p->t;
 }
 
-token analisa_variaveis(parser *p){
+token analisa_variaveis(parser *p, int *counter_var){
 
     while(strcmp(p->t.simbolo, "sdoispontos") != 0){
         if(strcmp(p->t.simbolo, "sidentificador") == 0){
             if(pesquisa_duplica_var_tabela(p->t.lexema) == 0){
                 insere_tabela(p->t.lexema,"variavel",' ', 0);
+                (*counter_var)++; // conta cada variavel dentro do bloco ex: var a,b,c inteiro;
+
                 token_free(&p->t);
                 p->t = lexer(p->file, p->out);
                 if(strcmp(p->t.simbolo, "svirgula") == 0 || strcmp(p->t.simbolo, "sdoispontos") == 0){
@@ -147,14 +151,15 @@ token analisa_variaveis(parser *p){
     return analisa_tipo(p);
 }
 
-token analisa_et_variaveis(parser *p){
+token analisa_et_variaveis(parser *p,int *counter_var){
 
     if(strcmp(p->t.simbolo, "svar") == 0){
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
         if(strcmp(p->t.simbolo, "sidentificador") == 0){
             while(strcmp(p->t.simbolo, "sidentificador") == 0){
-                p->t = analisa_variaveis(p);
+                p->t = analisa_variaveis(p,counter_var);         // passa o ponteiro do contador de variaveis para contar
+
                 if(strcmp(p->t.simbolo, "sponto_virgula") == 0){
                     token_free(&p->t);
                     p->t = lexer(p->file, p->out);
@@ -179,8 +184,12 @@ token analisa_declaracao_procedimento(parser *p){
     char nivel = 'L';
     if(strcmp(p->t.simbolo, "sidentificador") == 0){
         if (pesquisa_declproc_tabela(p->t.lexema) == 0 ){
-            insere_tabela(p->t.lexema,"procedimento",nivel,rotulo);
+            insere_tabela(p->t.lexema,"procedimento",nivel,rotulo);  //{guarda tabela de simb}
+            //Gera("rotulo","NULL","","");
+            instrucao("label", convert_integer_to_string(rotulo), ""); // CALL ira buscar este rotulo na tabsimb
+
             rotulo++;
+
             p->t = lexer(p->file, p->out);
             if(strcmp(p->t.simbolo, "sponto_virgula") == 0){
                 p->t = analisa_bloco(p);
@@ -246,6 +255,18 @@ token analisa_declaracao_funcao(parser *p){
 
 token analisa_subrotinas(parser *p){
 
+    int auxrot,flag;
+
+    flag = 0;
+    if((strcmp(p->t.simbolo, "sprocedimento") == 0) || (strcmp(p->t.simbolo, "sfuncao") == 0)){
+        auxrot = rotulo;
+        //Gera("","JMP","rotulo","");
+        instrucao("jmp", convert_integer_to_string(rotulo), ""); //{salta sub-rotinas}
+
+        rotulo++;
+        flag = 1;
+    }
+
     while((strcmp(p->t.simbolo, "sprocedimento") == 0) || (strcmp(p->t.simbolo, "sfuncao") == 0)) {
         if(strcmp(p->t.simbolo, "sprocedimento") == 0) {
             p->t = analisa_declaracao_procedimento(p);
@@ -260,6 +281,12 @@ token analisa_subrotinas(parser *p){
             exit(1);
         }
     }
+
+    if (flag == 1){
+        //Gera("auxrot","NULL","","");    
+        instrucao("label", convert_integer_to_string(auxrot), ""); // {inicio do principal}
+    }
+
     return p->t;
 }
 
@@ -339,6 +366,13 @@ token analisa_se(parser *p) {
 
 token analisa_enquanto(parser *p) {
 
+    int auxrot1,auxrot2;
+
+    auxrot1 = rotulo;
+    //Gera(rotulo,"NULL","","");    
+    instrucao("label", convert_integer_to_string(rotulo), ""); // {inicio do while}
+    rotulo++;
+
     token_free(&p->t);
     p->t = lexer(p->file, p->out);
 
@@ -362,9 +396,20 @@ token analisa_enquanto(parser *p) {
     free(pos_fixa_vetor);
 
     if (strcmp(p->t.simbolo, "sfaca") == 0) {
+        auxrot2 = rotulo;
+        //Gera("","JMPF",convert_integer_to_string(rotulo),""); 
+        instrucao("jmpf", convert_integer_to_string(rotulo), "");// {salta se falso}
+        rotulo++;
+
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
         p->t = analisa_comandos_simples(p);
+
+        //Gera("","JMP",auxrot1,""); 
+        instrucao("jmp", convert_integer_to_string(auxrot1), ""); // {retorna inicio do loop}
+        //Gera(auxrot2,"NULL","","");       
+        instrucao("label", convert_integer_to_string(auxrot2), ""); //{fim do while}
+
     } else {
         printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
         exit(1);
@@ -379,17 +424,38 @@ token analisa_leia(parser *p) {
     p->t = lexer(p->file, p->out);
 
     if (strcmp(p->t.simbolo, "sabre_parenteses") == 0) {
+
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
 
         if (strcmp(p->t.simbolo, "sidentificador") == 0) {
-            if (pesquisa_declvar_tabela(p->t.lexema) == 1) {
+            if (pesquisa_declvar_tabela(p->t.lexema) == 0) {
+
+                char operando_1[100];
+                strcpy(operando_1, p->t.lexema); // GERACODIGO salva antes para depois gerar o codigo(apenas se for valido)
+
                 token_free(&p->t);
                 p->t = lexer(p->file, p->out);
 
                 if (strcmp(p->t.simbolo, "sfecha_parenteses") == 0) {
                     token_free(&p->t);
                     p->t = lexer(p->file, p->out);
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    int result_end = busca_var(operando_1); // essa funcao ainda nao existe, mas será uma função que pesquisará na tabela de simbolos(até o nivel atual)
+                    // e retornará o ENDEREÇO da variavel pesquisada (ex 1(para x),2(para y),3(para z) para "var x,y,z")
+
+                    //operando_1 => endereço de um vetor de tamanho definido de caracteres(string) que é passado o endereço para "busca_var"
+                    
+                    // na funcao busca_var():
+                    //1.usa um buffer para pegar o tamanho real da string passada
+                    //2.procura por essa string nos t->lexema na tabela de simbolos(********até o fim do nivel atual(se nao procura var globais)*********)
+                    //3.retorna o endereço dessa variavel
+
+                    //instrucao("leia",result_end,"")  ****trocar e colocar essa funcao depois de fazer "busca_var" no semantico
+                    //apagar essa debaixo
+
+                    instrucao("leia", operando_1, ""); // GERACODIGO cria a instrução se realmente for um operando da funcao leia
+
                 } else {
                     printf("\nERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
                     exit(1);
@@ -420,13 +486,34 @@ token analisa_escreva(parser *p) {
         p->t = lexer(p->file, p->out);
 
         if (strcmp(p->t.simbolo, "sidentificador") == 0) {
-            if (pesquisa_declvarfunc_tabela(p->t.lexema) == 1) {
+            if (pesquisa_declvarfunc_tabela(p->t.lexema) == 0) {
+
+                char operando_1[100];
+                strcpy(operando_1, p->t.lexema); // GERACODIGO salva antes para depois gerar o codigo(apenas se for valido)
+
                 token_free(&p->t);
                 p->t = lexer(p->file, p->out);
 
                 if (strcmp(p->t.simbolo, "sfecha_parenteses") == 0) {
                     token_free(&p->t);
                     p->t = lexer(p->file, p->out);
+
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    int result_end = busca_var(operando_1); // essa funcao ainda nao existe, mas será uma função que pesquisará na tabela de simbolos(até o nivel atual)
+                    // e retornará o ENDEREÇO da variavel pesquisada (ex 1(para x),2(para y),3(para z) para "var x,y,z")
+
+                    //operando_1 => endereço de um vetor de tamanho definido de caracteres(string) que é passado o endereço para "busca_var"
+                    
+                    // na funcao busca_var():
+                    //1.usa um buffer para pegar o tamanho real da string passada
+                    //2.procura por essa string nos t->lexema na tabela de simbolos(********até o fim do nivel atual(se nao procura var globais)*********)
+                    //3.retorna o endereço dessa variavel
+
+                    //instrucao("escreva",result_end,"")  ****trocar e colocar essa funcao depois de fazer "busca_var" no semantico
+                    //apagar essa debaixo
+
+                    instrucao("escreva", operando_1, NULL); // GERACODIGO cria a instrução se realmente for um operando da funcao leia
+
                 } else {
                     printf("\nERRO: token sfecha_parenteses esperado\nLinha %d, Token: %s",
                            p->t.linha, p->t.lexema);
@@ -648,9 +735,25 @@ token analisa_chamada_procedimento(parser *p) {
 
 token analisa_bloco(parser *p) {
     p->t = lexer(p->file, p->out);
-    p->t = analisa_et_variaveis(p);
+
+    int counter_var = 0;
+    p->t = analisa_et_variaveis(p,&counter_var);
+
+    if(counter_var > 0){
+        char *aux = convert_integer_to_string(counter_var);
+        instrucao("var","",aux);                             //aloca as variaveis conforme a quantidade
+        free(aux);
+    }
+    
     p->t = analisa_subrotinas(p);
     p->t = analisa_comandos(p);
+
+    if (counter_var > 0){
+        char *aux = convert_integer_to_string(counter_var);
+        instrucao("var_dalloc","",aux);                         //terminando o bloco desaloca as variaveis
+        free(aux);
+    }
+    
     return p->t;
 }
 
@@ -663,6 +766,7 @@ int main(){
 
     sp_parser = initialize_stack();
     parser p; // Nova struct para o parser (melhor organizacao e clareza do codigo)
+    new_program_code();
 
     char file_name[100];
     printf("Digite o nome do arquivo a ser analisado: ");
@@ -694,6 +798,12 @@ int main(){
     fprintf(p.out, "----------------------+-----------------------\n");
 
     // --- Início da análise ---
+
+    // "def" rotulo integer -> essa parte a gente declarou no semantico
+    //      declarado como variavel global
+
+    instrucao("inicia_prog","","");
+
     p.t = lexer(p.file, p.out);
     if (strcmp(p.t.simbolo, "sprograma") == 0) {
         token_free(&p.t);
@@ -739,6 +849,8 @@ int main(){
 
     fclose(p.file);
     fclose(p.out);
+
+    instrucao("finaliza_prog","","");
     return 0;
 }
 // DETALHE A FUNÇÃO : "ANALISA_FATOR" TINHA UM TRATAMENTO DIFERENTE PARA PESQUISA_TABELA, ACHO QUE NAO TINHA NECESSIDADE ENTAO FIZ DIFERENTE,
