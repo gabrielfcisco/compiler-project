@@ -4,8 +4,6 @@
 #include "../../include/code_generator/generator.h"
 #include "../../include/code_generator/instructions.h"
 
-int endereco_var_gerador = 1; // inicia em 1 por que o endereço 1 é reservado para retorno de funcoes
-
 void instrucao(char *instrucao, char *operando1, char *operando2) {
 
     printf("\n Instrucao '%s': \n", instrucao);
@@ -25,6 +23,7 @@ void instrucao(char *instrucao, char *operando1, char *operando2) {
 
     //caso quando for só para marcar a linha para um jmp
     if (strcmp(instrucao, "label") == 0) {
+
         Gera(operando1, "NULL", "", "");
         return;
     }
@@ -61,18 +60,14 @@ void instrucao(char *instrucao, char *operando1, char *operando2) {
 
 
     if(strcmp(instrucao,"var") == 0){
-        char *aux = convert_integer_to_string(endereco_var_gerador);
-        Gera("","ALLOC",aux,operando2);
-        free(aux);
-        endereco_var_gerador = endereco_var_gerador + convert_string_to_integer(operando2);
+        
+        Gera("","ALLOC", operando1, operando2);
         return;
     }
 
     if(strcmp(instrucao,"var_dalloc") == 0){
-        char *aux = convert_integer_to_string(endereco_var_gerador);
-        Gera("","DALLOC",aux,operando2);
-        free(aux);
-        endereco_var_gerador = endereco_var_gerador - convert_string_to_integer(operando2);
+        
+        Gera("","DALLOC", operando1, operando2);
         return;
     }
 

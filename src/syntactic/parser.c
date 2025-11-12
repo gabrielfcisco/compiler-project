@@ -10,6 +10,7 @@
 
 Tabsimb* sp_parser;
 int rotulo = 1;
+int endereco_var = 1;
 
 void imprimir_token(token t) {
 
@@ -119,7 +120,7 @@ token analisa_variaveis(parser *p, int *counter_var){
     while(strcmp(p->t.simbolo, "sdoispontos") != 0){
         if(strcmp(p->t.simbolo, "sidentificador") == 0){
             if(pesquisa_duplica_var_tabela(p->t.lexema) == 0){
-                insere_tabela(p->t.lexema,"variavel",' ', 0);
+                insere_tabela(p->t.lexema,"variavel",' ', 0, &endereco_var, 1);
                 (*counter_var)++; // conta cada variavel dentro do bloco ex: var a,b,c inteiro;
 
                 token_free(&p->t);
@@ -183,12 +184,10 @@ token analisa_declaracao_procedimento(parser *p){
     p->t = lexer(p->file, p->out);
     char nivel = 'L';
     if(strcmp(p->t.simbolo, "sidentificador") == 0){
-        if (pesquisa_declproc_tabela(p->t.lexema) == 0 ){
-            insere_tabela(p->t.lexema,"procedimento",nivel,rotulo);  //{guarda tabela de simb}
+        if (pesquisa_declproc_dup_tabela(p->t.lexema) == 0 ){
+            insere_tabela(p->t.lexema,"procedimento", nivel, rotulo, &endereco_var, 0);  //{guarda tabela de simb}
             //Gera("rotulo","NULL","","");
             instrucao("label", convert_integer_to_string(rotulo), ""); // CALL ira buscar este rotulo na tabsimb
-
-            rotulo++;
 
             p->t = lexer(p->file, p->out);
             if(strcmp(p->t.simbolo, "sponto_virgula") == 0){
@@ -216,9 +215,8 @@ token analisa_declaracao_funcao(parser *p){
     char nivel = 'L';
 
     if(strcmp(p->t.simbolo, "sidentificador") == 0){
-        if(pesquisa_declfunc_tabela(p->t.lexema) == 0){
-            insere_tabela(p->t.lexema,"",nivel,rotulo);
-            rotulo++;
+        if(pesquisa_declfunc_dup_tabela(p->t.lexema) == 0){
+            insere_tabela(p->t.lexema,"", nivel, rotulo, &endereco_var, 0);
             p->t = lexer(p->file, p->out);
             if(strcmp(p->t.simbolo, "sdoispontos") == 0){
                 p->t = lexer(p->file, p->out);
@@ -429,10 +427,8 @@ token analisa_leia(parser *p) {
         p->t = lexer(p->file, p->out);
 
         if (strcmp(p->t.simbolo, "sidentificador") == 0) {
-            if (pesquisa_declvar_tabela(p->t.lexema) == 0) {
-
-                char operando_1[100];
-                strcpy(operando_1, p->t.lexema); // GERACODIGO salva antes para depois gerar o codigo(apenas se for valido)
+            Tabsimb *sp_aux;
+            if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1) {
 
                 token_free(&p->t);
                 p->t = lexer(p->file, p->out);
@@ -440,21 +436,8 @@ token analisa_leia(parser *p) {
                 if (strcmp(p->t.simbolo, "sfecha_parenteses") == 0) {
                     token_free(&p->t);
                     p->t = lexer(p->file, p->out);
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    int result_end = busca_var(operando_1); // essa funcao ainda nao existe, mas será uma função que pesquisará na tabela de simbolos(até o nivel atual)
-                    // e retornará o ENDEREÇO da variavel pesquisada (ex 1(para x),2(para y),3(para z) para "var x,y,z")
 
-                    //operando_1 => endereço de um vetor de tamanho definido de caracteres(string) que é passado o endereço para "busca_var"
-                    
-                    // na funcao busca_var():
-                    //1.usa um buffer para pegar o tamanho real da string passada
-                    //2.procura por essa string nos t->lexema na tabela de simbolos(********até o fim do nivel atual(se nao procura var globais)*********)
-                    //3.retorna o endereço dessa variavel
-
-                    //instrucao("leia",result_end,"")  ****trocar e colocar essa funcao depois de fazer "busca_var" no semantico
-                    //apagar essa debaixo
-
-                    instrucao("leia", operando_1, ""); // GERACODIGO cria a instrução se realmente for um operando da funcao leia
+                    instrucao("leia", convert_integer_to_string(sp_aux->end), ""); 
 
                 } else {
                     printf("\nERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
@@ -486,10 +469,8 @@ token analisa_escreva(parser *p) {
         p->t = lexer(p->file, p->out);
 
         if (strcmp(p->t.simbolo, "sidentificador") == 0) {
-            if (pesquisa_declvarfunc_tabela(p->t.lexema) == 0) {
-
-                char operando_1[100];
-                strcpy(operando_1, p->t.lexema); // GERACODIGO salva antes para depois gerar o codigo(apenas se for valido)
+            Tabsimb *sp_aux;
+            if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1) {
 
                 token_free(&p->t);
                 p->t = lexer(p->file, p->out);
@@ -498,22 +479,7 @@ token analisa_escreva(parser *p) {
                     token_free(&p->t);
                     p->t = lexer(p->file, p->out);
 
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    int result_end = busca_var(operando_1); // essa funcao ainda nao existe, mas será uma função que pesquisará na tabela de simbolos(até o nivel atual)
-                    // e retornará o ENDEREÇO da variavel pesquisada (ex 1(para x),2(para y),3(para z) para "var x,y,z")
-
-                    //operando_1 => endereço de um vetor de tamanho definido de caracteres(string) que é passado o endereço para "busca_var"
-                    
-                    // na funcao busca_var():
-                    //1.usa um buffer para pegar o tamanho real da string passada
-                    //2.procura por essa string nos t->lexema na tabela de simbolos(********até o fim do nivel atual(se nao procura var globais)*********)
-                    //3.retorna o endereço dessa variavel
-
-                    //instrucao("escreva",result_end,"")  ****trocar e colocar essa funcao depois de fazer "busca_var" no semantico
-                    //apagar essa debaixo
-
-                    instrucao("escreva", operando_1, NULL); // GERACODIGO cria a instrução se realmente for um operando da funcao leia
-
+                    instrucao("escreva", convert_integer_to_string(sp_aux->end), ""); 
                 } else {
                     printf("\nERRO: token sfecha_parenteses esperado\nLinha %d, Token: %s",
                            p->t.linha, p->t.lexema);
@@ -665,17 +631,17 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
 
     if (strcmp(p->t.simbolo, "sidentificador") == 0) {
 
-        Tabsimb *sp_func;   // endereco auxiliar para ver se o identificador encontrado e uma funcao
+        Tabsimb *sp_aux;   // endereco auxiliar para ver se o identificador encontrado e uma funcao
         
-        if (pesquisa_tabela(p->t.lexema, &sp_func) == 1){
+        if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1){
             atualiza_in_fixa(in_fixa, pos, p->t);
-            if (strcmp(sp_func->tipo, "funcao inteiro") == 0 || strcmp(sp_func->tipo, "funcao booleano") == 0){
+            if (strcmp(sp_aux->tipo, "funcao inteiro") == 0 || strcmp(sp_aux->tipo, "funcao booleano") == 0){
                 p->t = analisa_chamada_funcao(p);
             }else{
                 p->t = lexer(p->file, p->out);
             }
         }else{
-            printf("\nERRO semantico:  Linha %d, Token: %s", p->t.linha, p->t.lexema);
+            printf("\nERRO semantico, identificador nao encontrado:  Linha %d, Token: %s", p->t.linha, p->t.lexema);
             exit(1);
         }
      } else if (strcmp(p->t.simbolo, "snumero") == 0) {
@@ -737,21 +703,18 @@ token analisa_bloco(parser *p) {
     p->t = lexer(p->file, p->out);
 
     int counter_var = 0;
+    int end_aux_var = endereco_var;
     p->t = analisa_et_variaveis(p,&counter_var);
 
-    if(counter_var > 0){
-        char *aux = convert_integer_to_string(counter_var);
-        instrucao("var","",aux);                             //aloca as variaveis conforme a quantidade
-        free(aux);
+    if(counter_var > 0){    
+        instrucao("var", convert_integer_to_string(end_aux_var), convert_integer_to_string(counter_var));                             //aloca as variaveis conforme a quantidade  
     }
     
     p->t = analisa_subrotinas(p);
     p->t = analisa_comandos(p);
 
     if (counter_var > 0){
-        char *aux = convert_integer_to_string(counter_var);
-        instrucao("var_dalloc","",aux);                         //terminando o bloco desaloca as variaveis
-        free(aux);
+        instrucao("var_dalloc", convert_integer_to_string(end_aux_var), convert_integer_to_string(counter_var));                         //terminando o bloco desaloca as variaveis
     }
     
     return p->t;
@@ -810,7 +773,7 @@ int main(){
         p.t = lexer(p.file, p.out);
 
         if (strcmp(p.t.simbolo, "sidentificador") == 0) {
-            insere_tabela(p.t.lexema, "nomedeprograma", ' ', 0);
+            insere_tabela(p.t.lexema, "nomedeprograma", ' ', 0, &endereco_var, 0); // insere nome do programa na tabela de simbolos
             token_free(&p.t);
             p.t = lexer(p.file, p.out);
 

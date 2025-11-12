@@ -16,7 +16,7 @@ inicio
   faca inicio
            a:= x+z
        fim;
-  escreva(a)
+  escreva(a)-
 fim;
 
 

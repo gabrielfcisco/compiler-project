@@ -4,7 +4,9 @@
 #include "../../include/semantic/semantic.h"
 
 
-int endereco_var = 0;
+
+// 1 FOUND  
+// 0 NOT_FOUND
 
 Tabsimb symbol_table[1000];
 
@@ -27,7 +29,7 @@ Tabsimb* initialize_stack(){
     return sp;
 }
 
-void insere_tabela(char *lexema, char *tipo_inicial, char escopo, int rotulo){
+void insere_tabela(char *lexema, char *tipo_inicial, char escopo, int rotulo, int *endereco_var, int flag){
 
     Tabsimb aux;
 
@@ -40,12 +42,13 @@ void insere_tabela(char *lexema, char *tipo_inicial, char escopo, int rotulo){
 
     aux.escopo = escopo;
     
-    if(escopo == 'L'){
+    if(escopo == 'L' && flag == 0){
         aux.end = rotulo;
     }
-    else {
-        aux.end = endereco_var;
-        endereco_var ++;
+    else
+    if (flag == 1){
+        aux.end = *endereco_var;
+        (*endereco_var) ++;
     }
     
     push(sp, aux);
@@ -102,7 +105,7 @@ int pesquisa_declvarfunc_tabela(char *lexema){              //nao sei se declvar
     return 0;
 }
 
-int pesquisa_declproc_tabela(char *lexema){
+int pesquisa_declproc_dup_tabela(char *lexema){
 
     Tabsimb* sp_aux = sp;
     while (sp_aux != init){            
@@ -136,7 +139,7 @@ int pesquisa_tabela(char *lexema, Tabsimb** sp_func){
 
 }
 
-int pesquisa_declfunc_tabela(char *lexema){
+int pesquisa_declfunc_dup_tabela(char *lexema){
 
     Tabsimb* sp_aux = sp;
     while (sp_aux != init){            
