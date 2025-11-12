@@ -186,8 +186,8 @@ token analisa_declaracao_procedimento(parser *p){
     if(strcmp(p->t.simbolo, "sidentificador") == 0){
         if (pesquisa_declproc_dup_tabela(p->t.lexema) == 0 ){
             insere_tabela(p->t.lexema,"procedimento", nivel, rotulo, &endereco_var, 0);  //{guarda tabela de simb}
-            //Gera("rotulo","NULL","","");
             instrucao("label", convert_integer_to_string(rotulo), ""); // CALL ira buscar este rotulo na tabsimb
+            rotulo++;
 
             p->t = lexer(p->file, p->out);
             if(strcmp(p->t.simbolo, "sponto_virgula") == 0){
@@ -217,6 +217,7 @@ token analisa_declaracao_funcao(parser *p){
     if(strcmp(p->t.simbolo, "sidentificador") == 0){
         if(pesquisa_declfunc_dup_tabela(p->t.lexema) == 0){
             insere_tabela(p->t.lexema,"", nivel, rotulo, &endereco_var, 0);
+            rotulo++;
             p->t = lexer(p->file, p->out);
             if(strcmp(p->t.simbolo, "sdoispontos") == 0){
                 p->t = lexer(p->file, p->out);
