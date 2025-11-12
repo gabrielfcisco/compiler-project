@@ -107,7 +107,6 @@ token analisa_tipo(parser *p) {
         token_free(&p->t);
         exit(1);
     }else{
-        printf("HEEloo");
         coloca_tipo_tabela(p->t.lexema);
     }
     token_free(&p->t);
@@ -665,21 +664,18 @@ token analisa_termo(parser *p, token *in_fixa, int *pos) {
 token analisa_fator(parser *p, token *in_fixa, int *pos) {
 
     if (strcmp(p->t.simbolo, "sidentificador") == 0) {
-        atualiza_in_fixa(in_fixa, pos, p->t);
-        p->t = analisa_chamada_funcao(p);
-     
-    
-        if (pesquisa_tabela(p->t.lexema) == 1){ // semantico, verifica se é true e atribui o valor de ind no endereço passado para a função  -           IMPLEMENTAR
 
-            strcpy((sp_parser)->tipo, "funcao booleano");
-
-            if (strcmp((sp_parser)->tipo, "funcao inteiro") == 0 || strcmp((sp_parser)->tipo, "funcao booleano") == 0){
+        Tabsimb *sp_func;   // endereco auxiliar para ver se o identificador encontrado e uma funcao
+        
+        if (pesquisa_tabela(p->t.lexema, &sp_func) == 1){
+            atualiza_in_fixa(in_fixa, pos, p->t);
+            if (strcmp(sp_func->tipo, "funcao inteiro") == 0 || strcmp(sp_func->tipo, "funcao booleano") == 0){
                 p->t = analisa_chamada_funcao(p);
             }else{
                 p->t = lexer(p->file, p->out);
             }
         }else{
-            printf("\nERRO semantico:       Linha %d, Token: %s", p->t.linha, p->t.lexema);
+            printf("\nERRO semantico:  Linha %d, Token: %s", p->t.linha, p->t.lexema);
             exit(1);
         }
      } else if (strcmp(p->t.simbolo, "snumero") == 0) {
@@ -827,7 +823,7 @@ int main(){
                     p.t = lexer(p.file, p.out);
                     char ch = fgetc(p.file);
                     if (ch == EOF) {
-                        imprimir_tabela_simbolos();
+                        imprimir_tabela_simbolos();     // apenas para testes
                         printf("\nSucesso\n");
                     } else {
                         printf("\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);

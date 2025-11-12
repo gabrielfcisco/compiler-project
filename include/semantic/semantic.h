@@ -31,7 +31,7 @@ int pesquisa_declvar_tabela(char *lexema);
 int pesquisa_declvarfunc_tabela(char *lexema); 
 int pesquisa_declproc_tabela(char *lexema);
 void desempilha_ou_voltanivel();
-int pesquisa_tabela(char *lexema);
+int pesquisa_tabela(char *lexema, Tabsimb **sp_func);
 int pesquisa_declfunc_tabela(char *lexema);
 void imprimir_tabela_simbolos();
 

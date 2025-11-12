@@ -79,54 +79,72 @@ void coloca_tipo_tabela(char *lexema){
 }
 
 int pesquisa_declvar_tabela(char *lexema){  //boolean
-    (void)lexema;
-    //todo:
-    // no caso, se nao estiver duplicado =  false
+
+    Tabsimb* sp_aux = sp;
+    while (sp_aux != init){            
+        if(strcmp(sp_aux->lexema, lexema) == 0){ 
+            return 1;
+        }
+        sp_aux --;
+    }
     return 0;
 }
 
-int pesquisa_declvarfunc_tabela(char *lexema){ // boolean
-    (void)lexema;
-    //todo
+int pesquisa_declvarfunc_tabela(char *lexema){              //nao sei se declvarfunc e declvar sao iguais mesmo ou tem alguma diferenca, necessario verificar
+
+    Tabsimb* sp_aux = sp;
+    while (sp_aux != init){            
+        if(strcmp(sp_aux->lexema, lexema) == 0){ 
+            return 1;
+        }
+        sp_aux --;
+    }
     return 0;
 }
 
 int pesquisa_declproc_tabela(char *lexema){
-    (void)lexema;
-    //todo: pagina 50 livro dele
+
+    Tabsimb* sp_aux = sp;
+    while (sp_aux != init){            
+        if(strcmp(sp_aux->lexema, lexema) == 0){ 
+            return 1;
+        }
+        sp_aux --;
+    }
     return 0;
 }
 
 void desempilha_ou_voltanivel(){
-    // todo : pagina 50 do livro dele
-    return;
+    while(sp != init && sp->escopo != 'L'){
+        remove_tabela();
+    }
+    sp->escopo = ' ';
 }
 
-int pesquisa_tabela(char *lexema){
- 
-    // TODO : 
-    /*
-    nesse caso tera que pegar o lexema que foi passado e procurar se existe na tabela, se existir:
-     retorna 1,(true)
-     senao retorna 0 (false)
+int pesquisa_tabela(char *lexema, Tabsimb** sp_func){
 
-    lembrando que tem um detalhe do nivel, nao lembro muito bem esses conceitos se é ate a marca que procura ou se é ate o final
-    imagino que seja ate o final, mas seria bom revisar.
+    Tabsimb* sp_aux = sp;
+    while (sp_aux != init){            
+        if(strcmp(sp_aux->lexema, lexema) == 0){
+            *sp_func = sp_aux; 
+            return 1;
+            
+        }
+        sp_aux --;
+    }
+    return 0;
 
-    lembrando que o endereço de ind foi passado então estaremos manipulando diretamente o valor de ind de dentro da função "analisa_fator"
-    entao deveremos depositar o valor do indice da variavel encontrada pela função para o valor de ind, exemplo:
-
-     *ind = posição_do_lexema_procurado_na_lista_de_tabela_de_simbolos
-     ^
-     (com o asterisco)
-
-    */
-   return 1;
 }
 
 int pesquisa_declfunc_tabela(char *lexema){
-    (void)lexema;
-    //TODO : declaração de função ne
+
+    Tabsimb* sp_aux = sp;
+    while (sp_aux != init){            
+        if(strcmp(sp_aux->lexema, lexema) == 0){ 
+            return 1;
+        }
+        sp_aux --;
+    }
     return 0;
 }
 
