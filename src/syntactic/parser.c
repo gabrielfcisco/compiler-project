@@ -308,11 +308,13 @@ token analisa_comandos_simples(parser *p) {
 }
 
 token analisa_atrib_chprocedimento(parser *p) {
+    token left_side = p->t; // guardando o token da esquerda para gerar o codigo depois de analisar a expressao da direita
 
     token_free(&p->t);
     p->t = lexer(p->file, p->out);
     if (strcmp(p->t.simbolo, "satribuicao") == 0) {
-        p->t = analisa_atribuicao(p);
+        p->t = analisa_atribuicao(p,left_side);
+
     } else {
         p->t = analisa_chamada_procedimento(p);
     }
@@ -334,8 +336,27 @@ token analisa_se(parser *p) {
     p->t = analisa_expressao(p, in_fixa, &pos);
     
     pos_fixa_vetor = pos_fixa(in_fixa, pos, &posf);
-    // print_in_and_pos_fixa(in_fixa, pos, 0);
-    // print_in_and_pos_fixa(pos_fixa_vetor, posf, 1);
+    print_in_and_pos_fixa(in_fixa, pos, 0);
+    print_in_and_pos_fixa(pos_fixa_vetor, posf, 1);
+    
+    Tabsimb *sp_aux;   // endereco auxiliar para ver se o identificador encontrado e uma funcao
+
+    for (int i = 0; i < posf; i++){
+        printf("%s",pos_fixa_vetor[i].lexema);
+
+        if (pesquisa_tabela(pos_fixa_vetor[i].lexema, &sp_aux) == 1) {
+            char *endereco = convert_integer_to_string(sp_aux->end);
+            instrucao("operacao_var", endereco, ""); 
+            free(endereco);
+
+        }else if(strcmp(pos_fixa_vetor[i].simbolo, "snumero") == 0){
+            instrucao("operacao_num",pos_fixa_vetor[i].lexema, ""); 
+
+        }else{
+            instrucao("operacao",pos_fixa_vetor[i].lexema,"");
+        }
+
+    }
 
     for (int i = 0; i < pos; i++)
         token_free(&in_fixa[i]);
@@ -383,8 +404,27 @@ token analisa_enquanto(parser *p) {
     p->t = analisa_expressao(p, in_fixa, &pos);
     
     pos_fixa_vetor = pos_fixa(in_fixa, pos, &posf);
-    // print_in_and_pos_fixa(in_fixa, pos, 0);
-    // print_in_and_pos_fixa(pos_fixa_vetor, posf, 1);
+    print_in_and_pos_fixa(in_fixa, pos, 0);
+    print_in_and_pos_fixa(pos_fixa_vetor, posf, 1);
+
+    Tabsimb *sp_aux;   // endereco auxiliar para ver se o identificador encontrado e uma funcao
+
+    for (int i = 0; i < posf; i++){
+        printf("%s",pos_fixa_vetor[i].lexema);
+
+        if (pesquisa_tabela(pos_fixa_vetor[i].lexema, &sp_aux) == 1) {
+            char *endereco = convert_integer_to_string(sp_aux->end);
+            instrucao("operacao_var", endereco, ""); 
+            free(endereco); 
+
+        }else if(strcmp(pos_fixa_vetor[i].simbolo, "snumero") == 0){
+            instrucao("operacao_num",pos_fixa_vetor[i].lexema, ""); 
+
+        }else{
+            instrucao("operacao",pos_fixa_vetor[i].lexema,"");
+        }
+
+    }
 
     for (int i = 0; i < pos; i++)
         token_free(&in_fixa[i]);
@@ -503,7 +543,7 @@ token analisa_escreva(parser *p) {
     return p->t;
 }
 
-token analisa_atribuicao(parser *p) {
+token analisa_atribuicao(parser *p,token left_side) {
 
     if (strcmp(p->t.simbolo, "satribuicao") == 0) {
         token_free(&p->t);
@@ -517,8 +557,44 @@ token analisa_atribuicao(parser *p) {
         p->t = analisa_expressao(p, in_fixa, &pos);
         
         pos_fixa_vetor = pos_fixa(in_fixa, pos, &posf);
-        // print_in_and_pos_fixa(in_fixa, pos, 0);
-        // print_in_and_pos_fixa(pos_fixa_vetor, posf, 1);
+        print_in_and_pos_fixa(in_fixa, pos, 0);
+        print_in_and_pos_fixa(pos_fixa_vetor, posf, 1);
+
+        Tabsimb *sp_aux;   // endereco auxiliar para ver se o identificador encontrado e uma funcao
+
+        for (int i = 0; i < posf; i++){
+            printf("%s",pos_fixa_vetor[i].lexema);
+
+            if(i == (posf-1)){ //verifica se é o ultimo
+                if(verify_if_is_aritmetic(pos_fixa_vetor[i].lexema) == 1){ // verifica se é aritmetico
+                    if (pesquisa_tabela(left_side.lexema, &sp_aux) == 1) { //ve se tem na tabela
+                        char *endereco = convert_integer_to_string(sp_aux->end);
+                        instrucao("atribuicao", endereco, "");            //gera o load final depois de achar na
+                        free(endereco);
+                    }
+                }
+                break;
+                // aqui pode ter ficado meio confuso, mas quando pra saber quando é atribuição eu tenho que verificar se ja saiu do vetor de pos_fixa
+                //      se for, tenho que verificar se o ultimo termo valido é um operador aritmetico, se sim, é uma operação de atribuicao
+                //      se nao for, nao é uma operação de atribuição, portanto nao gera o codigo(LDV do lado esquerdo do ":=" )(que é a mesma geração para operacao_var)
+                //      
+            }
+
+            if (pesquisa_tabela(pos_fixa_vetor[i].lexema, &sp_aux) == 1) {
+                char *endereco = convert_integer_to_string(sp_aux->end);
+                instrucao("operacao_var", endereco, ""); 
+                free(endereco);
+
+            }else if(strcmp(pos_fixa_vetor[i].simbolo, "snumero") == 0){
+                instrucao("operacao_num",pos_fixa_vetor[i].lexema, ""); 
+
+            }else{
+                instrucao("operacao",pos_fixa_vetor[i].lexema,"");
+            }
+
+        }
+
+        
 
         for (int i = 0; i < pos; i++)
             token_free(&in_fixa[i]);

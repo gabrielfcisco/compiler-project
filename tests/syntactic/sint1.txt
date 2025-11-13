@@ -23,7 +23,7 @@ fim;
 procedimento analisa2;
 inicio
   leia(a);
-  b:= a*a+(c div (-b)) 
+  b:= a*a+(c div (-b)) * 0
 fim;
 
 inicio

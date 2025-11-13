@@ -4,6 +4,9 @@
 #include "../../include/code_generator/generator.h"
 #include "../../include/code_generator/instructions.h"
 
+int verify_if_is_aritmetic(char *operando);
+int verify_if_is_relational(char *operando);
+
 void instrucao(char *instrucao, char *operando1, char *operando2) {
 
     printf("\n Instrucao '%s': \n", instrucao);
@@ -71,5 +74,118 @@ void instrucao(char *instrucao, char *operando1, char *operando2) {
         return;
     }
 
+    if((strcmp(instrucao,"operacao_var") == 0)){
+        Gera("", "LDV", operando1 , "");
+        return;
+    }
+
+    if((strcmp(instrucao,"operacao_num") == 0)){
+        Gera("", "LDC", operando1 , "");
+        return;
+    }
+    
+    if(strcmp(instrucao,"operacao") == 0){
+
+        if(verify_if_is_aritmetic(operando1) == 1){
+            return;
+        }
+
+        if(verify_if_is_relational(operando1)==1){
+            return;
+        }
+    }
+
+    if((strcmp(instrucao,"atribuicao") == 0)){
+        Gera("", "LDV", operando1 , "");
+        return;
+    }
+
     printf(" Instrucao desconhecida: %s\n", instrucao);
+}
+
+int verify_if_is_aritmetic(char *operando){
+    if (strcmp(operando, "+") == 0){
+            Gera("","ADD","","");
+            return 1;
+        }
+        
+        if (strcmp(operando,"-") == 0 ){
+            Gera("","SUB","","");
+            return 1;
+        }
+
+        if (strcmp(operando,"*") == 0){
+            Gera("","MULT","","");
+            return 1;
+        }
+
+        if (strcmp(operando,"div") == 0){
+            Gera("","DIV","","");
+            return 1;
+        }
+
+        if (strcmp(operando,"inv") == 0){
+            Gera("","INV","",""); // inverte o sinal de um valor(usar depois para ler codigo)
+            //tambem verificar se esse é o nome que samuel deu para "-" no sentido de inverter
+            return 1;
+        }
+
+        printf(operando);
+        return 0;
+}
+
+int verify_if_is_relational(char *operando){
+    if (strcmp(operando,"e") == 0){
+            Gera("","AND","","");
+            return 1;
+        }
+
+        if (strcmp(operando,"ou") == 0){
+            Gera("","OR","","");
+            return 1;
+        }
+
+        if (strcmp(operando,"neg") == 0){
+            // inverte o sinal de um valor(usar depois para ler codigo)
+            //tambem verificar se esse é o nome que samuel deu para "-" no sentido de inverter
+            return 1;
+        }
+
+        if (strcmp(operando,"<") == 0){
+            Gera("","CME","","");
+            return 1;
+        }
+
+        if (strcmp(operando,"<=") == 0){
+            Gera("","CMEQ","","");
+            return 1;
+        }
+
+        if (strcmp(operando,">") ==0){
+            Gera("","CMA","","");
+            return 1;
+        }
+
+        if (strcmp(operando,">=") == 0){
+            Gera("","CMAQ","","");
+            return 1;
+        }
+
+        if (strcmp(operando,"<") == 0){
+            Gera("","CME","","");
+            return 1;
+        }
+
+        if (strcmp(operando,"=") == 0){
+            Gera("","CEQ","","");
+            return 1;
+        }
+
+        if (strcmp(operando,"!=") == 0){
+            Gera("","CDIF","","");
+            return 1;
+        }
+
+        printf(operando);
+        return 1;
 }

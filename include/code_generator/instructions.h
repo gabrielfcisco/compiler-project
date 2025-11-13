@@ -3,4 +3,6 @@
 
 void instrucao(char *instrucao, char *operando1, char *operando2);
 
+int verify_if_is_aritmetic(char *operando); //para fazer atribuicao
+
 #endif

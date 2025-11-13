@@ -19,7 +19,7 @@ token analisa_bloco(parser *p);
 token analisa_comandos_simples(parser *p);
 token analisa_comandos(parser *p);
 token analisa_atrib_chprocedimento(parser *p);
-token analisa_atribuicao(parser *p);
+token analisa_atribuicao(parser *p,token left_side);
 token analisa_escreva(parser *p);
 token analisa_leia(parser *p);
 token analisa_enquanto(parser *p);
