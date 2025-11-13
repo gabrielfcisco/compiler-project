@@ -550,6 +550,9 @@ token analisa_escreva(parser *p) {
 
 token analisa_atribuicao(parser *p,token left_side) {
 
+/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// fazer a verificacao se o resultado da posfixa é do mesmo tipo do "left_side"
+
     if (strcmp(p->t.simbolo, "satribuicao") == 0) {
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
