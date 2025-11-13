@@ -210,6 +210,8 @@ token analisa_declaracao_procedimento(parser *p){
         exit(1);
     }
     desempilha_ou_voltanivel();
+
+    instrucao("return","","");
     return p->t;
 }
 
@@ -254,6 +256,8 @@ token analisa_declaracao_funcao(parser *p){
     }
 
     desempilha_ou_voltanivel();
+
+    instrucao("return","","");
     return p->t;
 }
 
@@ -710,7 +714,7 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
         if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1){
             atualiza_in_fixa(in_fixa, pos, p->t);
             if (strcmp(sp_aux->tipo, "funcao inteiro") == 0 || strcmp(sp_aux->tipo, "funcao booleano") == 0){
-                p->t = analisa_chamada_funcao(p);
+                p->t = analisa_chamada_funcao(p,sp_aux->end);
             }else{
                 p->t = lexer(p->file, p->out);
             }
@@ -756,8 +760,13 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
     return p->t;
 }
 
-token analisa_chamada_funcao(parser *p) {
+token analisa_chamada_funcao(parser *p, int end) {
     if (strcmp(p->t.simbolo, "sidentificador") == 0) {
+        char *endereco = convert_integer_to_string(end);
+        instrucao("chamada_funcao", endereco, "");   // !!!!!!!!!!!!// !!!!!!!!!!!!// !!!!!!!!!!!!// !!!!!!!!!!!!// !!!!!!!!!!!!// !!!!!!!!!!!!// !!!!!!!!!!!!// !!!!!!!!!!!!// !!!!!!!!!!!!
+        // CALL NAO ESTA FUNCIONANDO
+        free(endereco);
+        
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
     }

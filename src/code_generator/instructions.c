@@ -105,6 +105,20 @@ void instrucao(char *instrucao, char *operando1, char *operando2) {
         return;
     }
 
+    if((strcmp(instrucao,"chamada_funcao") == 0)){
+        Gera("", "CALL", operando1 , "");
+        Gera("","LDV","0","");
+        return;
+    }
+
+    if((strcmp(instrucao,"return") == 0)){
+        if(strcmp(operando1,"procedimento")){
+            Gera("", "RETURN","", "");
+            return;
+        }
+    }
+    
+
     printf(" Instrucao desconhecida: %s\n", instrucao);
 }
 
