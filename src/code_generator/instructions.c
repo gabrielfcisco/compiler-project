@@ -79,6 +79,11 @@ void instrucao(char *instrucao, char *operando1, char *operando2) {
         return;
     }
 
+    if(strcmp(instrucao,"atribuicao") == 0){
+        Gera("","STR",operando1,"");
+        return;
+    }
+
     if((strcmp(instrucao,"operacao_num") == 0)){
         Gera("", "LDC", operando1 , "");
         return;
@@ -125,8 +130,7 @@ int verify_if_is_aritmetic(char *operando){
         }
 
         if (strcmp(operando,"inv") == 0){
-            Gera("","INV","",""); // inverte o sinal de um valor(usar depois para ler codigo)
-            //tambem verificar se esse é o nome que samuel deu para "-" no sentido de inverter
+            Gera("","INV","","");
             return 1;
         }
 
@@ -146,8 +150,7 @@ int verify_if_is_relational(char *operando){
         }
 
         if (strcmp(operando,"neg") == 0){
-            // inverte o sinal de um valor(usar depois para ler codigo)
-            //tambem verificar se esse é o nome que samuel deu para "-" no sentido de inverter
+            Gera("","NEG","","");
             return 1;
         }
 

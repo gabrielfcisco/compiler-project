@@ -24,7 +24,12 @@ void imprimir_token(token t) {
 
 void atualiza_in_fixa(token *in_fixa, int *pos, token t) {
 
-    in_fixa[*pos] = token_create(t.lexema, t.simbolo, t.linha);
+    if(t.unario == 1){
+        in_fixa[*pos] = token_create("inv", t.simbolo, t.linha);
+    }else{
+        in_fixa[*pos] = token_create(t.lexema, t.simbolo, t.linha);
+    }
+    
     (*pos)++;
 }
 
@@ -565,21 +570,6 @@ token analisa_atribuicao(parser *p,token left_side) {
         for (int i = 0; i < posf; i++){
             printf("%s",pos_fixa_vetor[i].lexema);
 
-            if(i == (posf-1)){ //verifica se é o ultimo
-                if(verify_if_is_aritmetic(pos_fixa_vetor[i].lexema) == 1){ // verifica se é aritmetico
-                    if (pesquisa_tabela(left_side.lexema, &sp_aux) == 1) { //ve se tem na tabela
-                        char *endereco = convert_integer_to_string(sp_aux->end);
-                        instrucao("atribuicao", endereco, "");            //gera o load final depois de achar na
-                        free(endereco);
-                    }
-                }
-                break;
-                // aqui pode ter ficado meio confuso, mas quando pra saber quando é atribuição eu tenho que verificar se ja saiu do vetor de pos_fixa
-                //      se for, tenho que verificar se o ultimo termo valido é um operador aritmetico, se sim, é uma operação de atribuicao
-                //      se nao for, nao é uma operação de atribuição, portanto nao gera o codigo(LDV do lado esquerdo do ":=" )(que é a mesma geração para operacao_var)
-                //      
-            }
-
             if (pesquisa_tabela(pos_fixa_vetor[i].lexema, &sp_aux) == 1) {
                 char *endereco = convert_integer_to_string(sp_aux->end);
                 instrucao("operacao_var", endereco, ""); 
@@ -594,8 +584,6 @@ token analisa_atribuicao(parser *p,token left_side) {
 
         }
 
-        
-
         for (int i = 0; i < pos; i++)
             token_free(&in_fixa[i]);
 
@@ -603,6 +591,12 @@ token analisa_atribuicao(parser *p,token left_side) {
             token_free(&pos_fixa_vetor[i]);
         
         free(pos_fixa_vetor);
+
+        if (pesquisa_tabela(left_side.lexema, &sp_aux) == 1) {
+            char *endereco = convert_integer_to_string(sp_aux->end);
+            instrucao("atribuicao", endereco, ""); 
+            free(endereco);
+        }
 
     } else {
         printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
