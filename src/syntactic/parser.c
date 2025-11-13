@@ -647,9 +647,9 @@ token analisa_expressao(parser *p, token *in_fixa, int *pos) {
 
     p->t = analisa_expressao_simples(p, in_fixa, pos);
 
-    if (strcmp(p->t.simbolo, "smaior") == 0 || strcmp(p->t.simbolo, "smaiorig") == 0 ||
-        strcmp(p->t.simbolo, "smenor") == 0 || strcmp(p->t.simbolo, "smenorig") == 0 ||
-        strcmp(p->t.simbolo, "sdif") == 0) {
+    if (strcmp(p->t.simbolo, "smaior") == 0   || strcmp(p->t.simbolo, "smaiorig") == 0 ||
+        strcmp(p->t.simbolo, "sig") == 0      || strcmp(p->t.simbolo, "smenor") == 0   || 
+        strcmp(p->t.simbolo, "smenorig") == 0 || strcmp(p->t.simbolo, "sdif") == 0) {
 
         atualiza_in_fixa(in_fixa, pos, p->t);
         token_free(&p->t);
