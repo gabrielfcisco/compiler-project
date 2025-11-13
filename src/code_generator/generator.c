@@ -35,7 +35,7 @@ int gera_comando(generator_struct g){
     print_if_not_empty(arquivo,g.operando2);
     fprintf(arquivo,"\n");
 
-    printf(" Codigo '%s %s %s %s' gerado ! \n",g.rotulo,g.instrucao,g.operando1,g.operando2);
+    // printf(" Codigo '%s %s %s %s' gerado ! \n",g.rotulo,g.instrucao,g.operando1,g.operando2);
     fclose(arquivo);
     return 0;
 }
@@ -48,7 +48,7 @@ void print_if_not_empty(FILE *arquivo, char *string){
 }
 
 char *convert_integer_to_string(int input){
-    char *output = malloc(32);
+    char *output = malloc(40);
     if (!output) return NULL;
 
     sprintf(output,"%d",input);

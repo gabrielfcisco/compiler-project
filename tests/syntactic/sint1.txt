@@ -14,7 +14,7 @@ inicio
   leia(z);
   enquanto (a != 89) e (a<= 1000)  {condicao de parada}
   faca inicio
-           a:= x+z
+           a:= a-b
        fim;
   escreva(a)
 fim;
@@ -23,13 +23,14 @@ fim;
 procedimento analisa2;
 inicio
   leia(a);
-  b:= a*a+(c div (-b)) 
+  b:= a*a+(c div (-b)) * 0;
+  z:= a<b
 fim;
 
 inicio
     analisa1;
     analisa2;
-    se b > (c+ a*a)
+    se b > (-c+ a*a)
     entao escreva(b)
     senao escreva(c)
 fim.
