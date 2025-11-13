@@ -239,32 +239,25 @@ class MVDMachine:
             self.outputs.append(val)
 
         elif op == "ALLOC":
-            # Formatos:
-            #   ALLOC n      -> s := s + n
-            #   ALLOC m,n    -> empilha cópia de M[m..m+n-1]
+            # Apenas formato: ALLOC m n  (copia M[m..m+n-1] para o topo da pilha)
             if a2 is None:
-                n = to_int(a1)
-                self.s += n
-            else:
-                m = to_int(a1)
-                n = to_int(a2)
-                for k in range(n):
-                    self.s += 1
-                    self.M[self.s] = self.M[m + k]
+                raise ValueError("Erro: ALLOC requer dois parâmetros (m n).")
+            m = to_int(a1)
+            n = to_int(a2)
+            for k in range(n):
+                self.s += 1
+                self.M[self.s] = self.M[m + k]
 
         elif op == "DALLOC":
-            # Formatos:
-            #   DALLOC n     -> s := s - n
-            #   DALLOC m,n   -> restaura M[m..m+n-1] a partir do topo
+            # Apenas formato: DALLOC m n  (restaura M[m..m+n-1] a partir do topo)
             if a2 is None:
-                n = to_int(a1)
-                self.s -= n
-            else:
-                m = to_int(a1)
-                n = to_int(a2)
-                for k in range(n - 1, -1, -1):
-                    self.M[m + k] = self.M[self.s]
-                    self.s -= 1
+                raise ValueError("Erro: DALLOC requer dois parâmetros (m n).")
+            m = to_int(a1)
+            n = to_int(a2)
+            for k in range(n - 1, -1, -1):
+                self.M[m + k] = self.M[self.s]
+                self.s -= 1
+
 
         elif op == "CALL":
             # Empilha endereço de retorno e salta

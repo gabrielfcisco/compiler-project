@@ -1,5 +1,5 @@
 START
-ALLOC 5          ; 0:n, 1:k, 2:f1, 3:f2, 4:f3
+ALLOC 0 5          ; 0:n, 1:k, 2:f1, 3:f2, 4:f3
 
 ; leia(n)
 RD
@@ -55,5 +55,5 @@ PRN
 LDV 2
 PRN
 
-DALLOC 5
+DALLOC 0 5
 HLT

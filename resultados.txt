@@ -1,5 +1,0 @@
-Resultados de execução da MVD - 2025-11-11 18:41:57.173168
-------------------------------------------------------------
-exemplo1.obj | Entrada: [5] | Saída: [10]
-exemplo2.obj | Entrada: [5] | Saída: [15]
-exemplo5.obj | Entrada: [5] | Saída: [5, 5]

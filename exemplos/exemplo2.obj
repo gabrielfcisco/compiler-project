@@ -1,5 +1,5 @@
 START
-ALLOC 2      ; 0:n  1:soma
+ALLOC 0 2     ; 0:n  1:soma
 
 RD           ; leia(n)
 STR 0
@@ -27,5 +27,5 @@ JMP L1
 L2:
 LDV 1
 PRN          ; imprime soma
-DALLOC 2
+DALLOC 0 2
 HLT

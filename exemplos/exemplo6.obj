@@ -1,0 +1,58 @@
+START
+ALLOC 0 1            ; variável global n no endereço 0
+
+RD
+STR 0                ; n := entrada
+
+; ---- chamada de função fat ----
+LDV 0                ; empilha argumento n
+CALL FAT
+STR 1                ; armazena resultado em 1 (temporário)
+LDV 1
+PRN
+
+DALLOC 0 1
+HLT
+
+
+; =============================
+;  FUNÇÃO FAT (fatorial)
+;  Parâmetros simulados via pilha
+; =============================
+FAT:
+ALLOC 2 1            ; variável local x fica no endereço 2
+
+; x := argumento (que está no topo)
+STR 2
+
+; testa x <= 1
+LDV 2
+LDC 1
+CMEQ
+JMPF FAT_RECURSE
+
+; caso base: return 1
+LDC 1
+RETURNF
+
+
+FAT_RECURSE:
+; prepara chamada recursiva: fat(x-1)
+
+LDV 2
+LDC 1
+SUB
+CALL FAT
+
+; resultado da recursão está no topo
+; agora multiplica por x
+
+LDV 2
+MULT                 ; (fat(x-1)) * x
+
+RETURNF
+
+
+; limpeza local
+DALLOC 2 1
+RETURN

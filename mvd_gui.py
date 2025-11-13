@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, messagebox, ttk, simpledialog
 from mvd_machine import MVDMachine
 
 
@@ -11,7 +11,6 @@ class MVDApp:
         # Estado da MVD
         self.vm = None
         self.current_program_text = ""
-        self.default_input = [5]  # você pode mudar ou depois ler de um campo
 
         # Interface
         self._build_menu()
@@ -143,10 +142,10 @@ class MVDApp:
             with open(filename, "r", encoding="utf-8") as f:
                 self.current_program_text = f.read()
 
-            # Cria nova VM sempre que carrega arquivo
+            # Cria VM sem entradas inicialmente
             self.vm = MVDMachine(
                 program_text=self.current_program_text,
-                input_values=self.default_input.copy()
+                input_values=[]
             )
 
             self.refresh_code_view()
@@ -160,6 +159,50 @@ class MVDApp:
             self.vm = None
 
     # =========================
+    # Função auxiliar: pedir entrada só na hora do RD
+    # =========================
+
+    def ensure_input_for_rd(self) -> bool:
+        """
+        Se a próxima instrução for RD e não houver valores em input_values,
+        pede UM inteiro para o usuário e coloca na fila.
+        Retorna True se ok, False se o usuário cancelou ou deu erro.
+        """
+        if not self.vm:
+            return False
+
+        # Se instrução atual não existe ou VM já terminou
+        if not (0 <= self.vm.i < len(self.vm.P)):
+            return False
+
+        ins = self.vm.P[self.vm.i]
+        if ins.op != "RD":
+            # Não é RD, não precisa de nada
+            return True
+
+        # Se já tem algum valor pendente, usamos ele
+        if self.vm.input_values:
+            return True
+
+        # Pedir UM valor inteiro para este RD
+        s = simpledialog.askstring(
+            "Entrada",
+            "Informe o próximo valor inteiro de entrada (para RD):"
+        )
+        if s is None:
+            # Usuário cancelou
+            return False
+
+        try:
+            v = int(s.strip())
+        except ValueError:
+            messagebox.showerror("Erro", "Valor inválido. Digite apenas um inteiro.")
+            return False
+
+        self.vm.input_values.append(v)
+        return True
+
+    # =========================
     # Execução NORMAL
     # =========================
 
@@ -169,14 +212,21 @@ class MVDApp:
             return
 
         if self.exec_mode.get() != "normal":
-            # Em passo a passo, Executar não deve fazer nada
             messagebox.showinfo("Info", "Selecione 'Normal' para usar o botão Executar.")
             return
 
         self.refresh_output_view(clear=True)
 
         try:
-            self.vm.run()
+            # Loop de execução manual, para poder interceptar RD
+            while self.vm.running and 0 <= self.vm.i < len(self.vm.P):
+                # Se a próxima instrução for RD, garante que há dado de entrada
+                if not self.ensure_input_for_rd():
+                    # Usuário cancelou ou erro de entrada
+                    break
+
+                self.vm.step()
+
             self.refresh_memory_view()
             self.refresh_output_view()
             self.highlight_current_instruction()
@@ -198,6 +248,10 @@ class MVDApp:
 
         if (not self.vm.running) or not (0 <= self.vm.i < len(self.vm.P)):
             messagebox.showinfo("Fim", "Programa já terminou (HLT alcançado).")
+            return
+
+        # Se o próximo passo é RD, pede entrada agora
+        if not self.ensure_input_for_rd():
             return
 
         try:
@@ -252,7 +306,6 @@ class MVDApp:
         if not self.vm:
             return
 
-        # mostra endereços 0..max(s, 20)
         topo = max(self.vm.s, 0)
         limite = max(topo + 1, 20)
         for addr in range(limite):
