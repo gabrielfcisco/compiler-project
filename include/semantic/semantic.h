@@ -23,7 +23,7 @@ typedef struct{
 
 
 //Prototype
-Tabsimb* initialize_stack();
+Tabsimb** initialize_stack();
 void insere_tabela(char *lexema, char *tipo_inicial, char escopo, int end, int *endereco_var, int flag);
 int pesquisa_duplica_var_tabela(char *lexema); 
 void coloca_tipo_tabela(char *lexema);

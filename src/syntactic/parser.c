@@ -8,7 +8,7 @@
 #include "../../include/code_generator/generator.h"
 #include "../../include/code_generator/instructions.h"
 
-Tabsimb* sp_parser;
+Tabsimb** sp_parser;
 int rotulo = 1;
 int endereco_var = 1;
 
@@ -243,10 +243,9 @@ token analisa_declaracao_funcao(parser *p){
                 p->t = lexer(p->file, p->out);
                 if((strcmp(p->t.simbolo, "sinteiro") == 0) || strcmp(p->t.simbolo, "sbooleano") == 0){
                     if(strcmp(p->t.simbolo, "sinteiro") == 0){
-                        printf("\n\n\n\n\n\n\n\n, %s", sp_parser->lexema);
-                        strcpy((sp_parser)->tipo, "funcao inteiro");
+                        strcpy((*sp_parser)->tipo, "funcao inteiro");
                     }else{
-                        strcpy((sp_parser)->tipo, "funcao booleano");
+                        strcpy((*sp_parser)->tipo, "funcao booleano");
                     }
                     p->t = lexer(p->file, p->out);
                     if(strcmp(p->t.simbolo, "sponto_virgula") == 0){
@@ -271,7 +270,6 @@ token analisa_declaracao_funcao(parser *p){
 
     desempilha_ou_voltanivel();
 
-    instrucao("return","","");
     return p->t;
 }
 

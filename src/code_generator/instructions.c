@@ -138,21 +138,20 @@ void ins_expressao(token *vetor_pos_fixa, int posf){
     Tabsimb *sp_aux;   // endereco auxiliar para ver se o identificador encontrado e uma funcao
     char *endereco;
 
-        for (int i = 0; i < posf; i++){
-
-            if (pesquisa_tabela(vetor_pos_fixa[i].lexema, &sp_aux) == 1) {
+    for (int i = 0; i < posf; i++){
+        if (pesquisa_tabela(vetor_pos_fixa[i].lexema, &sp_aux) == 1){
+            if((strcmp(sp_aux->tipo, "funcao inteiro") != 0 && strcmp(sp_aux->tipo, "funcao booleano") != 0)){
                 endereco = convert_integer_to_string(sp_aux->end);
                 instrucao("operacao_var", endereco, "");
                 free(endereco); 
-
-            }else if(strcmp(vetor_pos_fixa[i].simbolo, "snumero") == 0){
-                instrucao("operacao_num",vetor_pos_fixa[i].lexema, ""); 
-
-            }else{
-                instrucao("operacao",vetor_pos_fixa[i].lexema,"");
             }
+        }else if(strcmp(vetor_pos_fixa[i].simbolo, "snumero") == 0){
+            instrucao("operacao_num",vetor_pos_fixa[i].lexema, ""); 
 
+        }else{
+            instrucao("operacao",vetor_pos_fixa[i].lexema,"");
         }
+    }
 }
 
 void ins_atr_expressao(char *lexema){
