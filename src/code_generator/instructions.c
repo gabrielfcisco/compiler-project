@@ -11,7 +11,7 @@ int verify_if_is_relational(char *operando);
 
 void instrucao(char *instrucao, char *operando1, char *operando2) {
 
-    // printf("\n Instrucao '%s': \n", instrucao);
+    printf("\n Instrucao '%s': \n", instrucao);
 
     if(strcmp(instrucao,"inicia_prog") == 0){
         Gera("","START","","");
@@ -107,13 +107,19 @@ void instrucao(char *instrucao, char *operando1, char *operando2) {
         return;
     }
 
-    if((strcmp(instrucao,"chamada_funcao") == 0)){
-        Gera("", "CALL", operando1 , "");
-        Gera("","LDV","0","");
-        return;
-    }
-    if((strcmp(instrucao,"chamada_procedimento") == 0)){
-        Gera("", "CALL", operando1, "");
+    if(strcmp(instrucao,"chamada") == 0){
+
+        if(strcmp(operando2,"proc") == 0){
+            Gera("", "CALL", operando1, "");
+            return;
+        }
+
+        if(strcmp(operando2,"funcao") == 0){
+            Gera("", "CALL", operando1 , "");
+            Gera("","LDV","0","");
+            return;
+        }
+
     }
 
     if((strcmp(instrucao,"return") == 0)){
@@ -153,9 +159,15 @@ void ins_atr_expressao(char *lexema){
     Tabsimb *sp_aux;
     char *endereco;
     if (pesquisa_tabela(lexema, &sp_aux) == 1) {  
-        endereco = convert_integer_to_string (sp_aux->end);
-        instrucao("atribuicao", endereco, "");
-        free(endereco);
+        if (strcmp(sp_aux->tipo, "funcao inteiro") == 0 || strcmp(sp_aux->tipo, "funcao booleano") == 0){
+            instrucao("atribuicao", "0", "");
+            instrucao("return","","");
+
+        }else{
+            endereco = convert_integer_to_string (sp_aux->end);
+            instrucao("atribuicao", endereco, "");
+            free(endereco);
+        }
     }
 }
 

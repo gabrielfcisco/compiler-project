@@ -23,10 +23,10 @@ void imprimir_simbolo(Tabsimb* sp) {
     printf("-------------------------\n\n");
 }
 
-Tabsimb* initialize_stack(){
+Tabsimb** initialize_stack(){
     sp = symbol_table;
     init = sp;
-    return sp;
+    return &sp;
 }
 
 void insere_tabela(char *lexema, char *tipo_inicial, char escopo, int rotulo, int *endereco_var, int flag){

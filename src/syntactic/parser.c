@@ -242,7 +242,8 @@ token analisa_declaracao_funcao(parser *p){
             if(strcmp(p->t.simbolo, "sdoispontos") == 0){
                 p->t = lexer(p->file, p->out);
                 if((strcmp(p->t.simbolo, "sinteiro") == 0) || strcmp(p->t.simbolo, "sbooleano") == 0){
-                    if(strcmp(p->t.simbolo, "sinteiro") == 0){ 
+                    if(strcmp(p->t.simbolo, "sinteiro") == 0){
+                        printf("\n\n\n\n\n\n\n\n, %s", sp_parser->lexema);
                         strcpy((sp_parser)->tipo, "funcao inteiro");
                     }else{
                         strcpy((sp_parser)->tipo, "funcao booleano");
@@ -344,9 +345,16 @@ token analisa_atrib_chprocedimento(parser *p) {
         p->t = analisa_atribuicao(p, left_side);
 
     } else {
-        p->t = analisa_chamada_procedimento(p);
-    }
+        Tabsimb *sp_aux;
 
+        if(pesquisa_tabela(left_side, &sp_aux) == 1){
+            printf("\n\n\n\n\\n\n\n\n\n\n\n %s %i\n\n\n", left_side,sp_aux->end);
+            p->t = analisa_chamada_procedimento(p, sp_aux->end);
+        }else{
+            printf("ERRO proc '%s' nao encontrada: linha %d",left_side ,p->t.linha);
+            exit(1);
+        }
+    }
     free(left_side);
     return p->t;
 }
@@ -782,7 +790,7 @@ token analisa_chamada_funcao(parser *p, int end) {
     if (strcmp(p->t.simbolo, "sidentificador") == 0) {
 
         char *endereco = convert_integer_to_string(end);  //endereco aqui e rotulo
-        instrucao("chamada_funcao", endereco, "");
+        instrucao("chamada", endereco, "funcao");
         free(endereco);
 
         token_free(&p->t);
@@ -792,11 +800,12 @@ token analisa_chamada_funcao(parser *p, int end) {
 }
 
 
-token analisa_chamada_procedimento(parser *p) {
-    if (strcmp(p->t.simbolo, "sidentificador") == 0) {
-        token_free(&p->t);
-        p->t = lexer(p->file, p->out);
-    }
+token analisa_chamada_procedimento(parser *p, int end) {
+
+    char *endereco = convert_integer_to_string(end);  //endereco aqui e rotulo
+    instrucao("chamada", endereco, "proc");
+    free(endereco);
+
     return p->t;
 }
 
@@ -894,7 +903,7 @@ int main(){
                     p.t = lexer(p.file, p.out);
                     char ch = fgetc(p.file);
                     if (ch == EOF) {
-                        // imprimir_tabela_simbolos();     // apenas para testes
+                        imprimir_tabela_simbolos();     // apenas para testes
                         printf("\nSucesso\n");
                     } else {
                         printf("\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
