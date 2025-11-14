@@ -225,6 +225,7 @@ token analisa_declaracao_procedimento(parser *p){
     desempilha_ou_voltanivel();
 
     instrucao("return","","");
+    
     return p->t;
 }
 
@@ -237,7 +238,12 @@ token analisa_declaracao_funcao(parser *p){
     if(strcmp(p->t.simbolo, "sidentificador") == 0){
         if(pesquisa_declfunc_dup_tabela(p->t.lexema) == 0){
             insere_tabela(p->t.lexema,"", nivel, rotulo, &endereco_var, 0);
+
+            char *endereco = convert_integer_to_string(rotulo);
+            instrucao("label", endereco, ""); // CALL ira buscar este rotulo na tabsimb
+            free(endereco);
             rotulo++;
+            
             p->t = lexer(p->file, p->out);
             if(strcmp(p->t.simbolo, "sdoispontos") == 0){
                 p->t = lexer(p->file, p->out);
@@ -269,6 +275,8 @@ token analisa_declaracao_funcao(parser *p){
     }
 
     desempilha_ou_voltanivel();
+
+    instrucao("return","","");
 
     return p->t;
 }

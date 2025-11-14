@@ -15,10 +15,12 @@ void instrucao(char *instrucao, char *operando1, char *operando2) {
 
     if(strcmp(instrucao,"inicia_prog") == 0){
         Gera("","START","","");
+        Gera("","ALLOC","0","1");
         return;
     }
 
     if(strcmp(instrucao,"finaliza_prog") == 0){
+        Gera("","DALLOC","0","1");
         Gera("", "HLT","","");
         return;
     }
@@ -165,7 +167,6 @@ void ins_atr_expressao(char *lexema){
     if (pesquisa_tabela(lexema, &sp_aux) == 1) {  
         if (strcmp(sp_aux->tipo, "funcao inteiro") == 0 || strcmp(sp_aux->tipo, "funcao booleano") == 0){
             instrucao("atribuicao", "0", "");
-            instrucao("return","","");
 
         }else{
             endereco = convert_integer_to_string (sp_aux->end);
