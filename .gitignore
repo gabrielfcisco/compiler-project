@@ -29,3 +29,7 @@ parser.dSYM/
 !output/symbols/.gitkeep
 !output/code/.gitkeep
 !output/ast/.gitkeep
+
+# Vagrant
+Vagrantfile
+.vagrant

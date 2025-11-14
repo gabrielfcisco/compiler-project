@@ -24,8 +24,13 @@ void imprimir_token(token t) {
 
 void atualiza_in_fixa(token *in_fixa, int *pos, token t) {
 
-    if(t.unario == 1){
-        in_fixa[*pos] = token_create("inv", t.simbolo, t.linha);
+    if(t.unario == 1 && (strcmp(t.simbolo, "smenos") == 0 || strcmp(t.simbolo, "smais") == 0)){
+        if(strcmp(t.simbolo, "smenos") == 0){
+            in_fixa[*pos] = token_create("inv", t.simbolo, t.linha);
+        }
+        else{
+            return;    //se for smais e unario, descarta
+        }
     }else{
         in_fixa[*pos] = token_create(t.lexema, t.simbolo, t.linha);
     }
