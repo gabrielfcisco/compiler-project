@@ -140,11 +140,16 @@ void ins_expressao(token *vetor_pos_fixa, int posf){
 
     for (int i = 0; i < posf; i++){
         if (pesquisa_tabela(vetor_pos_fixa[i].lexema, &sp_aux) == 1){
-            if((strcmp(sp_aux->tipo, "funcao inteiro") != 0 && strcmp(sp_aux->tipo, "funcao booleano") != 0)){
+            if((strcmp(sp_aux->tipo, "funcao inteiro") == 0 || strcmp(sp_aux->tipo, "funcao booleano") == 0)){
+                char *endereco = convert_integer_to_string(sp_aux->end);  //endereco aqui e rotulo
+                instrucao("chamada", endereco, "funcao");
+                free(endereco);
+            }else{
                 endereco = convert_integer_to_string(sp_aux->end);
                 instrucao("operacao_var", endereco, "");
-                free(endereco); 
+                free(endereco);
             }
+
         }else if(strcmp(vetor_pos_fixa[i].simbolo, "snumero") == 0){
             instrucao("operacao_num",vetor_pos_fixa[i].lexema, ""); 
 

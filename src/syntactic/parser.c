@@ -346,7 +346,6 @@ token analisa_atrib_chprocedimento(parser *p) {
         Tabsimb *sp_aux;
 
         if(pesquisa_tabela(left_side, &sp_aux) == 1){
-            printf("\n\n\n\n\\n\n\n\n\n\n\n %s %i\n\n\n", left_side,sp_aux->end);
             p->t = analisa_chamada_procedimento(p, sp_aux->end);
         }else{
             printf("ERRO proc '%s' nao encontrada: linha %d",left_side ,p->t.linha);
@@ -738,7 +737,7 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
         if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1){
             atualiza_in_fixa(in_fixa, pos, p->t);
             if (strcmp(sp_aux->tipo, "funcao inteiro") == 0 || strcmp(sp_aux->tipo, "funcao booleano") == 0){
-                p->t = analisa_chamada_funcao(p, sp_aux->end);
+                p->t = analisa_chamada_funcao(p);
             }else{
                 p->t = lexer(p->file, p->out);
             }
@@ -784,12 +783,8 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
     return p->t;
 }
 
-token analisa_chamada_funcao(parser *p, int end) {
+token analisa_chamada_funcao(parser *p) {
     if (strcmp(p->t.simbolo, "sidentificador") == 0) {
-
-        char *endereco = convert_integer_to_string(end);  //endereco aqui e rotulo
-        instrucao("chamada", endereco, "funcao");
-        free(endereco);
 
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
