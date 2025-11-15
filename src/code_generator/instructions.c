@@ -11,7 +11,7 @@ int verify_if_is_relational(char *operando);
 
 void instrucao(char *instrucao, char *operando1, char *operando2) {
 
-    printf("\n Instrucao '%s': \n", instrucao);
+    // printf("\n Instrucao '%s': \n", instrucao);
 
     if(strcmp(instrucao,"inicia_prog") == 0){
         Gera("","START","","");

@@ -26,7 +26,7 @@ void atualiza_in_fixa(token *in_fixa, int *pos, token t) {
 
     if(t.unario == 1 && (strcmp(t.simbolo, "smenos") == 0 || strcmp(t.simbolo, "smais") == 0)){
         if(strcmp(t.simbolo, "smenos") == 0){
-            in_fixa[*pos] = token_create("inv", t.simbolo, t.linha);
+            in_fixa[*pos] = token_create("inv", "sinv", t.linha);
         }
         else{
             return;    //se for smais e unario, descarta
@@ -368,7 +368,7 @@ token analisa_atrib_chprocedimento(parser *p) {
 
 token analisa_se(parser *p) {
 
-    token in_fixa[100];
+    token in_fixa[1000];
     token *vetor_pos_fixa;
     int pos = 0;  // numero de elementos do vetor in_fixa ao termino da expressao
     int posf = 0; // numero de elementos do vetor pos_fixa ao termino da expressao
@@ -384,6 +384,11 @@ token analisa_se(parser *p) {
     vetor_pos_fixa = pos_fixa(in_fixa, pos, &posf);
     print_in_and_pos_fixa(in_fixa, pos, 0);
     print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
+
+    if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
+        printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
+        exit(1);
+    }
     
     ins_expressao(vetor_pos_fixa, posf);   // gera as instrucoes conforme pos_fixa
 
@@ -462,7 +467,7 @@ token analisa_enquanto(parser *p) {
     token_free(&p->t);
     p->t = lexer(p->file, p->out);
 
-    token in_fixa[100];
+    token in_fixa[1000];
     token *vetor_pos_fixa;
     int pos = 0;  // numero de elementos do vetor in_fixa ao termino da expressao
     int posf = 0; // numero de elementos do vetor pos_fixa ao termino da expressao
@@ -472,6 +477,11 @@ token analisa_enquanto(parser *p) {
     vetor_pos_fixa = pos_fixa(in_fixa, pos, &posf);
     print_in_and_pos_fixa(in_fixa, pos, 0);
     print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
+
+    if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
+    printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
+    exit(1);
+    }
 
     ins_expressao(vetor_pos_fixa, posf);      // gera as instrucoes conforme pos_fixa
 
@@ -612,7 +622,7 @@ token analisa_atribuicao(parser *p, char *left_side) {
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
 
-        token in_fixa[100];
+        token in_fixa[1000];
         token *vetor_pos_fixa;
         int pos = 0;  // numero de elementos do vetor in_fixa ao termino da expressao
         int posf = 0; // numero de elementos do vetor pos_fixa ao termino da expressao
@@ -622,6 +632,11 @@ token analisa_atribuicao(parser *p, char *left_side) {
         vetor_pos_fixa = pos_fixa(in_fixa, pos, &posf);
         print_in_and_pos_fixa(in_fixa, pos, 0);
         print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
+
+        if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
+            printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
+            exit(1);
+        }
 
         ins_expressao(vetor_pos_fixa, posf);  // gera as instrucoes conforme pos_fixa
 
@@ -757,7 +772,7 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
         atualiza_in_fixa(in_fixa, pos, p->t);
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
-    } else if (strcmp(p->t.simbolo, "snao") == 0) {
+    } else if (strcmp(p->t.simbolo, "snao") == 0) {        //nao e neg?
         p->t.unario = 1; // marca como operador unário
         atualiza_in_fixa(in_fixa, pos, p->t);
         token_free(&p->t);
@@ -767,7 +782,6 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
         atualiza_in_fixa(in_fixa, pos, p->t);
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
-
         p->t = analisa_expressao(p, in_fixa, pos);
         if (strcmp(p->t.simbolo, "sfecha_parenteses") == 0) {
             atualiza_in_fixa(in_fixa, pos, p->t);
@@ -904,7 +918,7 @@ int main(){
                     p.t = lexer(p.file, p.out);
                     char ch = fgetc(p.file);
                     if (ch == EOF) {
-                        imprimir_tabela_simbolos();     // apenas para testes
+                        // imprimir_tabela_simbolos();     // apenas para testes
                         printf("\nSucesso\n");
                     } else {
                         printf("\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);

@@ -40,7 +40,7 @@ int gera_comando(generator_struct g){
     print_if_not_empty(arquivo,g.operando2);
     fprintf(arquivo,"\n");
 
-    printf(" Codigo '%s %s %s %s' gerado ! \n",g.rotulo,g.instrucao,g.operando1,g.operando2);
+    // printf(" Codigo '%s %s %s %s' gerado ! \n",g.rotulo,g.instrucao,g.operando1,g.operando2);
     fclose(arquivo);
     return 0;
 }

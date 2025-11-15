@@ -1,11 +1,11 @@
 { teste procedimentos e funcoes aninhados recursivos OK
 escreva as sucessivas somas de traz para frente   
-8
-8
-12
-8
-7
--5
+8  -> cmp
+8  ->        c
+12 -> 20     a
+8  -> cmp
+7  ->        c
+-5 -> 2      a
 10 (FIM)
 saida
 2
