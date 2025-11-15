@@ -19,17 +19,16 @@ token analisa_bloco(parser *p);
 token analisa_comandos_simples(parser *p);
 token analisa_comandos(parser *p);
 token analisa_atrib_chprocedimento(parser *p);
-token analisa_atribuicao(parser *p);
+token analisa_atribuicao(parser *p,char *left_side);
 token analisa_escreva(parser *p);
 token analisa_leia(parser *p);
 token analisa_enquanto(parser *p);
 token analisa_se(parser *p);
-token analisa_atrib_chprocedimento(parser *p);
 token analisa_expressao_simples(parser *p, token *in_fixa, int *pos);
 token analisa_expressao(parser *p, token *in_fixa, int *pos);
 token analisa_termo(parser *p, token *in_fixa, int *pos);
 token analisa_chamada_funcao(parser *p);
-token analisa_chamada_procedimento(parser *p);
+token analisa_chamada_procedimento(parser *p, int end);
 token analisa_fator(parser *p, token *in_fixa, int *pos);
 
 #endif

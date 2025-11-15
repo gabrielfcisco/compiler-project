@@ -23,16 +23,16 @@ typedef struct{
 
 
 //Prototype
-Tabsimb* initialize_stack();
-void insere_tabela(char *lexema, char *tipo_inicial, char escopo, int end);
+Tabsimb** initialize_stack();
+void insere_tabela(char *lexema, char *tipo_inicial, char escopo, int end, int *endereco_var, int flag);
 int pesquisa_duplica_var_tabela(char *lexema); 
 void coloca_tipo_tabela(char *lexema);
 int pesquisa_declvar_tabela(char *lexema);  
 int pesquisa_declvarfunc_tabela(char *lexema); 
-int pesquisa_declproc_tabela(char *lexema);
+int pesquisa_declproc_dup_tabela(char *lexema);
 void desempilha_ou_voltanivel();
 int pesquisa_tabela(char *lexema, Tabsimb **sp_func);
-int pesquisa_declfunc_tabela(char *lexema);
+int pesquisa_declfunc_dup_tabela(char *lexema);
 void imprimir_tabela_simbolos();
 
 

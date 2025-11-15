@@ -12,6 +12,7 @@ output/tokens/*
 output/symbols/*
 output/code/*
 output/ast/*
+codigo_maquina_virtual.txt
 
 # IDEs
 .vscode/
@@ -28,3 +29,7 @@ parser.dSYM/
 !output/symbols/.gitkeep
 !output/code/.gitkeep
 !output/ast/.gitkeep
+
+# Vagrant
+Vagrantfile
+.vagrant
