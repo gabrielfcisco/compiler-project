@@ -257,6 +257,20 @@ int verify_if_is_relational(char *operando){
             return 1;
         }
 
+        if (strcmp(operando,"verdadeiro") == 0){
+            char *number = convert_integer_to_string (1);
+            Gera("", "LDC", number, "");
+            free (number);
+            return 1;
+        }
+
+        if (strcmp(operando,"falso") == 0){
+            char *number = convert_integer_to_string (0);
+            Gera("", "LDC", number, "");
+            free (number);
+            return 1;
+        }
+
         
         return 1;
 }

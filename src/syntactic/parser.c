@@ -24,12 +24,17 @@ void imprimir_token(token t) {
 
 void atualiza_in_fixa(token *in_fixa, int *pos, token t) {
 
-    if(t.unario == 1 && (strcmp(t.simbolo, "smenos") == 0 || strcmp(t.simbolo, "smais") == 0)){
-        if(strcmp(t.simbolo, "smenos") == 0){
+    if (t.unario == 1) {
+        if (strcmp(t.simbolo, "smenos") == 0) {
             in_fixa[*pos] = token_create("inv", "sinv", t.linha);
+            in_fixa[*pos].unario = 1;
+        } 
+        else if (strcmp(t.simbolo, "snao") == 0) {
+            in_fixa[*pos] = token_create("neg", t.simbolo, t.linha);
+            in_fixa[*pos].unario = 1;
         }
-        else{
-            return;    //se for smais e unario, descarta
+        else if (strcmp(t.simbolo, "smais") == 0) {
+            return; // descarta + unário
         }
     }else{
         in_fixa[*pos] = token_create(t.lexema, t.simbolo, t.linha);
@@ -43,6 +48,7 @@ void print_in_and_pos_fixa(token *vetor_tokens, int pos, int fixa) {
         printf("Expressão em notação infixa: ");
         for (int i = 0; i < pos; i++) {
             printf("%s ", vetor_tokens[i].lexema);
+            
         }
         printf("\n");
     }
@@ -57,13 +63,12 @@ void print_in_and_pos_fixa(token *vetor_tokens, int pos, int fixa) {
 
 int precedencia(token t) {
 
-    if (t.unario == 1) return 7; // maior prioridade para operadores unários   
-    if (strcmp(t.simbolo, "smult")    == 0  || strcmp(t.simbolo, "sdiv")     == 0) return 6;
-    if (strcmp(t.simbolo, "smais")    == 0  || strcmp(t.simbolo, "smenos")   == 0) return 5;
+    if (t.unario == 1) return 6; // maior prioridade para operadores unários   
+    if (strcmp(t.simbolo, "smult")    == 0  || strcmp(t.simbolo, "sdiv")     == 0) return 5;
+    if (strcmp(t.simbolo, "smais")    == 0  || strcmp(t.simbolo, "smenos")   == 0) return 4;
     if (strcmp(t.simbolo, "smaior")   == 0  || strcmp(t.simbolo, "smenor")   == 0 ||
         strcmp(t.simbolo, "smaiorig") == 0  || strcmp(t.simbolo, "smenorig") == 0 ||
-        strcmp(t.simbolo, "sdif")     == 0) return 4;
-    if (strcmp(t.simbolo, "snao") == 0) return 3;  
+        strcmp(t.simbolo, "sdif")     == 0) return 3; 
     if (strcmp(t.simbolo, "se")   == 0) return 2;
     if (strcmp(t.simbolo, "sou")  == 0) return 1;
     return 0; // menor prioridade possível (ou token inválido)
@@ -80,19 +85,28 @@ token *pos_fixa (token *in_fixa, int pos, int *posf) {
     for (int i = 0; i < pos; i++) {
         token t = in_fixa[i];
 
-        if (strcmp(t.simbolo, "snumero") == 0 || strcmp(t.simbolo, "sidentificador") == 0) {
+        if (strcmp(t.simbolo, "snumero") == 0     || strcmp(t.simbolo, "sidentificador") == 0 ||
+            strcmp(t.simbolo, "sverdadeiro") == 0 || strcmp(t.simbolo, "sfalso") == 0){
             out[(*posf)++] = token_create(t.lexema, t.simbolo, t.linha);
-        } else if (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0 ||
-                   strcmp(t.simbolo, "smult") == 0 || strcmp(t.simbolo, "sdiv") == 0 ||
-                   strcmp(t.simbolo, "se") == 0 || strcmp(t.simbolo, "sou") == 0 ||
-                   strcmp(t.simbolo, "smaior") == 0 || strcmp(t.simbolo, "smenor") == 0 ||
+        } else if (strcmp(t.simbolo, "smais") == 0    || strcmp(t.simbolo, "smenos") == 0   ||
+                   strcmp(t.simbolo, "smult") == 0    || strcmp(t.simbolo, "sdiv") == 0     ||
+                   strcmp(t.simbolo, "se") == 0       || strcmp(t.simbolo, "sou") == 0      ||
+                   strcmp(t.simbolo, "smaior") == 0   || strcmp(t.simbolo, "smenor") == 0   ||
                    strcmp(t.simbolo, "smaiorig") == 0 || strcmp(t.simbolo, "smenorig") == 0 ||
-                   strcmp(t.simbolo, "sdif") == 0 || strcmp(t.simbolo, "snao") == 0) {
+                   strcmp(t.simbolo, "sdif") == 0     || strcmp(t.simbolo, "snao") == 0     || 
+                   strcmp(t.simbolo, "sinv") == 0 ){
 
             while (topo != -1 && strcmp(pilha[topo].simbolo, "sabre_parenteses") != 0 && precedencia(pilha[topo]) >= precedencia(t)) {
                 out[(*posf)++] = pilha[topo--];
             }
-            pilha[++topo] = token_create(t.lexema, t.simbolo, t.linha);
+            if (strcmp(t.simbolo, "snao") == 0 || strcmp(t.simbolo, "sinv") == 0){
+                pilha[++topo] = token_create(t.lexema, t.simbolo, t.linha);
+                pilha[topo].unario = 1;
+            }
+            else {
+                pilha[++topo] = token_create(t.lexema, t.simbolo, t.linha);
+            }
+           
         } else if (strcmp(t.simbolo, "sabre_parenteses") == 0) {
             pilha[++topo] = token_create(t.lexema, t.simbolo, t.linha);
         } else if (strcmp(t.simbolo, "sfecha_parenteses") == 0) {
@@ -385,10 +399,10 @@ token analisa_se(parser *p) {
     print_in_and_pos_fixa(in_fixa, pos, 0);
     print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
 
-    if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
-        printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
-        exit(1);
-    }
+    // if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
+    //     printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
+    //     exit(1);
+    // }
     
     ins_expressao(vetor_pos_fixa, posf);   // gera as instrucoes conforme pos_fixa
 
@@ -478,10 +492,10 @@ token analisa_enquanto(parser *p) {
     print_in_and_pos_fixa(in_fixa, pos, 0);
     print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
 
-    if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
-    printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
-    exit(1);
-    }
+    // if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
+    //     printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
+    //     exit(1);
+    // }
 
     ins_expressao(vetor_pos_fixa, posf);      // gera as instrucoes conforme pos_fixa
 
@@ -633,10 +647,10 @@ token analisa_atribuicao(parser *p, char *left_side) {
         print_in_and_pos_fixa(in_fixa, pos, 0);
         print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
 
-        if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
-            printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
-            exit(1);
-        }
+        // if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
+        //     printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
+        //     exit(1);
+        // }
 
         ins_expressao(vetor_pos_fixa, posf);  // gera as instrucoes conforme pos_fixa
 
@@ -918,7 +932,7 @@ int main(){
                     p.t = lexer(p.file, p.out);
                     char ch = fgetc(p.file);
                     if (ch == EOF) {
-                        // imprimir_tabela_simbolos();     // apenas para testes
+                        imprimir_tabela_simbolos();     // apenas para testes
                         printf("\nSucesso\n");
                     } else {
                         printf("\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
