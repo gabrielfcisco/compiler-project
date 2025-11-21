@@ -357,7 +357,7 @@ token analisa_comandos_simples(parser *p) {
 
 token analisa_atrib_chprocedimento(parser *p) {
     
-    char *left_side = deep_copy(p->t.lexema);  // guardando o token da esquerda para gerar o codigo depois de analisar a expressao da direita
+    token left_side = token_create(p->t.lexema, p->t.simbolo, p->t.linha); // guardando o token da esquerda para gerar o codigo depois de analisar a expressao da direita
     token_free(&p->t);
     p->t = lexer(p->file, p->out);
 
@@ -367,14 +367,14 @@ token analisa_atrib_chprocedimento(parser *p) {
     } else {
         Tabsimb *sp_aux;
 
-        if(pesquisa_tabela(left_side, &sp_aux) == 1){
+        if(pesquisa_tabela(left_side.lexema, &sp_aux) == 1){
             p->t = analisa_chamada_procedimento(p, sp_aux->end);
         }else{
-            printf("ERRO proc '%s' nao encontrada: linha %d",left_side ,p->t.linha);
+            printf("ERRO proc '%s' nao encontrada: linha %d",left_side.lexema ,p->t.linha);
             exit(1);
         }
     }
-    free(left_side);
+    token_free(&left_side);
     return p->t;
 }
 
@@ -389,6 +389,7 @@ token analisa_se(parser *p) {
     int flag = 0; // flag para saber se o se tem senao
     char *endereco;
     int auxrot, auxrot2;
+    int tipo_pos_fixa = -1;
 
     token_free(&p->t);
     p->t = lexer(p->file, p->out);
@@ -399,7 +400,9 @@ token analisa_se(parser *p) {
     // print_in_and_pos_fixa(in_fixa, pos, 0);
     // print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
 
-    if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
+    tipo_pos_fixa = verifica_tipo_pos_fixa(vetor_pos_fixa, posf);
+
+    if (tipo_pos_fixa == -1){
         printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
         exit(1);
     }
@@ -485,6 +488,7 @@ token analisa_enquanto(parser *p) {
     token *vetor_pos_fixa;
     int pos = 0;  // numero de elementos do vetor in_fixa ao termino da expressao
     int posf = 0; // numero de elementos do vetor pos_fixa ao termino da expressao
+    int tipo_pos_fixa = -1;
 
     p->t = analisa_expressao(p, in_fixa, &pos);
     
@@ -492,10 +496,13 @@ token analisa_enquanto(parser *p) {
     // print_in_and_pos_fixa(in_fixa, pos, 0);
     // print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
 
-    if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
+    tipo_pos_fixa = verifica_tipo_pos_fixa(vetor_pos_fixa, posf);
+    
+    if (tipo_pos_fixa == -1){
         printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
         exit(1);
     }
+
 
     ins_expressao(vetor_pos_fixa, posf);      // gera as instrucoes conforme pos_fixa
 
@@ -627,7 +634,7 @@ token analisa_escreva(parser *p) {
     return p->t;
 }
 
-token analisa_atribuicao(parser *p, char *left_side) {
+token analisa_atribuicao(parser *p, token left_side) {
 
 /// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // fazer a verificacao se o resultado da posfixa é do mesmo tipo do "left_side"
@@ -640,6 +647,7 @@ token analisa_atribuicao(parser *p, char *left_side) {
         token *vetor_pos_fixa;
         int pos = 0;  // numero de elementos do vetor in_fixa ao termino da expressao
         int posf = 0; // numero de elementos do vetor pos_fixa ao termino da expressao
+        int tipo_pos_fixa = -1;
 
         p->t = analisa_expressao(p, in_fixa, &pos);
         
@@ -647,14 +655,21 @@ token analisa_atribuicao(parser *p, char *left_side) {
         print_in_and_pos_fixa(in_fixa, pos, 0);
         print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
 
-        if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
+        tipo_pos_fixa = verifica_tipo_pos_fixa(vetor_pos_fixa, posf);
+
+        if (tipo_pos_fixa == -1){
             printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
             exit(1);
         }
-
+        
+        if (verifica_tipo(left_side) != tipo_pos_fixa){
+            printf("\nERRO: Tipo da expressao incompativel com atribuicao na linha %d\n", p->t.linha);
+            exit(1);
+        }
+        
         ins_expressao(vetor_pos_fixa, posf);  // gera as instrucoes conforme pos_fixa
 
-        ins_atr_expressao(left_side);  // gera o store para a expressao
+        ins_atr_expressao(left_side.lexema);  // gera o store para a expressao
 
         for (int i = 0; i < pos; i++)
             token_free(&in_fixa[i]);

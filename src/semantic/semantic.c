@@ -135,14 +135,11 @@ int verifica_tipo_pos_fixa (token *vetor_pos_fixa, int posf){
     for (int i = 0; i < posf; i++){
 
         token t = vetor_pos_fixa[i];
-        if (topo> -1){
-            printf("[%d] -> %d\n", i, pilha[topo]);
-        }
         /* Caso 1: Operando */
         if (!is_operator(t)) {
 
             int tipo = verifica_tipo(t);  // 0=int, 1=bool
-            if (tipo < 0) return 0;  //tipo invalido
+            if (tipo < 0) return -1;  //tipo invalido
             pilha[++topo] = tipo;
             continue;
         }
@@ -150,17 +147,17 @@ int verifica_tipo_pos_fixa (token *vetor_pos_fixa, int posf){
         /* Caso 2: Operador Unário */
         if (strcmp(t.simbolo, "sinv") == 0 || strcmp(t.simbolo, "snao") == 0) {
 
-            if (topo < 0) return 0;
+            if (topo < 0) return -1;
 
             a = pilha[topo--];
             /* sinv → só aceita inteiro */
             if (strcmp(t.simbolo, "sinv") == 0){
-                if (a != 0) return 0;
+                if (a != 0) return -1;
                 pilha[++topo] = 0;
             }
             /* snao → só aceita booleano */
             else if (strcmp(t.simbolo, "snao") == 0){
-                if (a != 1) return 0;
+                if (a != 1) return -1;
                 pilha[++topo] = 1;
             }
 
@@ -168,7 +165,7 @@ int verifica_tipo_pos_fixa (token *vetor_pos_fixa, int posf){
         }
 
         /* Caso 3: Operadores Binários */
-        if (topo < 1) return 0;  //necessita dois operadores
+        if (topo < 1) return -1;  //necessita dois operadores
 
         b = pilha[topo--];
         a = pilha[topo--];
@@ -182,7 +179,7 @@ int verifica_tipo_pos_fixa (token *vetor_pos_fixa, int posf){
             strcmp(t.simbolo, "sdif")     == 0)
         {
             if (a != 0 || b != 0)   // relacionais so aceitam inteiros
-                return 0;
+                return -1;
 
             pilha[++topo] = 1; // booleano
             continue;
@@ -193,7 +190,7 @@ int verifica_tipo_pos_fixa (token *vetor_pos_fixa, int posf){
             strcmp(t.simbolo, "sou") == 0)     // OR
         {
             if (a != 1 || b != 1)  // so booleano
-                return 0;
+                return -1;
 
             pilha[++topo] = 1;
             continue;
@@ -206,19 +203,24 @@ int verifica_tipo_pos_fixa (token *vetor_pos_fixa, int posf){
             strcmp(t.simbolo, "sdiv")   == 0)
         {
             if (a != 0 || b != 0)
-                return 0;
+                return -1;
 
             pilha[++topo] = 0;
             continue;
         }
 
         /* Operador desconhecido */
-        return 0;
+        return -1;
         
 
     }
-
-    return topo == 0;
+    if (topo == 0){
+        printf("tipo da expressao -> %d", pilha[topo]);
+        return pilha[topo];
+    }
+    else{
+        return -1;
+    }
 }
 
 int verifica_tipo (token t){
