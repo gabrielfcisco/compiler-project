@@ -114,7 +114,7 @@ token *pos_fixa (token *in_fixa, int pos, int *posf) {
 token analisa_tipo(parser *p) {
 
     if(strcmp(p->t.simbolo, "sinteiro") != 0 && strcmp(p->t.simbolo, "sbooleano") != 0){
-        printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+        fprintf(stderr,"\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
         token_free(&p->t);
         exit(1);
     }else{
@@ -140,20 +140,20 @@ token analisa_variaveis(parser *p, int *counter_var){
                         token_free(&p->t);
                         p->t = lexer(p->file, p->out);
                         if(strcmp(p->t.simbolo, "sdoispontos") == 0){
-                            printf("\nERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
+                            fprintf(stderr,"\nERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
                             exit(1);
                         }
                     }
                 }else{
-                    printf("\nERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
+                    fprintf(stderr,"\nERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
                     exit(1);
                 }
             }else{
-                printf("\nERRO semantico: linha %d, token: %s", p->t.linha, p->t.lexema);
+                fprintf(stderr,"\nERRO semantico: linha %d, token: %s", p->t.linha, p->t.lexema);
                 exit(1);
             }
         }else{
-            printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+            fprintf(stderr,"\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
             exit(1);
         }
     }
@@ -175,12 +175,12 @@ token analisa_et_variaveis(parser *p,int *counter_var){
                     token_free(&p->t);
                     p->t = lexer(p->file, p->out);
                 } else {
-                    printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+                    fprintf(stderr,"\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
                     exit(1);
                 }
             }
         }else{
-            printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+            fprintf(stderr,"\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
             exit(1);
         }
     }
@@ -211,15 +211,15 @@ token analisa_declaracao_procedimento(parser *p){
                 p->t = analisa_bloco(p);
 
             }else{
-                printf("ERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
+                fprintf(stderr,"ERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
                 exit(1);
             }
         }else{
-            printf("ERRO semantico: linha %d, token: %s", p->t.linha, p->t.lexema);
+            fprintf(stderr,"ERRO semantico: linha %d, token: %s", p->t.linha, p->t.lexema);
             exit(1);
         }
     }else{
-        printf("ERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
+        fprintf(stderr,"ERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
         exit(1);
     }
     desempilha_ou_voltanivel();
@@ -252,19 +252,19 @@ token analisa_declaracao_funcao(parser *p){
                         p->t = analisa_bloco(p);
                     }
                 } else {
-                    printf("ERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
+                    fprintf(stderr,"ERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
                     exit(1);
                 }
             }else{
-                printf("\nERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
+                fprintf(stderr,"\nERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
                 exit(1);
             }
         }else{
-            printf("\nERRO semantico: linha %d, token: %s", p->t.linha, p->t.lexema);
+            fprintf(stderr,"\nERRO semantico: linha %d, token: %s", p->t.linha, p->t.lexema);
             exit(1);
         }
     }else{
-        printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+        fprintf(stderr,"\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
         exit(1);
     }
 
@@ -302,7 +302,7 @@ token analisa_subrotinas(parser *p){
             token_free(&p->t);
             p->t = lexer(p->file, p->out);
         }else{
-            printf("ERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+            fprintf(stderr,"ERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
             exit(1);
         }
     }
@@ -420,7 +420,7 @@ token analisa_se(parser *p) {
             free(endereco);
         }
     } else {
-        printf("\nERRO entao: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+        fprintf(stderr,"\nERRO entao: linha %d, token: %s\n", p->t.linha, p->t.lexema);
         exit(1);
     }
 
@@ -493,7 +493,7 @@ token analisa_enquanto(parser *p) {
         free(endereco);
 
     } else {
-        printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+        fprintf(stderr,"\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
         exit(1);
     }
     return p->t;
@@ -526,19 +526,19 @@ token analisa_leia(parser *p) {
                     free(endereco);
 
                 } else {
-                    printf("\nERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
+                    fprintf(stderr,"\nERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
                     exit(1);
                 }
             } else {
-                printf("\nERRO semantico: linha %d, token: %s", p->t.linha, p->t.lexema);
+                fprintf(stderr,"\nERRO semantico: linha %d, token: %s", p->t.linha, p->t.lexema);
                 exit(1);
             }
         } else {
-            printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+            fprintf(stderr,"\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
             exit(1);
         }
     } else {
-        printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+        fprintf(stderr,"\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
         exit(1);
     }
 
@@ -569,21 +569,21 @@ token analisa_escreva(parser *p) {
                     instrucao("escreva", endereco, ""); 
                     free(endereco);
                 } else {
-                    printf("\nERRO: token sfecha_parenteses esperado\nLinha %d, Token: %s",
+                    fprintf(stderr,"\nERRO: token sfecha_parenteses esperado\nLinha %d, Token: %s",
                            p->t.linha, p->t.lexema);
                     exit(1);
                 }
             } else {
-                printf("\nERRO semantico: Linha %d, token: %s", p->t.linha, p->t.lexema);
+                fprintf(stderr,"\nERRO semantico: Linha %d, token: %s", p->t.linha, p->t.lexema);
                 exit(1);
             }
         } else {
-            printf("\nERRO: token sidentificador esperado\nLinha %d, token: %s",
+            fprintf(stderr,"\nERRO: token sidentificador esperado\nLinha %d, token: %s",
                    p->t.linha, p->t.lexema);
             exit(1);
         }
     } else {
-        printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+        fprintf(stderr,"\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
         exit(1);
     }
 
@@ -624,7 +624,7 @@ token analisa_atribuicao(parser *p, char *left_side) {
 
 
     } else {
-        printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+        fprintf(stderr,"\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
         exit(1);
     }
     return p->t;
@@ -646,7 +646,7 @@ token analisa_comandos(parser *p) {
                     p->t = analisa_comandos_simples(p);
                 }
             } else {
-                printf("\nERRO: token sponto_virgula esperado\nLinha %d, Token: %s\n",
+                fprintf(stderr,"\nERRO: token sponto_virgula esperado\nLinha %d, Token: %s\n",
                        p->t.linha, p->t.lexema);
                 exit(1);
             }
@@ -655,7 +655,7 @@ token analisa_comandos(parser *p) {
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
     } else {
-        printf("\nERRO: token sinicio esperado\nLinha %d, Token: %s\n", p->t.linha, p->t.lexema);
+        fprintf(stderr,"\nERRO: token sinicio esperado\nLinha %d, Token: %s\n", p->t.linha, p->t.lexema);
         exit(1);
     }
     return p->t;
@@ -737,7 +737,7 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
                 p->t = lexer(p->file, p->out);
             }
         }else{
-            printf("\nERRO semantico, identificador nao encontrado:  Linha %d, Token: %s", p->t.linha, p->t.lexema);
+            fprintf(stderr,"\nERRO semantico, identificador nao encontrado:  Linha %d, Token: %s", p->t.linha, p->t.lexema);
             exit(1);
         }
      } else if (strcmp(p->t.simbolo, "snumero") == 0) {
@@ -761,7 +761,7 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
             token_free(&p->t);
             p->t = lexer(p->file, p->out);
         } else {
-            printf("\nERRO: esperado fecha parênteses\nLinha %d, Token: %s\n",
+            fprintf(stderr,"\nERRO: esperado fecha parênteses\nLinha %d, Token: %s\n",
                    p->t.linha, p->t.lexema);
             exit(1);
         }
@@ -771,7 +771,7 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
     } else {
-        printf("\nERRO: fator inválido\nLinha %d, Token: %s\n", p->t.linha, p->t.lexema);
+        fprintf(stderr,"\nERRO: fator inválido\nLinha %d, Token: %s\n", p->t.linha, p->t.lexema);
         exit(1);
     }
 
@@ -833,22 +833,32 @@ token analisa_bloco(parser *p) {
     return p->t;
 }
 
-int main(){
+int main(int argc, char **argv){
 
     sp_parser = initialize_stack();
     parser p; // Nova struct para o parser (melhor organizacao e clareza do codigo)
     new_program_code();
 
-    char file_name[100];
-    printf("Digite o nome do arquivo a ser analisado: ");
-    scanf("%s", file_name);
+    char file_name[512];
+
+    if (argc > 1) {
+        // usar argumento passado pela linha de comando
+        strncpy(file_name, argv[1], sizeof(file_name)-1);
+        file_name[sizeof(file_name)-1] = '\0';
+    } else {
+        printf("Digite o nome do arquivo a ser analisado: ");
+        if (scanf("%511s", file_name) != 1) {
+            fprintf(stderr, "Erro: nome de arquivo inválido na entrada padrão.\n");
+            return 1;
+        }
+    }
 
     // --- Abertura do arquivo fonte ---
     p.file = fopen(file_name, "r");
     if (p.file) {
-        printf("Arquivo aberto com sucesso!\n");
+        fprintf(stderr, "Arquivo aberto com sucesso: %s\n", file_name);
     } else {
-        fprintf(stderr, "Erro ao abrir arquivo!\n");
+        fprintf(stderr, "Erro ao abrir arquivo: %s\n", file_name);
         exit(1);
     }
 
@@ -857,11 +867,11 @@ int main(){
     // --- Criação do arquivo de saída ---
     p.out = fopen("output/tokens/tabela_tokens.txt", "w");
     if (!p.out) {
-        printf("Erro ao criar arquivo da tabela de tokens!\n");
+        fprintf(stderr,"Erro ao criar arquivo da tabela de tokens!\n");
         fclose(p.file);
         exit(1);
     } else {
-        printf("Arquivo tabela_tokens criado com sucesso!\n");
+        fprintf(stderr,"Arquivo tabela_tokens criado com sucesso!\n");
     }
 
     fprintf(p.out, "Tabela de Tokens:\n");
@@ -895,26 +905,26 @@ int main(){
                     char ch = fgetc(p.file);
                     if (ch == EOF) {
                         // imprimir_tabela_simbolos();     // apenas para testes
-                        printf("\nSucesso\n");
+                        fprintf(stderr,"\nSucesso\n");
                     } else {
-                        printf("\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
+                        fprintf(stderr,"\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
                         exit(1);
                     }
                     token_free(&p.t);
                 } else {
-                    printf("\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
+                    fprintf(stderr,"\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
                     exit(1);
                 }
             } else {
-                printf("\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
+                fprintf(stderr,"\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
                 exit(1);
             }
         } else {
-            printf("\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
+            fprintf(stderr,"\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
             exit(1);
         }
     } else {
-        printf("\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
+        fprintf(stderr,"\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
         exit(1);
     }
 
