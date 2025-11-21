@@ -215,8 +215,7 @@ int verifica_tipo_pos_fixa (token *vetor_pos_fixa, int posf){
 
     }
     if (topo == 0){
-        printf("tipo da expressao -> %d", pilha[topo]);
-        return pilha[topo];
+        return pilha[topo]; // retorna o topo para comparacao com o left_side da atribuicao
     }
     else{
         return -1;

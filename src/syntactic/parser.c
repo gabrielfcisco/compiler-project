@@ -545,7 +545,7 @@ token analisa_enquanto(parser *p) {
 
 
 token analisa_leia(parser *p) {
-
+    
     token_free(&p->t);
     p->t = lexer(p->file, p->out);
 
@@ -557,7 +557,10 @@ token analisa_leia(parser *p) {
         if (strcmp(p->t.simbolo, "sidentificador") == 0) {
             Tabsimb *sp_aux;
             if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1) {
-
+                if (verifica_tipo(p->t) != 0){
+                    printf("\nERRO: Tipo da variavel incompativel com instrucao leia, na linha %d\n", p->t.linha);
+                    exit(1);
+                }
                 token_free(&p->t);
                 p->t = lexer(p->file, p->out);
 
@@ -601,7 +604,10 @@ token analisa_escreva(parser *p) {
         if (strcmp(p->t.simbolo, "sidentificador") == 0) {
             Tabsimb *sp_aux;
             if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1) {
-
+                if (verifica_tipo(p->t) != 0){
+                    printf("\nERRO: Tipo da variavel incompativel com instrucao escreva, na linha %d\n", p->t.linha);
+                    exit(1);
+                }
                 token_free(&p->t);
                 p->t = lexer(p->file, p->out);
 

@@ -2,8 +2,9 @@
 programa teste;
 {}
 var a,x,y,total,z: inteiro;
+c,w:booleano;
 
-funcao soma:inteiro;
+funcao soma:booleano;
 inicio
   soma:= (x + 7 * 5 div (-30+y) <= (x*a+2))e( nao (z>0)) e verdadeiro;
 fim;
@@ -11,6 +12,6 @@ fim;
 inicio
   leia(x);
   leia(y);
-  total:= soma;
+  c:= soma;
   escreva(total)
 fim.
