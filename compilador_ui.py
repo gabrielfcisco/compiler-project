@@ -221,6 +221,26 @@ RE_POS_LEGACY = re.compile(r"notação posfixa[:\s]*(.*)", re.I | re.UNICODE)
 FALLBACK_LINE = re.compile(r"ERRO(?: semantico)?:\s*linha\s*(\d+),?.*token:?\s*(.*)", re.I)
 
 # --------------------
+# Small helper: procura token no editor e retorna linha (1-based) ou None
+# --------------------
+def find_line_for_token(token):
+    if not token:
+        return None
+    content = editor.get("1.0", "end-1c")
+    # procura palavra inteira primeiro
+    regex_word = re.compile(r"\b" + re.escape(token) + r"\b")
+    m = regex_word.search(content)
+    if m:
+        start_idx = m.start()
+        idx = editor.index(f"1.0+{start_idx}c")
+        return int(idx.split('.')[0])
+    # fallback: substring search
+    pos = editor.search(token, "1.0", "end")
+    if pos:
+        return int(pos.split('.')[0])
+    return None
+
+# --------------------
 # Classification and UI append
 # --------------------
 def classify_and_append(line):
@@ -337,38 +357,91 @@ def classify_and_append(line):
 # --------------------
 # Click handlers to jump to line in editor
 # --------------------
-def highlight_line_in_editor(ln):
+def update_listbox_entry(listbox, index, text):
+    """
+    Replace the single item at index with new text, preserving selection.
+    """
+    sel = listbox.curselection()
+    was_selected = (sel and sel[0] == index)
+    listbox.delete(index)
+    listbox.insert(index, text)
+    if was_selected:
+        listbox.selection_set(index)
+
+def highlight_line_in_editor(ln, token=None):
+    """
+    ln: integer or string with number (may be None)
+    token: optional lexeme to search for if ln seems invalid or doesn't contain the token
+    Strategy:
+      1) If ln provided -> try to use it (clamped to valid range).
+      2) If token provided and the clamped line doesn't contain the token -> search the document for token.
+      3) If ln not provided -> search for token (if given); otherwise do nothing.
+    """
     try:
-        if ln is None:
-            return
-        # garante que seja inteiro; se não for, tenta extrair dígitos
-        try:
-            ln_int = int(ln)
-        except Exception:
-            # tenta extrair um número de dentro de uma string
-            s = str(ln)
-            m = re.search(r"(\d+)", s)
-            if m:
-                ln_int = int(m.group(1))
-            else:
-                return
-
-        # limita o número de linha ao total de linhas do editor
+        if ln is None and not token:
+            return None
+        # get editor content
+        content = editor.get("1.0", "end-1c")
+        # try to get ln_int from ln argument
+        ln_int = None
+        if ln is not None:
+            try:
+                ln_int = int(ln)
+            except Exception:
+                # try extract digits from string
+                m = re.search(r"(\d+)", str(ln))
+                if m:
+                    ln_int = int(m.group(1))
         total_lines = int(editor.index('end-1c').split('.')[0])
-        if ln_int < 1:
-            ln_int = 1
-        if ln_int > total_lines:
-            ln_int = total_lines
-
-        start = f"{ln_int}.0"
-        end = f"{ln_int}.end"
-        editor.tag_remove("hl", "1.0", "end")
-        editor.tag_add("hl", start, end)
-        editor.tag_config("hl", background="yellow")
-        editor.see(start)
+        # clamp
+        if ln_int is not None:
+            if ln_int < 1:
+                ln_int = 1
+            if ln_int > total_lines:
+                ln_int = total_lines
+        # helper to highlight given ln_int
+        def do_highlight(line_number):
+            start = f"{line_number}.0"
+            end = f"{line_number}.end"
+            editor.tag_remove("hl", "1.0", "end")
+            editor.tag_add("hl", start, end)
+            editor.tag_config("hl", background="yellow")
+            editor.see(start)
+        # if we have a candidate line number, check if token is present there
+        if ln_int is not None:
+            if token:
+                # get that line text
+                try:
+                    line_text = editor.get(f"{ln_int}.0", f"{ln_int}.end")
+                except Exception:
+                    line_text = ""
+                # if token appears in that line (substring or word), accept it
+                if token and (token in line_text or re.search(r"\b" + re.escape(token) + r"\b", line_text)):
+                    do_highlight(ln_int)
+                    return ln_int
+                # else, try searching the whole document for token (first match)
+                found_line = find_line_for_token(token)
+                if found_line:
+                    do_highlight(found_line)
+                    return found_line
+                # if not found, still highlight the provided ln_int (best effort)
+                do_highlight(ln_int)
+                return ln_int
+            else:
+                # no token to verify, just highlight ln_int
+                do_highlight(ln_int)
+                return ln_int
+        # if no ln_int (or couldn't use it), but token exists -> search for token
+        if token:
+            found_line = find_line_for_token(token)
+            if found_line:
+                do_highlight(found_line)
+                return found_line
+        # nothing to do
+        return None
     except Exception as e:
-        # não parar o programa por conta de highlight; registra no log
         append_log(f"Erro ao destacar linha: {e}")
+        return None
 
 def on_lex_select(evt):
     sel = lex_listbox.curselection()
@@ -377,7 +450,7 @@ def on_lex_select(evt):
     idx = sel[0]
     if idx >= len(lex_data): return
     ln = lex_data[idx][0]
-    highlight_line_in_editor(ln)
+    highlight_line_in_editor(ln, token=None)
 
 def on_syn_select(evt):
     sel = syn_listbox.curselection()
@@ -385,8 +458,16 @@ def on_syn_select(evt):
         return
     idx = sel[0]
     if idx >= len(syn_data): return
-    ln = syn_data[idx][0]
-    highlight_line_in_editor(ln)
+    origem_tuple = syn_data[idx]
+    # syn_data: (linha, token, msg, raw)
+    ln, token, msg, raw = origem_tuple[0], origem_tuple[1], origem_tuple[2], origem_tuple[3]
+    # try to highlight and get resolved line
+    resolved = highlight_line_in_editor(ln, token=token)
+    # if we found a better line different than stored, update syn_data and listbox text
+    if resolved and (ln is None or resolved != ln):
+        syn_data[idx] = (resolved, token, msg, raw)
+        new_text = f"L{resolved} {token}: {msg}"
+        update_listbox_entry(syn_listbox, idx, new_text)
 
 def on_sem_select(evt):
     sel = sem_listbox.curselection()
@@ -394,8 +475,13 @@ def on_sem_select(evt):
         return
     idx = sel[0]
     if idx >= len(sem_data): return
-    ln = sem_data[idx][0]
-    highlight_line_in_editor(ln)
+    origem_tuple = sem_data[idx]
+    ln, token, msg, raw = origem_tuple[0], origem_tuple[1], origem_tuple[2], origem_tuple[3]
+    resolved = highlight_line_in_editor(ln, token=token)
+    if resolved and (ln is None or resolved != ln):
+        sem_data[idx] = (resolved, token, msg, raw)
+        new_text = f"L{resolved} {token}: {msg}"
+        update_listbox_entry(sem_listbox, idx, new_text)
 
 def on_code_select(evt):
     # Codegen errors may not have line numbers; show raw message in a popup
