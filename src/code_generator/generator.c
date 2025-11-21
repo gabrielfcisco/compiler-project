@@ -29,7 +29,12 @@ int gera_comando(generator_struct g){
         return 1;
     }
 
-    print_if_not_empty(arquivo,g.rotulo);
+    if (strcmp(g.instrucao,"NULL") == 0) {
+        fprintf(arquivo, "%s\t", g.rotulo);
+    } else {
+        // Se não tem rótulo → imprime TAB no começo
+        fprintf(arquivo, "\t");
+    }
     print_if_not_empty(arquivo,g.instrucao);
     print_if_not_empty(arquivo,g.operando1);
     print_if_not_empty(arquivo,g.operando2);

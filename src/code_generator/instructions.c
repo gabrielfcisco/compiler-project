@@ -15,10 +15,12 @@ void instrucao(char *instrucao, char *operando1, char *operando2) {
 
     if(strcmp(instrucao,"inicia_prog") == 0){
         Gera("","START","","");
+        Gera("","ALLOC","0","1");
         return;
     }
 
     if(strcmp(instrucao,"finaliza_prog") == 0){
+        Gera("","DALLOC","0","1");
         Gera("", "HLT","","");
         return;
     }
@@ -107,13 +109,19 @@ void instrucao(char *instrucao, char *operando1, char *operando2) {
         return;
     }
 
-    if((strcmp(instrucao,"chamada_funcao") == 0)){
-        Gera("", "CALL", operando1 , "");
-        Gera("","LDV","0","");
-        return;
-    }
-    if((strcmp(instrucao,"chamada_procedimento") == 0)){
-        Gera("", "CALL", operando1, "");
+    if(strcmp(instrucao,"chamada") == 0){
+
+        if(strcmp(operando2,"proc") == 0){
+            Gera("", "CALL", operando1, "");
+            return;
+        }
+
+        if(strcmp(operando2,"funcao") == 0){
+            Gera("", "CALL", operando1 , "");
+            Gera("","LDV","0","");
+            return;
+        }
+
     }
 
     if((strcmp(instrucao,"return") == 0)){
@@ -132,30 +140,39 @@ void ins_expressao(token *vetor_pos_fixa, int posf){
     Tabsimb *sp_aux;   // endereco auxiliar para ver se o identificador encontrado e uma funcao
     char *endereco;
 
-        for (int i = 0; i < posf; i++){
-
-            if (pesquisa_tabela(vetor_pos_fixa[i].lexema, &sp_aux) == 1) {
+    for (int i = 0; i < posf; i++){
+        if (pesquisa_tabela(vetor_pos_fixa[i].lexema, &sp_aux) == 1){
+            if((strcmp(sp_aux->tipo, "funcao inteiro") == 0 || strcmp(sp_aux->tipo, "funcao booleano") == 0)){
+                char *endereco = convert_integer_to_string(sp_aux->end);  //endereco aqui e rotulo
+                instrucao("chamada", endereco, "funcao");
+                free(endereco);
+            }else{
                 endereco = convert_integer_to_string(sp_aux->end);
                 instrucao("operacao_var", endereco, "");
-                free(endereco); 
-
-            }else if(strcmp(vetor_pos_fixa[i].simbolo, "snumero") == 0){
-                instrucao("operacao_num",vetor_pos_fixa[i].lexema, ""); 
-
-            }else{
-                instrucao("operacao",vetor_pos_fixa[i].lexema,"");
+                free(endereco);
             }
 
+        }else if(strcmp(vetor_pos_fixa[i].simbolo, "snumero") == 0){
+            instrucao("operacao_num",vetor_pos_fixa[i].lexema, ""); 
+
+        }else{
+            instrucao("operacao",vetor_pos_fixa[i].lexema,"");
         }
+    }
 }
 
 void ins_atr_expressao(char *lexema){
     Tabsimb *sp_aux;
     char *endereco;
     if (pesquisa_tabela(lexema, &sp_aux) == 1) {  
-        endereco = convert_integer_to_string (sp_aux->end);
-        instrucao("atribuicao", endereco, "");
-        free(endereco);
+        if (strcmp(sp_aux->tipo, "funcao inteiro") == 0 || strcmp(sp_aux->tipo, "funcao booleano") == 0){
+            instrucao("atribuicao", "0", "");
+
+        }else{
+            endereco = convert_integer_to_string (sp_aux->end);
+            instrucao("atribuicao", endereco, "");
+            free(endereco);
+        }
     }
 }
 
@@ -237,6 +254,20 @@ int verify_if_is_relational(char *operando){
 
         if (strcmp(operando,"!=") == 0){
             Gera("","CDIF","","");
+            return 1;
+        }
+
+        if (strcmp(operando,"verdadeiro") == 0){
+            char *number = convert_integer_to_string (1);
+            Gera("", "LDC", number, "");
+            free (number);
+            return 1;
+        }
+
+        if (strcmp(operando,"falso") == 0){
+            char *number = convert_integer_to_string (0);
+            Gera("", "LDC", number, "");
+            free (number);
             return 1;
         }
 
