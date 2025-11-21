@@ -396,13 +396,13 @@ token analisa_se(parser *p) {
     p->t = analisa_expressao(p, in_fixa, &pos);
     
     vetor_pos_fixa = pos_fixa(in_fixa, pos, &posf);
-    print_in_and_pos_fixa(in_fixa, pos, 0);
-    print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
+    // print_in_and_pos_fixa(in_fixa, pos, 0);
+    // print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
 
-    // if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
-    //     printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
-    //     exit(1);
-    // }
+    if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
+        printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
+        exit(1);
+    }
     
     ins_expressao(vetor_pos_fixa, posf);   // gera as instrucoes conforme pos_fixa
 
@@ -489,13 +489,13 @@ token analisa_enquanto(parser *p) {
     p->t = analisa_expressao(p, in_fixa, &pos);
     
     vetor_pos_fixa = pos_fixa(in_fixa, pos, &posf);
-    print_in_and_pos_fixa(in_fixa, pos, 0);
-    print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
+    // print_in_and_pos_fixa(in_fixa, pos, 0);
+    // print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
 
-    // if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
-    //     printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
-    //     exit(1);
-    // }
+    if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
+        printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
+        exit(1);
+    }
 
     ins_expressao(vetor_pos_fixa, posf);      // gera as instrucoes conforme pos_fixa
 
@@ -647,10 +647,10 @@ token analisa_atribuicao(parser *p, char *left_side) {
         print_in_and_pos_fixa(in_fixa, pos, 0);
         print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
 
-        // if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
-        //     printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
-        //     exit(1);
-        // }
+        if (verifica_tipo_pos_fixa(vetor_pos_fixa, posf) == 0){
+            printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
+            exit(1);
+        }
 
         ins_expressao(vetor_pos_fixa, posf);  // gera as instrucoes conforme pos_fixa
 

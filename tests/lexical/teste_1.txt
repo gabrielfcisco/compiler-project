@@ -5,7 +5,7 @@ var a,x,y,total,z: inteiro;
 
 funcao soma:inteiro;
 inicio
-  soma:= (x + 7 * 5 div (-30+y) <= (x*a+2))e( nao z>0) e verdadeiro;
+  soma:= (x + 7 * 5 div (-30+y) <= (x*a+2))e( nao (z>0)) e verdadeiro;
 fim;
 
 inicio

@@ -142,22 +142,28 @@ int verifica_tipo_pos_fixa (token *vetor_pos_fixa, int posf){
         if (!is_operator(t)) {
 
             int tipo = verifica_tipo(t);  // 0=int, 1=bool
-
+            if (tipo < 0) return 0;  //tipo invalido
             pilha[++topo] = tipo;
             continue;
         }
 
         /* Caso 2: Operador Unário */
-        if (strcmp(t.simbolo, "sinv") == 0) {
+        if (strcmp(t.simbolo, "sinv") == 0 || strcmp(t.simbolo, "snao") == 0) {
 
             if (topo < 0) return 0;
 
             a = pilha[topo--];
+            /* sinv → só aceita inteiro */
+            if (strcmp(t.simbolo, "sinv") == 0){
+                if (a != 0) return 0;
+                pilha[++topo] = 0;
+            }
+            /* snao → só aceita booleano */
+            else if (strcmp(t.simbolo, "snao") == 0){
+                if (a != 1) return 0;
+                pilha[++topo] = 1;
+            }
 
-            if (a != 0)     // só inteiro aceita inv
-                return 0;
-
-            pilha[++topo] = 0; // resultado é inteiro
             continue;
         }
 
@@ -218,10 +224,14 @@ int verifica_tipo_pos_fixa (token *vetor_pos_fixa, int posf){
 int verifica_tipo (token t){
 
     Tabsimb *sp_aux;
+    
     if(strcmp(t.simbolo, "snumero") == 0){
         return 0;
     }
-    else if (pesquisa_tabela(t.lexema, &sp_aux) == 1){
+    if (strcmp(t.simbolo, "sverdadeiro") == 0 || strcmp(t.simbolo, "sfalso") == 0){
+        return 1; // booleano
+    }
+    if (pesquisa_tabela(t.lexema, &sp_aux) == 1){
         if(strcmp(sp_aux->tipo, "inteiro") == 0 || strcmp(sp_aux->tipo, "funcao inteiro") == 0){
             return 0;  //inteiro
         }
@@ -230,7 +240,7 @@ int verifica_tipo (token t){
         }
     }
 
-    return 0;  //verificar depois, retornando 0 por padrao
+    return -1;  //tipo invalido
    
 }
 
@@ -241,7 +251,8 @@ int is_operator(token t) {
         strcmp(t.simbolo, "sig")    == 0   || strcmp(t.simbolo, "sdif")     == 0 ||
         strcmp(t.simbolo, "smais")  == 0   || strcmp(t.simbolo, "smenos")   == 0 ||
         strcmp(t.simbolo, "sou")    == 0   || strcmp(t.simbolo, "smult")    == 0 ||
-        strcmp(t.simbolo, "sdiv")   == 0   || strcmp(t.simbolo, "se")       == 0 
+        strcmp(t.simbolo, "sdiv")   == 0   || strcmp(t.simbolo, "se")       == 0 ||
+        strcmp(t.simbolo, "sinv")   == 0   || strcmp(t.simbolo, "snao")     == 0
     ){  
         return 1;
     }
