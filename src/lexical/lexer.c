@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "../../include/lexical/token.h"
+#include "../../include/error_UI/error.h"
 char ch;
 int line;
 
@@ -23,7 +24,8 @@ token token_create_error(int linha) {
     token t;
     t.lexema = malloc(50);
     if (t.lexema != NULL) {
-        sprintf(t.lexema, "Erro lexical: linha %d", linha);
+        // sprintf(t.lexema, "Erro lexical: linha %d", linha);
+        report_error(ERR_LEXICAL, linha, NULL, "Erro ao criar token '%c'", ch);
     }
     strcpy(t.simbolo, "serro");
     t.linha = linha;
