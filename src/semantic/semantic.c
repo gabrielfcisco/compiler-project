@@ -3,8 +3,6 @@
 #include <string.h>
 #include "../../include/semantic/semantic.h"
 
-
-
 // 1 FOUND  
 // 0 NOT_FOUND
 
@@ -23,10 +21,10 @@ void imprimir_simbolo(Tabsimb* sp) {
     printf("-------------------------\n\n");
 }
 
-Tabsimb* initialize_stack(){
+Tabsimb** initialize_stack(){
     sp = symbol_table;
     init = sp;
-    return sp;
+    return &sp;
 }
 
 void insere_tabela(char *lexema, char *tipo_inicial, char escopo, int rotulo, int *endereco_var, int flag){
@@ -81,30 +79,6 @@ void coloca_tipo_tabela(char *lexema){
      }
 }
 
-int pesquisa_declvar_tabela(char *lexema){  //boolean
-
-    Tabsimb* sp_aux = sp;
-    while (sp_aux != init){            
-        if(strcmp(sp_aux->lexema, lexema) == 0){ 
-            return 1;
-        }
-        sp_aux --;
-    }
-    return 0;
-}
-
-int pesquisa_declvarfunc_tabela(char *lexema){              //nao sei se declvarfunc e declvar sao iguais mesmo ou tem alguma diferenca, necessario verificar
-
-    Tabsimb* sp_aux = sp;
-    while (sp_aux != init){            
-        if(strcmp(sp_aux->lexema, lexema) == 0){ 
-            return 1;
-        }
-        sp_aux --;
-    }
-    return 0;
-}
-
 int pesquisa_declproc_dup_tabela(char *lexema){
 
     Tabsimb* sp_aux = sp;
@@ -150,6 +124,145 @@ int pesquisa_declfunc_dup_tabela(char *lexema){
     }
     return 0;
 }
+
+int verifica_tipo_pos_fixa (token *vetor_pos_fixa, int posf){
+
+    int pilha[1000];
+    int topo = -1;
+
+    int a, b;
+
+    for (int i = 0; i < posf; i++){
+
+        token t = vetor_pos_fixa[i];
+        /* Caso 1: Operando */
+        if (!is_operator(t)) {
+
+            int tipo = verifica_tipo(t);  // 0=int, 1=bool
+            if (tipo < 0) return -1;  //tipo invalido
+            pilha[++topo] = tipo;
+            continue;
+        }
+
+        /* Caso 2: Operador Unário */
+        if (strcmp(t.simbolo, "sinv") == 0 || strcmp(t.simbolo, "snao") == 0) {
+
+            if (topo < 0) return -1;
+
+            a = pilha[topo--];
+            /* sinv → só aceita inteiro */
+            if (strcmp(t.simbolo, "sinv") == 0){
+                if (a != 0) return -1;
+                pilha[++topo] = 0;
+            }
+            /* snao → só aceita booleano */
+            else if (strcmp(t.simbolo, "snao") == 0){
+                if (a != 1) return -1;
+                pilha[++topo] = 1;
+            }
+
+            continue;
+        }
+
+        /* Caso 3: Operadores Binários */
+        if (topo < 1) return -1;  //necessita dois operadores
+
+        b = pilha[topo--];
+        a = pilha[topo--];
+
+        /* RELACIONAIS: resultado é booleano (1) */
+        if (strcmp(t.simbolo, "smaior")   == 0 ||
+            strcmp(t.simbolo, "smenor")   == 0 ||
+            strcmp(t.simbolo, "smaiorig") == 0 ||
+            strcmp(t.simbolo, "smenorig") == 0 ||
+            strcmp(t.simbolo, "sig")      == 0 ||
+            strcmp(t.simbolo, "sdif")     == 0)
+        {
+            if (a != 0 || b != 0)   // relacionais so aceitam inteiros
+                return -1;
+
+            pilha[++topo] = 1; // booleano
+            continue;
+        }
+
+        /* LÓGICOS */
+        if (strcmp(t.simbolo, "se") == 0 ||    // AND
+            strcmp(t.simbolo, "sou") == 0)     // OR
+        {
+            if (a != 1 || b != 1)  // so booleano
+                return -1;
+
+            pilha[++topo] = 1;
+            continue;
+        }
+
+        /* Caso 4: Aritméticos */
+        if (strcmp(t.simbolo, "smais")  == 0 ||
+            strcmp(t.simbolo, "smenos") == 0 ||
+            strcmp(t.simbolo, "smult")  == 0 ||
+            strcmp(t.simbolo, "sdiv")   == 0)
+        {
+            if (a != 0 || b != 0)
+                return -1;
+
+            pilha[++topo] = 0;
+            continue;
+        }
+
+        /* Operador desconhecido */
+        return -1;
+        
+
+    }
+    if (topo == 0){
+        return pilha[topo]; // retorna o topo para comparacao com o left_side da atribuicao
+    }
+    else{
+        return -1;
+    }
+}
+
+int verifica_tipo (token t){
+
+    Tabsimb *sp_aux;
+    
+    if(strcmp(t.simbolo, "snumero") == 0){
+        return 0;
+    }
+    if (strcmp(t.simbolo, "sverdadeiro") == 0 || strcmp(t.simbolo, "sfalso") == 0){
+        return 1; // booleano
+    }
+    if (pesquisa_tabela(t.lexema, &sp_aux) == 1){
+        if(strcmp(sp_aux->tipo, "inteiro") == 0 || strcmp(sp_aux->tipo, "funcao inteiro") == 0){
+            return 0;  //inteiro
+        }
+        else{
+            return 1; //booleano
+        }
+    }
+
+    return -1;  //tipo invalido
+   
+}
+
+int is_operator(token t) {
+
+    if (strcmp(t.simbolo, "smaior") == 0   || strcmp(t.simbolo, "smaiorig") == 0 ||
+        strcmp(t.simbolo, "smenor") == 0   || strcmp(t.simbolo, "smenorig") == 0 ||
+        strcmp(t.simbolo, "sig")    == 0   || strcmp(t.simbolo, "sdif")     == 0 ||
+        strcmp(t.simbolo, "smais")  == 0   || strcmp(t.simbolo, "smenos")   == 0 ||
+        strcmp(t.simbolo, "sou")    == 0   || strcmp(t.simbolo, "smult")    == 0 ||
+        strcmp(t.simbolo, "sdiv")   == 0   || strcmp(t.simbolo, "se")       == 0 ||
+        strcmp(t.simbolo, "sinv")   == 0   || strcmp(t.simbolo, "snao")     == 0
+    ){  
+        return 1;
+    }
+    else{
+        return 0;
+    }
+ 
+}
+
 
 void imprimir_tabela_simbolos(){
     Tabsimb* sp_aux = init + 1; //pula o primeiro que é vazio

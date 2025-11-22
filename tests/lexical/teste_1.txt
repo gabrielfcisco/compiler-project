@@ -1,16 +1,17 @@
 {este programa e o primeiro teste}
 programa teste;
 {}
-var x,y,total: inteiro;
+var a,x,y,total,z: inteiro;
+c,w:booleano;
 
-funcao soma:inteiro;
+funcao soma:booleano;
 inicio
-  soma:= (x + 7 * 5 div (30+y) <= (x*a+2))e(z>0);
+  soma:= (x + 7 * 5 div (-30+y) <= (x*a+2))e( nao (z>0)) e verdadeiro;
 fim;
 
 inicio
   leia(x);
   leia(y);
-  total:= soma;
+  c:= soma;
   escreva(total)
 fim.

@@ -9,7 +9,7 @@
 #include "../../include/code_generator/instructions.h"
 #include "../../include/error_UI/error.h"
 
-Tabsimb* sp_parser;
+Tabsimb** sp_parser;
 int rotulo = 1;
 int endereco_var = 1;
 
@@ -25,12 +25,17 @@ void imprimir_token(token t) {
 
 void atualiza_in_fixa(token *in_fixa, int *pos, token t) {
 
-    if(t.unario == 1 && (strcmp(t.simbolo, "smenos") == 0 || strcmp(t.simbolo, "smais") == 0)){
-        if(strcmp(t.simbolo, "smenos") == 0){
-            in_fixa[*pos] = token_create("inv", t.simbolo, t.linha);
+    if (t.unario == 1) {
+        if (strcmp(t.simbolo, "smenos") == 0) {
+            in_fixa[*pos] = token_create("inv", "sinv", t.linha);
+            in_fixa[*pos].unario = 1;
+        } 
+        else if (strcmp(t.simbolo, "snao") == 0) {
+            in_fixa[*pos] = token_create("neg", t.simbolo, t.linha);
+            in_fixa[*pos].unario = 1;
         }
-        else{
-            return;    //se for smais e unario, descarta
+        else if (strcmp(t.simbolo, "smais") == 0) {
+            return; // descarta + unário
         }
     }else{
         in_fixa[*pos] = token_create(t.lexema, t.simbolo, t.linha);
@@ -96,13 +101,12 @@ void print_in_and_pos_fixa(token *vetor_tokens, int pos, int fixa, const char *o
 
 int precedencia(token t) {
 
-    if (t.unario == 1) return 7; // maior prioridade para operadores unários   
-    if (strcmp(t.simbolo, "smult")    == 0  || strcmp(t.simbolo, "sdiv")     == 0) return 6;
-    if (strcmp(t.simbolo, "smais")    == 0  || strcmp(t.simbolo, "smenos")   == 0) return 5;
+    if (t.unario == 1) return 6; // maior prioridade para operadores unários   
+    if (strcmp(t.simbolo, "smult")    == 0  || strcmp(t.simbolo, "sdiv")     == 0) return 5;
+    if (strcmp(t.simbolo, "smais")    == 0  || strcmp(t.simbolo, "smenos")   == 0) return 4;
     if (strcmp(t.simbolo, "smaior")   == 0  || strcmp(t.simbolo, "smenor")   == 0 ||
         strcmp(t.simbolo, "smaiorig") == 0  || strcmp(t.simbolo, "smenorig") == 0 ||
-        strcmp(t.simbolo, "sdif")     == 0) return 4;
-    if (strcmp(t.simbolo, "snao") == 0) return 3;  
+        strcmp(t.simbolo, "sdif")     == 0) return 3; 
     if (strcmp(t.simbolo, "se")   == 0) return 2;
     if (strcmp(t.simbolo, "sou")  == 0) return 1;
     return 0; // menor prioridade possível (ou token inválido)
@@ -119,19 +123,28 @@ token *pos_fixa (token *in_fixa, int pos, int *posf) {
     for (int i = 0; i < pos; i++) {
         token t = in_fixa[i];
 
-        if (strcmp(t.simbolo, "snumero") == 0 || strcmp(t.simbolo, "sidentificador") == 0) {
+        if (strcmp(t.simbolo, "snumero") == 0     || strcmp(t.simbolo, "sidentificador") == 0 ||
+            strcmp(t.simbolo, "sverdadeiro") == 0 || strcmp(t.simbolo, "sfalso") == 0){
             out[(*posf)++] = token_create(t.lexema, t.simbolo, t.linha);
-        } else if (strcmp(t.simbolo, "smais") == 0 || strcmp(t.simbolo, "smenos") == 0 ||
-                   strcmp(t.simbolo, "smult") == 0 || strcmp(t.simbolo, "sdiv") == 0 ||
-                   strcmp(t.simbolo, "se") == 0 || strcmp(t.simbolo, "sou") == 0 ||
-                   strcmp(t.simbolo, "smaior") == 0 || strcmp(t.simbolo, "smenor") == 0 ||
+        } else if (strcmp(t.simbolo, "smais") == 0    || strcmp(t.simbolo, "smenos") == 0   ||
+                   strcmp(t.simbolo, "smult") == 0    || strcmp(t.simbolo, "sdiv") == 0     ||
+                   strcmp(t.simbolo, "se") == 0       || strcmp(t.simbolo, "sou") == 0      ||
+                   strcmp(t.simbolo, "smaior") == 0   || strcmp(t.simbolo, "smenor") == 0   ||
                    strcmp(t.simbolo, "smaiorig") == 0 || strcmp(t.simbolo, "smenorig") == 0 ||
-                   strcmp(t.simbolo, "sdif") == 0 || strcmp(t.simbolo, "snao") == 0) {
+                   strcmp(t.simbolo, "sdif") == 0     || strcmp(t.simbolo, "snao") == 0     || 
+                   strcmp(t.simbolo, "sinv") == 0 ){
 
             while (topo != -1 && strcmp(pilha[topo].simbolo, "sabre_parenteses") != 0 && precedencia(pilha[topo]) >= precedencia(t)) {
                 out[(*posf)++] = pilha[topo--];
             }
-            pilha[++topo] = token_create(t.lexema, t.simbolo, t.linha);
+            if (strcmp(t.simbolo, "snao") == 0 || strcmp(t.simbolo, "sinv") == 0){
+                pilha[++topo] = token_create(t.lexema, t.simbolo, t.linha);
+                pilha[topo].unario = 1;
+            }
+            else {
+                pilha[++topo] = token_create(t.lexema, t.simbolo, t.linha);
+            }
+           
         } else if (strcmp(t.simbolo, "sabre_parenteses") == 0) {
             pilha[++topo] = token_create(t.lexema, t.simbolo, t.linha);
         } else if (strcmp(t.simbolo, "sfecha_parenteses") == 0) {
@@ -264,6 +277,7 @@ token analisa_declaracao_procedimento(parser *p){
     desempilha_ou_voltanivel();
 
     instrucao("return","","");
+    
     return p->t;
 }
 
@@ -276,15 +290,20 @@ token analisa_declaracao_funcao(parser *p){
     if(strcmp(p->t.simbolo, "sidentificador") == 0){
         if(pesquisa_declfunc_dup_tabela(p->t.lexema) == 0){
             insere_tabela(p->t.lexema,"", nivel, rotulo, &endereco_var, 0);
+
+            char *endereco = convert_integer_to_string(rotulo);
+            instrucao("label", endereco, ""); // CALL ira buscar este rotulo na tabsimb
+            free(endereco);
             rotulo++;
+            
             p->t = lexer(p->file, p->out);
             if(strcmp(p->t.simbolo, "sdoispontos") == 0){
                 p->t = lexer(p->file, p->out);
                 if((strcmp(p->t.simbolo, "sinteiro") == 0) || strcmp(p->t.simbolo, "sbooleano") == 0){
-                    if(strcmp(p->t.simbolo, "sinteiro") == 0){ 
-                        strcpy((sp_parser)->tipo, "funcao inteiro");
+                    if(strcmp(p->t.simbolo, "sinteiro") == 0){
+                        strcpy((*sp_parser)->tipo, "funcao inteiro");
                     }else{
-                        strcpy((sp_parser)->tipo, "funcao booleano");
+                        strcpy((*sp_parser)->tipo, "funcao booleano");
                     }
                     p->t = lexer(p->file, p->out);
                     if(strcmp(p->t.simbolo, "sponto_virgula") == 0){
@@ -310,6 +329,7 @@ token analisa_declaracao_funcao(parser *p){
     desempilha_ou_voltanivel();
 
     instrucao("return","","");
+
     return p->t;
 }
 
@@ -375,18 +395,29 @@ token analisa_comandos_simples(parser *p) {
 
 token analisa_atrib_chprocedimento(parser *p) {
     
-    char *left_side = deep_copy(p->t.lexema);  // guardando o token da esquerda para gerar o codigo depois de analisar a expressao da direita
+    token left_side = token_create(p->t.lexema, p->t.simbolo, p->t.linha); // guardando o token da esquerda para gerar o codigo depois de analisar a expressao da direita
+    Tabsimb *sp_aux;
     token_free(&p->t);
     p->t = lexer(p->file, p->out);
 
     if (strcmp(p->t.simbolo, "satribuicao") == 0) {
-        p->t = analisa_atribuicao(p, left_side);
-
+        if(pesquisa_tabela(left_side.lexema, &sp_aux) == 1){
+            p->t = analisa_atribuicao(p, left_side);
+        }
+        else{
+            report_error(ERR_SEMANTIC, p->t.linha, left_side.lexema, "Variavel nao declarada");
+            exit(1);
+        }
     } else {
-        p->t = analisa_chamada_procedimento(p);
-    }
 
-    free(left_side);
+        if(pesquisa_tabela(left_side.lexema, &sp_aux) == 1){
+            p->t = analisa_chamada_procedimento(p, sp_aux->end);
+        }else{
+            report_error(ERR_SEMANTIC, p->t.linha, left_side.lexema, "Procedimento nao encontrado");
+            exit(1);
+        }
+    }
+    token_free(&left_side);
     return p->t;
 }
 
@@ -394,13 +425,14 @@ token analisa_atrib_chprocedimento(parser *p) {
 
 token analisa_se(parser *p) {
 
-    token in_fixa[100];
+    token in_fixa[1000];
     token *vetor_pos_fixa;
     int pos = 0;  // numero de elementos do vetor in_fixa ao termino da expressao
     int posf = 0; // numero de elementos do vetor pos_fixa ao termino da expressao
     int flag = 0; // flag para saber se o se tem senao
     char *endereco;
     int auxrot, auxrot2;
+    int tipo_pos_fixa = -1;
 
     token_free(&p->t);
     p->t = lexer(p->file, p->out);
@@ -408,6 +440,14 @@ token analisa_se(parser *p) {
     p->t = analisa_expressao(p, in_fixa, &pos);
     
     vetor_pos_fixa = pos_fixa(in_fixa, pos, &posf);
+
+    tipo_pos_fixa = verifica_tipo_pos_fixa(vetor_pos_fixa, posf);
+
+    if (tipo_pos_fixa == -1){
+        report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipos incompativeis");
+        exit(1);
+    }
+    
     print_in_and_pos_fixa(in_fixa, pos, 0, "se");
     print_in_and_pos_fixa(vetor_pos_fixa, posf, 1, "se");
 
@@ -459,7 +499,6 @@ token analisa_se(parser *p) {
             free(endereco);
         }
     } else {
-        fprintf(stderr,"\nERRO entao: linha %d, token: %s\n", p->t.linha, p->t.lexema);
         report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "Entao");
         exit(1);
     }
@@ -489,14 +528,23 @@ token analisa_enquanto(parser *p) {
     token_free(&p->t);
     p->t = lexer(p->file, p->out);
 
-    token in_fixa[100];
+    token in_fixa[1000];
     token *vetor_pos_fixa;
     int pos = 0;  // numero de elementos do vetor in_fixa ao termino da expressao
     int posf = 0; // numero de elementos do vetor pos_fixa ao termino da expressao
+    int tipo_pos_fixa = -1;
 
     p->t = analisa_expressao(p, in_fixa, &pos);
     
     vetor_pos_fixa = pos_fixa(in_fixa, pos, &posf);
+
+    tipo_pos_fixa = verifica_tipo_pos_fixa(vetor_pos_fixa, posf);
+    
+    if (tipo_pos_fixa == -1){
+        report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipos incompativeis");
+        exit(1);
+    }
+
     print_in_and_pos_fixa(in_fixa, pos, 0, "enquanto");
     print_in_and_pos_fixa(vetor_pos_fixa, posf, 1, "enquanto");
 
@@ -541,7 +589,7 @@ token analisa_enquanto(parser *p) {
 
 
 token analisa_leia(parser *p) {
-
+    
     token_free(&p->t);
     p->t = lexer(p->file, p->out);
 
@@ -553,7 +601,10 @@ token analisa_leia(parser *p) {
         if (strcmp(p->t.simbolo, "sidentificador") == 0) {
             Tabsimb *sp_aux;
             if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1) {
-
+                if (verifica_tipo(p->t) != 0){
+                    report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipo da variavel incompativel com instrucao leia");
+                    exit(1);
+                }
                 token_free(&p->t);
                 p->t = lexer(p->file, p->out);
 
@@ -597,7 +648,10 @@ token analisa_escreva(parser *p) {
         if (strcmp(p->t.simbolo, "sidentificador") == 0) {
             Tabsimb *sp_aux;
             if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1) {
-
+                if (verifica_tipo(p->t) != 0){
+                    report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipo da variavel incompativel com instrucao escreva");
+                    exit(1);
+                }
                 token_free(&p->t);
                 p->t = lexer(p->file, p->out);
 
@@ -628,7 +682,7 @@ token analisa_escreva(parser *p) {
     return p->t;
 }
 
-token analisa_atribuicao(parser *p, char *left_side) {
+token analisa_atribuicao(parser *p, token left_side) {
 
 /// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // fazer a verificacao se o resultado da posfixa é do mesmo tipo do "left_side"
@@ -637,10 +691,11 @@ token analisa_atribuicao(parser *p, char *left_side) {
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
 
-        token in_fixa[100];
+        token in_fixa[1000];
         token *vetor_pos_fixa;
         int pos = 0;  // numero de elementos do vetor in_fixa ao termino da expressao
         int posf = 0; // numero de elementos do vetor pos_fixa ao termino da expressao
+        int tipo_pos_fixa = -1;
 
         p->t = analisa_expressao(p, in_fixa, &pos);
         
@@ -648,9 +703,21 @@ token analisa_atribuicao(parser *p, char *left_side) {
         print_in_and_pos_fixa(in_fixa, pos, 0, "atribuicao");
         print_in_and_pos_fixa(vetor_pos_fixa, posf, 1, "atribuicao");
 
+        tipo_pos_fixa = verifica_tipo_pos_fixa(vetor_pos_fixa, posf);
+
+        if (tipo_pos_fixa == -1){
+            report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipos incompativeis");
+            exit(1);
+        }
+        
+        if (verifica_tipo(left_side) != tipo_pos_fixa){
+            report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipo da expressao incompativel com atribuicao");
+            exit(1);
+        }
+        
         ins_expressao(vetor_pos_fixa, posf);  // gera as instrucoes conforme pos_fixa
 
-        ins_atr_expressao(left_side);  // gera o store para a expressao
+        ins_atr_expressao(left_side.lexema);  // gera o store para a expressao
 
         for (int i = 0; i < pos; i++)
             token_free(&in_fixa[i]);
@@ -769,7 +836,7 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
         if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1){
             atualiza_in_fixa(in_fixa, pos, p->t);
             if (strcmp(sp_aux->tipo, "funcao inteiro") == 0 || strcmp(sp_aux->tipo, "funcao booleano") == 0){
-                p->t = analisa_chamada_funcao(p, sp_aux->end);
+                p->t = analisa_chamada_funcao(p);
             }else{
                 p->t = lexer(p->file, p->out);
             }
@@ -781,7 +848,7 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
         atualiza_in_fixa(in_fixa, pos, p->t);
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
-    } else if (strcmp(p->t.simbolo, "snao") == 0) {
+    } else if (strcmp(p->t.simbolo, "snao") == 0) {        //nao e neg?
         p->t.unario = 1; // marca como operador unário
         atualiza_in_fixa(in_fixa, pos, p->t);
         token_free(&p->t);
@@ -791,7 +858,6 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
         atualiza_in_fixa(in_fixa, pos, p->t);
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
-
         p->t = analisa_expressao(p, in_fixa, pos);
         if (strcmp(p->t.simbolo, "sfecha_parenteses") == 0) {
             atualiza_in_fixa(in_fixa, pos, p->t);
@@ -814,12 +880,8 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
     return p->t;
 }
 
-token analisa_chamada_funcao(parser *p, int end) {
+token analisa_chamada_funcao(parser *p) {
     if (strcmp(p->t.simbolo, "sidentificador") == 0) {
-
-        char *endereco = convert_integer_to_string(end);  //endereco aqui e rotulo
-        instrucao("chamada_funcao", endereco, "");
-        free(endereco);
 
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
@@ -828,11 +890,12 @@ token analisa_chamada_funcao(parser *p, int end) {
 }
 
 
-token analisa_chamada_procedimento(parser *p) {
-    if (strcmp(p->t.simbolo, "sidentificador") == 0) {
-        token_free(&p->t);
-        p->t = lexer(p->file, p->out);
-    }
+token analisa_chamada_procedimento(parser *p, int end) {
+
+    char *endereco = convert_integer_to_string(end);  //endereco aqui e rotulo
+    instrucao("chamada", endereco, "proc");
+    free(endereco);
+
     return p->t;
 }
 
@@ -941,7 +1004,7 @@ int main(int argc, char **argv){
                     char ch = fgetc(p.file);
                     if (ch == EOF) {
                         // imprimir_tabela_simbolos();     // apenas para testes
-                        fprintf(stderr,"\nSucesso\n");
+                        // fprintf(stderr,"\nSucesso\n");
                     } else {
                         report_error(ERR_SYNTACTIC, p.t.linha, p.t.lexema, "token inesperado");
                         exit(1);
