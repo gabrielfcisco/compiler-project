@@ -67,6 +67,15 @@ notebook.add(frame_code, text="Geração Código")
 notebook.add(frame_pos, text="POSFIXA")
 notebook.add(frame_log, text="Log Completo")
 
+# make default tab = Log Completo (select the frame we just added)
+try:
+    notebook.select(frame_log)
+except Exception:
+    # fallback: select last tab
+    tabs = notebook.tabs()
+    if tabs:
+        notebook.select(tabs[-1])
+
 # Helper to create listbox with scrollbar
 def make_listbox(frame):
     lb = tk.Listbox(frame)
@@ -208,7 +217,6 @@ def load_file(path):
 # --------------------
 RE_POSF = re.compile(r"POSFIXA\s+id=(\d+)\s+origem=([^ ]+)\s+infixa=\"([^\"]*)\"\s+posfixa=\"([^\"]*)\"", re.I)
 RE_LEX = re.compile(r"\] .*LEXICAL\b.*linha=(\d+).*msg=(.*)", re.I)
-# Ajustei nomes tipo para seu report_error: usamos "SYNTACTIC" no error.c
 RE_SYN = re.compile(r"\] .*SYNTACTIC\b.*linha=(\d+).*token=([^ ]+).*msg=(.*)", re.I)
 RE_SEM = re.compile(r"\] .*SEMANTIC\b.*linha=(\d+).*token=([^ ]+).*msg=(.*)", re.I)
 RE_CODE = re.compile(r"\] .*CODEGEN\b.*msg=(.*)", re.I)
@@ -228,25 +236,59 @@ def find_line_for_token(token):
         return None
     content = editor.get("1.0", "end-1c")
     # procura palavra inteira primeiro
-    regex_word = re.compile(r"\b" + re.escape(token) + r"\b")
-    m = regex_word.search(content)
-    if m:
-        start_idx = m.start()
-        idx = editor.index(f"1.0+{start_idx}c")
-        return int(idx.split('.')[0])
+    try:
+        regex_word = re.compile(r"\b" + re.escape(token) + r"\b")
+        m = regex_word.search(content)
+        if m:
+            start_idx = m.start()
+            idx = editor.index(f"1.0+{start_idx}c")
+            return int(idx.split('.')[0])
+    except Exception:
+        pass
     # fallback: substring search
-    pos = editor.search(token, "1.0", "end")
-    if pos:
-        return int(pos.split('.')[0])
+    try:
+        pos = editor.search(token, "1.0", "end")
+        if pos:
+            return int(pos.split('.')[0])
+    except Exception:
+        pass
     return None
 
 # --------------------
-# Classification and UI append
+# Resolve line number (used immediately during classification)
+# --------------------
+def resolve_line_number(token, ln_hint):
+    try:
+        if ln_hint is not None:
+            try:
+                ln_int = int(ln_hint)
+            except Exception:
+                ln_int = None
+            if ln_int is not None:
+                total = int(editor.index('end-1c').split('.')[0])
+                if ln_int < 1:
+                    ln_int = 1
+                if ln_int > total:
+                    ln_int = total
+                try:
+                    line_text = editor.get(f"{ln_int}.0", f"{ln_int}.end")
+                except Exception:
+                    line_text = ""
+                if token and (token in line_text or re.search(r"\b" + re.escape(token) + r"\b", line_text)):
+                    return ln_int
+        # fallback: procurar no documento
+        return find_line_for_token(token)
+    except Exception as e:
+        append_log(f"Erro em resolve_line_number: {e}")
+        return None
+
+# --------------------
+# Classification and UI append (immediate resolution + logging)
 # --------------------
 def classify_and_append(line):
     """
-    Analisa UMA linha de stderr e popula as listas correspondentes.
-    Garante que 'linha' seja armazenada como int quando disponível.
+    Analisa UMA linha de stderr, resolve linha se possível, popula as lists e escreve no log
+    com a linha correta já resolvida.
     """
     global legacy_infix_temp
 
@@ -273,10 +315,16 @@ def classify_and_append(line):
         except Exception:
             linha = None
         msg = m.group(2).strip()
-        lex_data.append((linha, None, msg, line))
-        display_ln = f"L{linha}" if linha else "L?"
+        # attempt to resolve (maybe token not provided by lexical messages)
+        resolved = linha
+        lex_data.append((resolved, None, msg, line))
+        display_ln = f"L{resolved}" if resolved else "L?"
         lex_listbox.insert("end", f"{display_ln}: {msg}")
-        append_log(f"[LEXICAL] {display_ln}: {msg}")
+        # write to full log with resolved line (if found)
+        if resolved:
+            append_log(f"[LEXICAL] L{resolved}: {msg}")
+        else:
+            append_log(f"[LEXICAL] {msg}")
         return
 
     # Syntactic
@@ -288,10 +336,18 @@ def classify_and_append(line):
             linha = None
         token = m.group(2)
         msg = m.group(3).strip()
-        syn_data.append((linha, token, msg, line))
-        display_ln = f"L{linha}" if linha else "L?"
-        syn_listbox.insert("end", f"{display_ln} {token}: {msg}")
-        append_log(f"[SYNTACTIC] {display_ln} {token}: {msg}")
+        # try to resolve immediately
+        resolved = resolve_line_number(token, linha)
+        if resolved:
+            lex_str = f"L{resolved} {token}: {msg}"
+            syn_data.append((resolved, token, msg, line))
+            syn_listbox.insert("end", lex_str)
+            append_log(f"[SYNTACTIC] L{resolved} {token}: {msg}")
+        else:
+            syn_data.append((linha, token, msg, line))
+            display_ln = f"L{linha}" if linha else "L?"
+            syn_listbox.insert("end", f"{display_ln} {token}: {msg}")
+            append_log(f"[SYNTACTIC] {display_ln} {token}: {msg}")
         return
 
     # Semantic
@@ -303,10 +359,16 @@ def classify_and_append(line):
             linha = None
         token = m.group(2)
         msg = m.group(3).strip()
-        sem_data.append((linha, token, msg, line))
-        display_ln = f"L{linha}" if linha else "L?"
-        sem_listbox.insert("end", f"{display_ln} {token}: {msg}")
-        append_log(f"[SEMANTIC] {display_ln} {token}: {msg}")
+        resolved = resolve_line_number(token, linha)
+        if resolved:
+            sem_data.append((resolved, token, msg, line))
+            sem_listbox.insert("end", f"L{resolved} {token}: {msg}")
+            append_log(f"[SEMANTIC] L{resolved} {token}: {msg}")
+        else:
+            sem_data.append((linha, token, msg, line))
+            display_ln = f"L{linha}" if linha else "L?"
+            sem_listbox.insert("end", f"{display_ln} {token}: {msg}")
+            append_log(f"[SEMANTIC] {display_ln} {token}: {msg}")
         return
 
     # Codegen
@@ -345,10 +407,16 @@ def classify_and_append(line):
         except Exception:
             linha = None
         token = m.group(2).strip()
-        syn_data.append((linha, token, f"token inesperado", line))
-        display_ln = f"L{linha}" if linha else "L?"
-        syn_listbox.insert("end", f"{display_ln} {token}: token inesperado")
-        append_log(f"[SYNTACTIC-FALLBACK] {display_ln} {token}: token inesperado")
+        resolved = resolve_line_number(token, linha)
+        if resolved:
+            syn_data.append((resolved, token, "token inesperado", line))
+            syn_listbox.insert("end", f"L{resolved} {token}: token inesperado")
+            append_log(f"[SYNTACTIC-FALLBACK] L{resolved} {token}: token inesperado")
+        else:
+            syn_data.append((linha, token, "token inesperado", line))
+            display_ln = f"L{linha}" if linha else "L?"
+            syn_listbox.insert("end", f"{display_ln} {token}: token inesperado")
+            append_log(f"[SYNTACTIC-FALLBACK] {display_ln} {token}: token inesperado")
         return
 
     # nothing matched -> just append to log
@@ -358,9 +426,6 @@ def classify_and_append(line):
 # Click handlers to jump to line in editor
 # --------------------
 def update_listbox_entry(listbox, index, text):
-    """
-    Replace the single item at index with new text, preserving selection.
-    """
     sel = listbox.curselection()
     was_selected = (sel and sel[0] == index)
     listbox.delete(index)
@@ -369,37 +434,24 @@ def update_listbox_entry(listbox, index, text):
         listbox.selection_set(index)
 
 def highlight_line_in_editor(ln, token=None):
-    """
-    ln: integer or string with number (may be None)
-    token: optional lexeme to search for if ln seems invalid or doesn't contain the token
-    Strategy:
-      1) If ln provided -> try to use it (clamped to valid range).
-      2) If token provided and the clamped line doesn't contain the token -> search the document for token.
-      3) If ln not provided -> search for token (if given); otherwise do nothing.
-    """
     try:
         if ln is None and not token:
             return None
-        # get editor content
         content = editor.get("1.0", "end-1c")
-        # try to get ln_int from ln argument
         ln_int = None
         if ln is not None:
             try:
                 ln_int = int(ln)
             except Exception:
-                # try extract digits from string
                 m = re.search(r"(\d+)", str(ln))
                 if m:
                     ln_int = int(m.group(1))
         total_lines = int(editor.index('end-1c').split('.')[0])
-        # clamp
         if ln_int is not None:
             if ln_int < 1:
                 ln_int = 1
             if ln_int > total_lines:
                 ln_int = total_lines
-        # helper to highlight given ln_int
         def do_highlight(line_number):
             start = f"{line_number}.0"
             end = f"{line_number}.end"
@@ -407,37 +459,29 @@ def highlight_line_in_editor(ln, token=None):
             editor.tag_add("hl", start, end)
             editor.tag_config("hl", background="yellow")
             editor.see(start)
-        # if we have a candidate line number, check if token is present there
         if ln_int is not None:
             if token:
-                # get that line text
                 try:
                     line_text = editor.get(f"{ln_int}.0", f"{ln_int}.end")
                 except Exception:
                     line_text = ""
-                # if token appears in that line (substring or word), accept it
                 if token and (token in line_text or re.search(r"\b" + re.escape(token) + r"\b", line_text)):
                     do_highlight(ln_int)
                     return ln_int
-                # else, try searching the whole document for token (first match)
                 found_line = find_line_for_token(token)
                 if found_line:
                     do_highlight(found_line)
                     return found_line
-                # if not found, still highlight the provided ln_int (best effort)
                 do_highlight(ln_int)
                 return ln_int
             else:
-                # no token to verify, just highlight ln_int
                 do_highlight(ln_int)
                 return ln_int
-        # if no ln_int (or couldn't use it), but token exists -> search for token
         if token:
             found_line = find_line_for_token(token)
             if found_line:
                 do_highlight(found_line)
                 return found_line
-        # nothing to do
         return None
     except Exception as e:
         append_log(f"Erro ao destacar linha: {e}")
@@ -459,11 +503,8 @@ def on_syn_select(evt):
     idx = sel[0]
     if idx >= len(syn_data): return
     origem_tuple = syn_data[idx]
-    # syn_data: (linha, token, msg, raw)
     ln, token, msg, raw = origem_tuple[0], origem_tuple[1], origem_tuple[2], origem_tuple[3]
-    # try to highlight and get resolved line
     resolved = highlight_line_in_editor(ln, token=token)
-    # if we found a better line different than stored, update syn_data and listbox text
     if resolved and (ln is None or resolved != ln):
         syn_data[idx] = (resolved, token, msg, raw)
         new_text = f"L{resolved} {token}: {msg}"
@@ -484,7 +525,6 @@ def on_sem_select(evt):
         update_listbox_entry(sem_listbox, idx, new_text)
 
 def on_code_select(evt):
-    # Codegen errors may not have line numbers; show raw message in a popup
     sel = code_listbox.curselection()
     if not sel:
         return
@@ -566,30 +606,23 @@ def compile_current():
         # Update UI
         def ui_update():
             nonlocal out, err
-            had_errors = False
             # stdout
             if out.strip():
                 append_log("=== stdout ===")
                 for l in out.splitlines():
                     append_log(l)
-            # stderr: classify line by line
+            # stderr: classify line by line, resolving immediately
             if err.strip():
                 append_log("=== stderr (erros do compilador) ===")
                 for l in err.splitlines():
-                    # write raw line to full log (to keep originals)
-                    error_log.insert("end", l + "\n")
+                    # classify_and_append will append resolved message to the full log
                     classify_and_append(l)
-                # decide if any errors were found by checking lists
-                if len(lex_data) + len(syn_data) + len(sem_data) + len(code_data) > 0:
-                    had_errors = True
                 message_var.set("Compilação finalizada com erros.")
             else:
                 # no stderr lines -> success
                 append_log("Sucesso")
                 message_var.set("Compilação finalizada com sucesso.")
-            # always enable button
             compile_btn.config(state="normal")
-            # ensure log view scrolls
             error_log.see("end")
 
         ROOT.after(1, ui_update)
