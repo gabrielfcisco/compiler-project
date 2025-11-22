@@ -730,7 +730,7 @@ def compile_current():
                 had_errors = True
 
             if not had_errors:
-                append_log("Sucesso")
+                append_log("Sucesso na compilação. Nenhum erro encontrado.")
                 message_var.set("Sucesso")
             else:
                 append_log(f"Compilação finalizada com erros. (exit={rc}, itens classificados={total_errors_now})")

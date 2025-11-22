@@ -999,7 +999,7 @@ int main(int argc, char **argv){
                     char ch = fgetc(p.file);
                     if (ch == EOF) {
                         // imprimir_tabela_simbolos();     // apenas para testes
-                        fprintf(stderr,"\nSucesso\n");
+                        // fprintf(stderr,"\nSucesso\n");
                     } else {
                         report_error(ERR_SYNTACTIC, p.t.linha, p.t.lexema, "token inesperado");
                         exit(1);
