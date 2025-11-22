@@ -408,7 +408,7 @@ token analisa_atrib_chprocedimento(parser *p) {
         if(pesquisa_tabela(left_side.lexema, &sp_aux) == 1){
             p->t = analisa_chamada_procedimento(p, sp_aux->end);
         }else{
-            printf("ERRO proc '%s' nao encontrada: linha %d",left_side.lexema ,p->t.linha);
+            report_error(ERR_SEMANTIC, p->t.linha, left_side.lexema, "Procedimento nao encontrado");
             exit(1);
         }
     }
@@ -439,7 +439,7 @@ token analisa_se(parser *p) {
     tipo_pos_fixa = verifica_tipo_pos_fixa(vetor_pos_fixa, posf);
 
     if (tipo_pos_fixa == -1){
-        printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
+        report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipos incompativeis");
         exit(1);
     }
     
@@ -494,7 +494,6 @@ token analisa_se(parser *p) {
             free(endereco);
         }
     } else {
-        fprintf(stderr,"\nERRO entao: linha %d, token: %s\n", p->t.linha, p->t.lexema);
         report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "Entao");
         exit(1);
     }
@@ -537,7 +536,7 @@ token analisa_enquanto(parser *p) {
     tipo_pos_fixa = verifica_tipo_pos_fixa(vetor_pos_fixa, posf);
     
     if (tipo_pos_fixa == -1){
-        printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
+        report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipos incompativeis");
         exit(1);
     }
 
@@ -598,7 +597,7 @@ token analisa_leia(parser *p) {
             Tabsimb *sp_aux;
             if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1) {
                 if (verifica_tipo(p->t) != 0){
-                    printf("\nERRO: Tipo da variavel incompativel com instrucao leia, na linha %d\n", p->t.linha);
+                    report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipo da variavel incompativel com instrucao leia");
                     exit(1);
                 }
                 token_free(&p->t);
@@ -645,7 +644,7 @@ token analisa_escreva(parser *p) {
             Tabsimb *sp_aux;
             if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1) {
                 if (verifica_tipo(p->t) != 0){
-                    printf("\nERRO: Tipo da variavel incompativel com instrucao escreva, na linha %d\n", p->t.linha);
+                    report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipo da variavel incompativel com instrucao escreva");
                     exit(1);
                 }
                 token_free(&p->t);
@@ -702,12 +701,12 @@ token analisa_atribuicao(parser *p, token left_side) {
         tipo_pos_fixa = verifica_tipo_pos_fixa(vetor_pos_fixa, posf);
 
         if (tipo_pos_fixa == -1){
-            printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
+            report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipos incompativeis");
             exit(1);
         }
         
         if (verifica_tipo(left_side) != tipo_pos_fixa){
-            printf("\nERRO: Tipo da expressao incompativel com atribuicao na linha %d\n", p->t.linha);
+            report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipo da expressao incompativel com atribuicao");
             exit(1);
         }
         
