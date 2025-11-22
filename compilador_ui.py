@@ -10,6 +10,7 @@ import shutil
 import traceback
 from datetime import datetime
 import tempfile
+import sys
 
 ROOT = tk.Tk()
 ROOT.title("Compilador - UI")
@@ -47,25 +48,20 @@ compile_btn.pack(side="right", padx=(4,0))
 editor_frame = ttk.Frame(ROOT)
 editor_frame.pack(fill="both", expand=True, padx=8, pady=(0,6))
 
-# line numbers text (readonly)
 ln_text = tk.Text(editor_frame, width=6, padx=4, takefocus=0, border=0,
                   background="#f0f0f0", state="disabled", wrap="none")
 ln_text.pack(side="left", fill="y")
 
-# vertical scrollbar shared between editor and ln_text
 vbar = ttk.Scrollbar(editor_frame, orient="vertical")
 vbar.pack(side="right", fill="y")
 
-# editor itself (Text to allow custom scrollbar sync)
 editor = tk.Text(editor_frame, wrap="none", undo=True)
 editor.pack(side="left", fill="both", expand=True)
 
-# horizontal scrollbar for editor (optional)
 hbar = ttk.Scrollbar(editor_frame, orient="horizontal", command=editor.xview)
 hbar.pack(side="bottom", fill="x")
 editor.configure(xscrollcommand=hbar.set)
 
-# connect vertical scrollbar to both text widgets
 def on_vscroll(*args):
     try:
         editor.yview(*args)
@@ -82,7 +78,6 @@ def on_vscroll(*args):
 
 vbar.config(command=on_vscroll)
 
-# editor -> scrollbar callback (receives fractions)
 def on_yscroll(first, last):
     try:
         ln_text.yview_moveto(first)
@@ -95,7 +90,6 @@ def on_yscroll(first, last):
 
 editor.configure(yscrollcommand=on_yscroll)
 
-# mousewheel handling to ensure both scroll in sync across platforms
 def _on_mousewheel(event):
     if getattr(event, "num", None) == 4 or getattr(event, "delta", 0) > 0:
         editor.yview_scroll(-1, "units")
@@ -113,7 +107,6 @@ editor.bind("<Button-5>", _on_mousewheel)
 notebook = ttk.Notebook(ROOT)
 notebook.pack(fill="both", expand=False, padx=8, pady=(0,6), ipady=6)
 
-# Frames for each tab
 frame_lex = ttk.Frame(notebook)
 frame_syn = ttk.Frame(notebook)
 frame_sem = ttk.Frame(notebook)
@@ -128,13 +121,12 @@ notebook.add(frame_code, text="Geração Código")
 notebook.add(frame_pos, text="POSFIXA")
 notebook.add(frame_log, text="Log Completo")
 
-# make default tab = Log Completo
+# default to Log Completo tab
 try:
     notebook.select(frame_log)
 except Exception:
     pass
 
-# Helper to create listbox with scrollbar
 def make_listbox(frame):
     lb = tk.Listbox(frame)
     lb.pack(side="left", fill="both", expand=True, padx=(0,4), pady=4)
@@ -148,7 +140,6 @@ syn_listbox = make_listbox(frame_syn)
 sem_listbox = make_listbox(frame_sem)
 code_listbox = make_listbox(frame_code)
 
-# POSFIXA listbox uses a text preview area beside
 pos_left = ttk.Frame(frame_pos)
 pos_left.pack(side="left", fill="both", expand=True, padx=(0,4), pady=4)
 pos_listbox = tk.Listbox(pos_left)
@@ -160,7 +151,6 @@ pos_listbox.config(yscrollcommand=pos_sb.set)
 pos_preview = ScrolledText(frame_pos, height=6, wrap="word")
 pos_preview.pack(side="left", fill="both", expand=True, padx=(6,0), pady=4)
 
-# Log (full)
 error_log = ScrolledText(frame_log, wrap="none", height=10)
 error_log.pack(fill="both", expand=True, padx=4, pady=4)
 
@@ -176,7 +166,6 @@ def save_log():
     if not fn:
         return
     try:
-        # escreve o log com índice de linhas numerado
         content = error_log.get("1.0", "end").rstrip("\n")
         lines = content.splitlines()
         with open(fn, "w", encoding="utf-8") as f:
@@ -223,9 +212,8 @@ syn_data = []   # list of tuples (linha, token, msg, raw)
 sem_data = []   # list of tuples (linha, token, msg, raw)
 code_data = []  # list of tuples (msg, raw)
 pos_data = []   # list of tuples (id, origem, infixa, posfixa, raw)
-errors_data_combined = []  # combined list to allow "go to" from a combined view if needed
+errors_data_combined = []
 
-# temp holder for legacy infix/posfix matching
 legacy_infix_temp = None
 
 # --------------------
@@ -243,7 +231,6 @@ def load_file(path):
     try:
         if not path:
             raise FileNotFoundError("Caminho vazio — verifique o campo 'Arquivo'.")
-        # try to auto-fix common paste error: trailing ':' (not drive spec)
         if path.endswith(':') and not (len(path) == 2 and path[1] == ':'):
             candidate = path.rstrip(':').rstrip()
             if os.path.exists(candidate):
@@ -257,7 +244,6 @@ def load_file(path):
             raise IsADirectoryError(f"O caminho é um diretório, não um arquivo: {path}")
         with open(path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
-        # normalize newlines -> garante que editor e cálculo de linhas fiquem consistentes
         content = content.replace("\r\n", "\n").replace("\r", "\n")
         editor.delete("1.0", "end")
         editor.insert("1.0", content)
@@ -272,7 +258,7 @@ def load_file(path):
         message_var.set("Erro ao abrir arquivo")
 
 # --------------------
-# Regex for classification (adjust if your C output differs slightly)
+# Regex for classification
 # --------------------
 RE_POSF = re.compile(r"POSFIXA\s+id=(\d+)\s+origem=([^ ]+)\s+infixa=\"([^\"]*)\"\s+posfixa=\"([^\"]*)\"", re.I)
 RE_LEX = re.compile(r"\] .*LEXICAL\b.*linha=(\d+).*msg=(.*)", re.I)
@@ -280,11 +266,9 @@ RE_SYN = re.compile(r"\] .*SYNTACTIC\b.*linha=(\d+).*token=([^ ]+).*msg=(.*)", r
 RE_SEM = re.compile(r"\] .*SEMANTIC\b.*linha=(\d+).*token=([^ ]+).*msg=(.*)", re.I)
 RE_CODE = re.compile(r"\] .*CODEGEN\b.*msg=(.*)", re.I)
 
-# Legacy patterns for "Expressão em notação infixa/posfixa" (captures accented text too)
 RE_INF_LEGACY = re.compile(r"notação infixa[:\s]*(.*)", re.I | re.UNICODE)
 RE_POS_LEGACY = re.compile(r"notação posfixa[:\s]*(.*)", re.I | re.UNICODE)
 
-# Fallback regex for older formats (keeps compatibility)
 FALLBACK_LINE = re.compile(r"ERRO(?: semantico)?:\s*linha\s*(\d+),?.*token:?\s*(.*)", re.I)
 
 # --------------------
@@ -339,9 +323,6 @@ def find_line_for_token(token):
         pass
     return None
 
-# --------------------
-# Resolve line number (used immediately during classification)
-# --------------------
 def resolve_line_number(token, ln_hint):
     try:
         if ln_hint is not None:
@@ -367,12 +348,11 @@ def resolve_line_number(token, ln_hint):
         return None
 
 # --------------------
-# Classification and UI append (immediate resolution + logging)
+# Classification and UI append
 # --------------------
 def classify_and_append(line):
     global legacy_infix_temp
 
-    # check POSFIXA structured output first
     m = RE_POSF.search(line)
     if m:
         try:
@@ -387,7 +367,6 @@ def classify_and_append(line):
         append_log(f"[POSFIXA] id={pid} origem={origem} in=\"{infixa}\" pos=\"{posfixa}\"")
         return
 
-    # Lexical
     m = RE_LEX.search(line)
     if m:
         try:
@@ -397,15 +376,14 @@ def classify_and_append(line):
         msg = m.group(2).strip()
         resolved = linha
         lex_data.append((resolved, None, msg, line))
-        display_ln = f"L{resolved}" if resolved else "L?"
+        display_ln = f"Linha  {resolved}" if resolved else "Linha  ?"
         lex_listbox.insert("end", f"{display_ln}: {msg}")
         if resolved:
-            append_log(f"[LEXICAL] L{resolved}: {msg}")
+            append_log(f"[LEXICAL] Linha  {resolved}: {msg}")
         else:
             append_log(f"[LEXICAL] {msg}")
         return
 
-    # Syntactic
     m = RE_SYN.search(line)
     if m:
         try:
@@ -417,16 +395,15 @@ def classify_and_append(line):
         resolved = resolve_line_number(token, linha)
         if resolved:
             syn_data.append((resolved, token, msg, line))
-            syn_listbox.insert("end", f"L{resolved} {token}: {msg}")
-            append_log(f"[SYNTACTIC] L{resolved} {token}: {msg}")
+            syn_listbox.insert("end", f"Linha  {resolved} {token}: {msg}")
+            append_log(f"[SYNTACTIC] Linha  {resolved} {token}: {msg}")
         else:
             syn_data.append((linha, token, msg, line))
-            display_ln = f"L{linha}" if linha else "L?"
+            display_ln = f"Linha  {linha}" if linha else "Linha  ?"
             syn_listbox.insert("end", f"{display_ln} {token}: {msg}")
             append_log(f"[SYNTACTIC] {display_ln} {token}: {msg}")
         return
 
-    # Semantic
     m = RE_SEM.search(line)
     if m:
         try:
@@ -438,16 +415,15 @@ def classify_and_append(line):
         resolved = resolve_line_number(token, linha)
         if resolved:
             sem_data.append((resolved, token, msg, line))
-            sem_listbox.insert("end", f"L{resolved} {token}: {msg}")
-            append_log(f"[SEMANTIC] L{resolved} {token}: {msg}")
+            sem_listbox.insert("end", f"Linha  {resolved} {token}: {msg}")
+            append_log(f"[SEMANTIC] Linha  {resolved} {token}: {msg}")
         else:
             sem_data.append((linha, token, msg, line))
-            display_ln = f"L{linha}" if linha else "L?"
+            display_ln = f"Linha  {linha}" if linha else "Linha  ?"
             sem_listbox.insert("end", f"{display_ln} {token}: {msg}")
             append_log(f"[SEMANTIC] {display_ln} {token}: {msg}")
         return
 
-    # Codegen
     m = RE_CODE.search(line)
     if m:
         msg = m.group(1).strip()
@@ -456,7 +432,6 @@ def classify_and_append(line):
         append_log(f"[CODEGEN] {msg}")
         return
 
-    # Legacy infixa/posfixa handling (compiler printed them as separate human-readable lines)
     m = RE_INF_LEGACY.search(line)
     if m:
         inf = m.group(1).strip()
@@ -475,7 +450,6 @@ def classify_and_append(line):
         legacy_infix_temp = None
         return
 
-    # fallback: older ERRO: linha X, token: Y
     m = FALLBACK_LINE.search(line)
     if m:
         try:
@@ -486,20 +460,19 @@ def classify_and_append(line):
         resolved = resolve_line_number(token, linha)
         if resolved:
             syn_data.append((resolved, token, "token inesperado", line))
-            syn_listbox.insert("end", f"L{resolved} {token}: token inesperado")
-            append_log(f"[SYNTACTIC-FALLBACK] L{resolved} {token}: token inesperado")
+            syn_listbox.insert("end", f"Linha  {resolved} {token}: token inesperado")
+            append_log(f"[SYNTACTIC-FALLBACK] Linha  {resolved} {token}: token inesperado")
         else:
             syn_data.append((linha, token, "token inesperado", line))
-            display_ln = f"L{linha}" if linha else "L?"
+            display_ln = f"Linha  {linha}" if linha else "Linha  ?"
             syn_listbox.insert("end", f"{display_ln} {token}: token inesperado")
             append_log(f"[SYNTACTIC-FALLBACK] {display_ln} {token}: token inesperado")
         return
 
-    # nothing matched -> just append to log
     append_log(line)
 
 # --------------------
-# Click handlers to jump to line in editor
+# Click handlers / highlighting
 # --------------------
 def update_listbox_entry(listbox, index, text):
     sel = listbox.curselection()
@@ -582,7 +555,7 @@ def on_syn_select(evt):
     resolved = highlight_line_in_editor(ln, token=token)
     if resolved and (ln is None or resolved != ln):
         syn_data[idx] = (resolved, token, msg, raw)
-        new_text = f"L{resolved} {token}: {msg}"
+        new_text = f"Linha  {resolved} {token}: {msg}"
         update_listbox_entry(syn_listbox, idx, new_text)
 
 def on_sem_select(evt):
@@ -596,7 +569,7 @@ def on_sem_select(evt):
     resolved = highlight_line_in_editor(ln, token=token)
     if resolved and (ln is None or resolved != ln):
         sem_data[idx] = (resolved, token, msg, raw)
-        new_text = f"L{resolved} {token}: {msg}"
+        new_text = f"Linha  {resolved} {token}: {msg}"
         update_listbox_entry(sem_listbox, idx, new_text)
 
 def on_code_select(evt):
@@ -626,10 +599,45 @@ code_listbox.bind("<<ListboxSelect>>", on_code_select)
 pos_listbox.bind("<<ListboxSelect>>", on_pos_select)
 
 # --------------------
-# Compilation worker & processing output
+# File opener and clickable-link helper
+# --------------------
+def open_file_with_default(path):
+    try:
+        if not path:
+            return
+        if os.name == 'nt':
+            os.startfile(path)
+        elif sys.platform == 'darwin':
+            subprocess.Popen(['open', path])
+        else:
+            subprocess.Popen(['xdg-open', path])
+    except Exception as e:
+        messagebox.showerror("Abrir arquivo", f"Não foi possível abrir o arquivo:\n{e}")
+
+# counter for unique tags
+_link_counter = 0
+def insert_clickable_link(file_path, link_text="codigo_maquina_virtual.txt", prefix_text="Código assembly gerado em "):
+    global _link_counter
+    if not os.path.exists(file_path):
+        append_log(f"Arquivo de assembly não encontrado: {file_path}")
+        return
+    tag = f"link{_link_counter}"
+    _link_counter += 1
+    # insert prefix then the clickable link text (with tag)
+    error_log.insert("end", prefix_text)
+    error_log.insert("end", link_text + "\n", (tag,))
+    error_log.tag_config(tag, foreground="blue", underline=True)
+    # bind click to open file
+    def _open(event, p=file_path):
+        open_file_with_default(p)
+    # text widget tag_bind expects function with one arg
+    error_log.tag_bind(tag, "<Button-1>", _open)
+    error_log.see("end")
+
+# --------------------
+# Compilation worker & processing output (improved detection of actual errors)
 # --------------------
 def compile_current():
-    # we'll compile the current edited content: write editor text to a temp file and pass it to exe
     path_field = file_var.get().strip()
     if path_field.endswith(':') and not (len(path_field) == 2 and path_field[1] == ':'):
         candidate = path_field.rstrip(':').rstrip()
@@ -655,7 +663,6 @@ def compile_current():
             if not os.path.exists(exe):
                 raise FileNotFoundError(f"Executável não encontrado: {exe}")
 
-            # get editor content (use the edited text)
             content = editor.get("1.0", "end-1c")
             content = content.replace("\r\n", "\n").replace("\r", "\n")
             tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pg", mode="w", encoding="utf-8")
@@ -693,25 +700,21 @@ def compile_current():
             except Exception:
                 pass
 
-        # Update UI
         def ui_update():
             nonlocal out, err, rc
-            # stdout
             if out.strip():
                 append_log("=== stdout ===")
                 for l in out.splitlines():
                     append_log(l)
 
-            # stderr: classify line by line, resolving immediately
             if err.strip():
                 append_log("=== stderr (erros do compilador) ===")
                 for l in err.splitlines():
                     classify_and_append(l)
 
-            # after classification, check returncode + classified items + meaningful stderr contents
             total_errors_now = len(lex_data) + len(syn_data) + len(sem_data) + len(code_data)
 
-            # detect if stderr contains real error indicators (ignore plain info lines)
+            # detect meaningful stderr errors (ignore mere info lines)
             error_indicators = re.compile(r'\b(ERRO|Erro|erro|token inesperado|LEXICAL|SYNTACTIC|SEMANTIC|CODEGEN)\b', re.I)
             had_stderr_errors = False
             if err.strip():
@@ -729,9 +732,42 @@ def compile_current():
             if had_stderr_errors:
                 had_errors = True
 
+            # Decide success vs error
             if not had_errors:
-                append_log("Sucesso na compilação. Nenhum erro encontrado.")
+                append_log("Sucesso")
                 message_var.set("Sucesso")
+                # try to find the generated assembly file and insert clickable link
+                # common filename used by seu gerador: 'codigo_maquina_virtual.txt'
+                exe = exe_var.get().strip() or "./parser"
+                search_dirs = []
+                if os.path.isabs(exe) and os.path.exists(exe):
+                    search_dirs.append(os.path.dirname(exe))
+                search_dirs.append(os.getcwd())
+                # also check temp and the file path of last used file dir (if provided)
+                provided_path = file_var.get().strip()
+                if provided_path:
+                    search_dirs.append(os.path.dirname(os.path.abspath(provided_path)))
+                found = None
+                target_name = "codigo_maquina_virtual.txt"
+                for d in search_dirs:
+                    if not d:
+                        continue
+                    candidate = os.path.join(d, target_name)
+                    if os.path.exists(candidate):
+                        found = candidate
+                        break
+                # if not found, also try recursive search up to current dir (fast)
+                if not found:
+                    for root, dirs, files in os.walk(os.getcwd()):
+                        if target_name in files:
+                            found = os.path.join(root, target_name)
+                            break
+                if found:
+                    append_log(f"Arquivo de código de máquina encontrado: {found}")
+                    # insert clickable LINK into the log
+                    insert_clickable_link(found, link_text="codigo_maquina_virtual.txt", prefix_text="Código assembly gerado em ")
+                else:
+                    append_log(f"Atenção: compilação teve sucesso mas arquivo '{target_name}' não encontrado.")
             else:
                 append_log(f"Compilação finalizada com erros. (exit={rc}, itens classificados={total_errors_now})")
                 message_var.set("Compilação finalizada com erros.")
@@ -743,7 +779,6 @@ def compile_current():
         ROOT.after(1, ui_update)
 
     threading.Thread(target=worker, daemon=True).start()
-
 
 compile_btn.config(command=compile_current)
 
