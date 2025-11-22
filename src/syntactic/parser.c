@@ -39,19 +39,7 @@ void atualiza_in_fixa(token *in_fixa, int *pos, token t) {
     (*pos)++;
 }
 
-// declare pf_id_counter em escopo global (já tem)
 int pf_id_counter = 0;
-
-/**
- * print_in_and_pos_fixa - versão que preserva infixa entre chamadas
- * - vetor_tokens: array de tokens
- * - pos: número de tokens
- * - fixa: 0 = infixa, 1 = posfixa
- * - origem: string curta descrevendo contexto
- *
- * Observação: usa um buffer estático last_infix para guardar a última infixa
- * gerada e combinar com a posfixa quando esta for impressa.
- */
 void print_in_and_pos_fixa(token *vetor_tokens, int pos, int fixa, const char *origem) {
     // buffers locais para montar as strings
     char buffer_tmp[2048];
@@ -68,8 +56,6 @@ void print_in_and_pos_fixa(token *vetor_tokens, int pos, int fixa, const char *o
         }
     }
 
-    // buffer estático para guardar a última infixa
-    // tamanho suficiente para expressões razoáveis; ajuste se necessário
     #define LAST_INFIX_MAX 4096
     static char last_infix[LAST_INFIX_MAX] = {0};
     static char last_origem[128] = {0};
@@ -87,11 +73,11 @@ void print_in_and_pos_fixa(token *vetor_tokens, int pos, int fixa, const char *o
         }
 
         // imprimir para compatibilidade/depuração
-        printf("Expressão em notação infixa: %s\n", last_infix);
+        // printf("Expressão em notação infixa: %s\n", last_infix);
         fflush(stdout);
     } else {
         // posfixa: buffer_tmp contém a posfixa
-        printf("Expressão em notação posfixa: %s\n", buffer_tmp);
+        // printf("Expressão em notação posfixa: %s\n", buffer_tmp);
         fflush(stdout);
 
         // combine com a infixa armazenada (se houver) e reporte

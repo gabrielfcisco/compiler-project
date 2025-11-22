@@ -9,6 +9,7 @@ import os
 import shutil
 import traceback
 from datetime import datetime
+import tempfile
 
 ROOT = tk.Tk()
 ROOT.title("Compilador - UI")
@@ -41,10 +42,70 @@ compile_btn = ttk.Button(top_frame, text="Compilar")
 compile_btn.pack(side="right", padx=(4,0))
 
 # --------------------
-# Editor area
+# Editor area with line numbers (gutter)
 # --------------------
-editor = ScrolledText(ROOT, wrap="none", height=24)
-editor.pack(fill="both", expand=True, padx=8, pady=(0,6))
+editor_frame = ttk.Frame(ROOT)
+editor_frame.pack(fill="both", expand=True, padx=8, pady=(0,6))
+
+# line numbers text (readonly)
+ln_text = tk.Text(editor_frame, width=6, padx=4, takefocus=0, border=0,
+                  background="#f0f0f0", state="disabled", wrap="none")
+ln_text.pack(side="left", fill="y")
+
+# vertical scrollbar shared between editor and ln_text
+vbar = ttk.Scrollbar(editor_frame, orient="vertical")
+vbar.pack(side="right", fill="y")
+
+# editor itself (Text to allow custom scrollbar sync)
+editor = tk.Text(editor_frame, wrap="none", undo=True)
+editor.pack(side="left", fill="both", expand=True)
+
+# horizontal scrollbar for editor (optional)
+hbar = ttk.Scrollbar(editor_frame, orient="horizontal", command=editor.xview)
+hbar.pack(side="bottom", fill="x")
+editor.configure(xscrollcommand=hbar.set)
+
+# connect vertical scrollbar to both text widgets
+def on_vscroll(*args):
+    try:
+        editor.yview(*args)
+    except Exception:
+        pass
+    try:
+        ln_text.yview(*args)
+    except Exception:
+        pass
+    try:
+        vbar.set(*args)
+    except Exception:
+        pass
+
+vbar.config(command=on_vscroll)
+
+# editor -> scrollbar callback (receives fractions)
+def on_yscroll(first, last):
+    try:
+        ln_text.yview_moveto(first)
+    except Exception:
+        pass
+    try:
+        vbar.set(first, last)
+    except Exception:
+        pass
+
+editor.configure(yscrollcommand=on_yscroll)
+
+# mousewheel handling to ensure both scroll in sync across platforms
+def _on_mousewheel(event):
+    if getattr(event, "num", None) == 4 or getattr(event, "delta", 0) > 0:
+        editor.yview_scroll(-1, "units")
+    elif getattr(event, "num", None) == 5 or getattr(event, "delta", 0) < 0:
+        editor.yview_scroll(1, "units")
+    return "break"
+
+editor.bind("<MouseWheel>", _on_mousewheel)
+editor.bind("<Button-4>", _on_mousewheel)
+editor.bind("<Button-5>", _on_mousewheel)
 
 # --------------------
 # Notebook for error categories / posfixa / log
@@ -67,14 +128,11 @@ notebook.add(frame_code, text="Geração Código")
 notebook.add(frame_pos, text="POSFIXA")
 notebook.add(frame_log, text="Log Completo")
 
-# make default tab = Log Completo (select the frame we just added)
+# make default tab = Log Completo
 try:
     notebook.select(frame_log)
 except Exception:
-    # fallback: select last tab
-    tabs = notebook.tabs()
-    if tabs:
-        notebook.select(tabs[-1])
+    pass
 
 # Helper to create listbox with scrollbar
 def make_listbox(frame):
@@ -90,7 +148,7 @@ syn_listbox = make_listbox(frame_syn)
 sem_listbox = make_listbox(frame_sem)
 code_listbox = make_listbox(frame_code)
 
-# POSFIXA listbox uses a text preview area below
+# POSFIXA listbox uses a text preview area beside
 pos_left = ttk.Frame(frame_pos)
 pos_left.pack(side="left", fill="both", expand=True, padx=(0,4), pady=4)
 pos_listbox = tk.Listbox(pos_left)
@@ -203,6 +261,7 @@ def load_file(path):
         content = content.replace("\r\n", "\n").replace("\r", "\n")
         editor.delete("1.0", "end")
         editor.insert("1.0", content)
+        update_line_numbers()
         message_var.set(f"Aberto: {path}")
         append_log(f"Arquivo aberto: {path}")
     except Exception as e:
@@ -229,13 +288,40 @@ RE_POS_LEGACY = re.compile(r"notação posfixa[:\s]*(.*)", re.I | re.UNICODE)
 FALLBACK_LINE = re.compile(r"ERRO(?: semantico)?:\s*linha\s*(\d+),?.*token:?\s*(.*)", re.I)
 
 # --------------------
+# Line numbers (gutter) updating
+# --------------------
+def update_line_numbers():
+    last = editor.index("end-1c").split('.')[0]
+    lines = int(last)
+    nums = "\n".join(f"{i}." for i in range(1, lines+1))
+    ln_text.config(state="normal")
+    ln_text.delete("1.0", "end")
+    ln_text.insert("1.0", nums + ("\n" if nums else ""))
+    ln_text.config(state="disabled")
+
+def update_line_numbers_async(event=None):
+    ROOT.after(10, update_line_numbers)
+
+def on_editor_modified(event=None):
+    try:
+        if editor.edit_modified():
+            update_line_numbers()
+            editor.edit_modified(False)
+    except Exception:
+        pass
+
+editor.bind("<<Modified>>", on_editor_modified)
+editor.bind("<KeyRelease>", update_line_numbers_async)
+editor.bind("<ButtonRelease>", update_line_numbers_async)
+editor.bind("<Configure>", update_line_numbers_async)
+
+# --------------------
 # Small helper: procura token no editor e retorna linha (1-based) ou None
 # --------------------
 def find_line_for_token(token):
     if not token:
         return None
     content = editor.get("1.0", "end-1c")
-    # procura palavra inteira primeiro
     try:
         regex_word = re.compile(r"\b" + re.escape(token) + r"\b")
         m = regex_word.search(content)
@@ -245,7 +331,6 @@ def find_line_for_token(token):
             return int(idx.split('.')[0])
     except Exception:
         pass
-    # fallback: substring search
     try:
         pos = editor.search(token, "1.0", "end")
         if pos:
@@ -276,7 +361,6 @@ def resolve_line_number(token, ln_hint):
                     line_text = ""
                 if token and (token in line_text or re.search(r"\b" + re.escape(token) + r"\b", line_text)):
                     return ln_int
-        # fallback: procurar no documento
         return find_line_for_token(token)
     except Exception as e:
         append_log(f"Erro em resolve_line_number: {e}")
@@ -286,10 +370,6 @@ def resolve_line_number(token, ln_hint):
 # Classification and UI append (immediate resolution + logging)
 # --------------------
 def classify_and_append(line):
-    """
-    Analisa UMA linha de stderr, resolve linha se possível, popula as lists e escreve no log
-    com a linha correta já resolvida.
-    """
     global legacy_infix_temp
 
     # check POSFIXA structured output first
@@ -315,12 +395,10 @@ def classify_and_append(line):
         except Exception:
             linha = None
         msg = m.group(2).strip()
-        # attempt to resolve (maybe token not provided by lexical messages)
         resolved = linha
         lex_data.append((resolved, None, msg, line))
         display_ln = f"L{resolved}" if resolved else "L?"
         lex_listbox.insert("end", f"{display_ln}: {msg}")
-        # write to full log with resolved line (if found)
         if resolved:
             append_log(f"[LEXICAL] L{resolved}: {msg}")
         else:
@@ -336,12 +414,10 @@ def classify_and_append(line):
             linha = None
         token = m.group(2)
         msg = m.group(3).strip()
-        # try to resolve immediately
         resolved = resolve_line_number(token, linha)
         if resolved:
-            lex_str = f"L{resolved} {token}: {msg}"
             syn_data.append((resolved, token, msg, line))
-            syn_listbox.insert("end", lex_str)
+            syn_listbox.insert("end", f"L{resolved} {token}: {msg}")
             append_log(f"[SYNTACTIC] L{resolved} {token}: {msg}")
         else:
             syn_data.append((linha, token, msg, line))
@@ -437,7 +513,6 @@ def highlight_line_in_editor(ln, token=None):
     try:
         if ln is None and not token:
             return None
-        content = editor.get("1.0", "end-1c")
         ln_int = None
         if ln is not None:
             try:
@@ -554,23 +629,21 @@ pos_listbox.bind("<<ListboxSelect>>", on_pos_select)
 # Compilation worker & processing output
 # --------------------
 def compile_current():
-    path = file_var.get().strip()
-    if path.endswith(':') and not (len(path) == 2 and path[1] == ':'):
-        candidate = path.rstrip(':').rstrip()
+    # we'll compile the current edited content: write editor text to a temp file and pass it to exe
+    path_field = file_var.get().strip()
+    if path_field.endswith(':') and not (len(path_field) == 2 and path_field[1] == ':'):
+        candidate = path_field.rstrip(':').rstrip()
         if os.path.exists(candidate):
-            path = candidate
-            file_var.set(path)
+            file_var.set(candidate)
             append_log("Removido ':' final do caminho automaticamente.")
-    if not path or not os.path.exists(path):
-        messagebox.showwarning("Arquivo", f"Escolha um arquivo válido antes de compilar.\nAtual: {path}")
-        append_log(f"Tentativa de compilar com caminho inválido: {path}")
-        return
     compile_btn.config(state="disabled")
     message_var.set("Compilando...")
 
     def worker():
         out = ""
         err = ""
+        rc = None
+        tmp_path = None
         try:
             exe = exe_var.get().strip() or "./parser"
             if not os.path.isabs(exe) and shutil.which(exe):
@@ -582,8 +655,15 @@ def compile_current():
             if not os.path.exists(exe):
                 raise FileNotFoundError(f"Executável não encontrado: {exe}")
 
-            path_arg = os.path.abspath(path)
-            # ensure we decode as utf-8 (compiler should emit utf-8); errors='replace' avoids crashes
+            # get editor content (use the edited text)
+            content = editor.get("1.0", "end-1c")
+            content = content.replace("\r\n", "\n").replace("\r", "\n")
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pg", mode="w", encoding="utf-8")
+            tmp.write(content)
+            tmp.close()
+            tmp_path = tmp.name
+
+            path_arg = os.path.abspath(tmp_path)
             proc = subprocess.Popen([exe, path_arg],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
@@ -592,46 +672,83 @@ def compile_current():
                         errors='replace',
                         cwd=os.path.dirname(exe) or None)
             out, err = proc.communicate(timeout=60)
+            rc = proc.returncode
         except subprocess.TimeoutExpired:
             try:
                 proc.kill()
             except Exception:
                 pass
             out, err = "", "Tempo esgotado durante compilação."
+            rc = -1
         except FileNotFoundError as e:
             out, err = "", str(e)
+            rc = -1
         except Exception as e:
             out, err = "", f"Exceção: {e}\n{traceback.format_exc()}"
+            rc = -1
+        finally:
+            try:
+                if tmp_path and os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+            except Exception:
+                pass
 
         # Update UI
         def ui_update():
-            nonlocal out, err
+            nonlocal out, err, rc
             # stdout
             if out.strip():
                 append_log("=== stdout ===")
                 for l in out.splitlines():
                     append_log(l)
+
             # stderr: classify line by line, resolving immediately
             if err.strip():
                 append_log("=== stderr (erros do compilador) ===")
                 for l in err.splitlines():
-                    # classify_and_append will append resolved message to the full log
                     classify_and_append(l)
-                message_var.set("Compilação finalizada com erros.")
-            else:
-                # no stderr lines -> success
+
+            # after classification, check returncode + classified items + meaningful stderr contents
+            total_errors_now = len(lex_data) + len(syn_data) + len(sem_data) + len(code_data)
+
+            # detect if stderr contains real error indicators (ignore plain info lines)
+            error_indicators = re.compile(r'\b(ERRO|Erro|erro|token inesperado|LEXICAL|SYNTACTIC|SEMANTIC|CODEGEN)\b', re.I)
+            had_stderr_errors = False
+            if err.strip():
+                for l in err.splitlines():
+                    if error_indicators.search(l):
+                        had_stderr_errors = True
+                        break
+
+            had_errors = False
+            if rc is not None and rc != 0:
+                had_errors = True
+                append_log(f"[PROCESS RETURN CODE] returncode={rc}")
+            if total_errors_now > 0:
+                had_errors = True
+            if had_stderr_errors:
+                had_errors = True
+
+            if not had_errors:
                 append_log("Sucesso")
-                message_var.set("Compilação finalizada com sucesso.")
+                message_var.set("Sucesso")
+            else:
+                append_log(f"Compilação finalizada com erros. (exit={rc}, itens classificados={total_errors_now})")
+                message_var.set("Compilação finalizada com erros.")
+
             compile_btn.config(state="normal")
             error_log.see("end")
+            update_line_numbers()
 
         ROOT.after(1, ui_update)
 
     threading.Thread(target=worker, daemon=True).start()
+
 
 compile_btn.config(command=compile_current)
 
 # --------------------
 # Start UI
 # --------------------
+update_line_numbers()
 ROOT.mainloop()
