@@ -12,7 +12,7 @@ typedef struct {
 
 // Prototype
 void atualiza_in_fixa(token *in_fixa, int *pos, token t);
-void print_in_and_pos_fixa(token *vetor_tokens, int pos, int fixa);
+void print_in_and_pos_fixa(token *vetor_tokens, int pos, int fixa, const char *origem);
 int precedencia(token t);
 token *pos_fixa (token *in_fixa, int pos, int *posf);
 token analisa_bloco(parser *p);
