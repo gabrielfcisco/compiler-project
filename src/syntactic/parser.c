@@ -396,14 +396,19 @@ token analisa_comandos_simples(parser *p) {
 token analisa_atrib_chprocedimento(parser *p) {
     
     token left_side = token_create(p->t.lexema, p->t.simbolo, p->t.linha); // guardando o token da esquerda para gerar o codigo depois de analisar a expressao da direita
+    Tabsimb *sp_aux;
     token_free(&p->t);
     p->t = lexer(p->file, p->out);
 
     if (strcmp(p->t.simbolo, "satribuicao") == 0) {
-        p->t = analisa_atribuicao(p, left_side);
-
+        if(pesquisa_tabela(left_side.lexema, &sp_aux) == 1){
+            p->t = analisa_atribuicao(p, left_side);
+        }
+        else{
+            report_error(ERR_SEMANTIC, p->t.linha, left_side.lexema, "Variavel nao declarada");
+            exit(1);
+        }
     } else {
-        Tabsimb *sp_aux;
 
         if(pesquisa_tabela(left_side.lexema, &sp_aux) == 1){
             p->t = analisa_chamada_procedimento(p, sp_aux->end);
