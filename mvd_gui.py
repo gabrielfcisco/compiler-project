@@ -108,10 +108,14 @@ class MVDApp:
 
         # Botões – mais largos e mais para a direita
         self.btn_exec = ttk.Button(self.root, text="Executar", command=self.run_program)
-        self.btn_exec.place(x=820, y=490, width=220, height=40)
+        self.btn_exec.place(x=820, y=480, width=220, height=40)
 
         self.btn_step = ttk.Button(self.root, text="Próximo Passo", command=self.step_program)
-        self.btn_step.place(x=820, y=540, width=220, height=40)
+        self.btn_step.place(x=820, y=530, width=220, height=40)
+
+        # 🔁 Botão RESET
+        self.btn_reset = ttk.Button(self.root, text="Resetar Programa", command=self.reset_program)
+        self.btn_reset.place(x=820, y=580, width=220, height=40)
 
     # =========================
     # Habilitar/Desabilitar botões
@@ -125,6 +129,12 @@ class MVDApp:
         else:
             self.btn_exec.config(state="disabled")
             self.btn_step.config(state="normal")
+
+        # Reset só faz sentido se já tiver programa carregado
+        if self.current_program_text:
+            self.btn_reset.config(state="normal")
+        else:
+            self.btn_reset.config(state="disabled")
 
     # =========================
     # Carregar programa
@@ -142,17 +152,45 @@ class MVDApp:
             with open(filename, "r", encoding="utf-8") as f:
                 self.current_program_text = f.read()
 
+            # Cria nova VM
             self.vm = MVDMachine(program_text=self.current_program_text, input_values=[])
 
             self.refresh_code_view()
             self.refresh_memory_view()
             self.refresh_output_view(clear=True)
             self.highlight_current_instruction()
+            self.update_buttons()
 
             messagebox.showinfo("Sucesso", f"Programa carregado:\n{filename}")
         except Exception as e:
             messagebox.showerror("Erro", f"Falha ao carregar .obj:\n{e}")
             self.vm = None
+            self.current_program_text = ""
+            self.update_buttons()
+
+    # =========================
+    # RESETAR PROGRAMA
+    # =========================
+
+    def reset_program(self):
+        """Reinicia a VM com o mesmo código .obj já carregado."""
+        if not self.current_program_text:
+            messagebox.showwarning("Atenção", "Nenhum programa carregado para resetar.")
+            return
+
+        try:
+            # Recria a VM zerada
+            self.vm = MVDMachine(program_text=self.current_program_text, input_values=[])
+
+            # Limpa saída, memória e volta highlight
+            self.refresh_code_view()
+            self.refresh_memory_view()
+            self.refresh_output_view(clear=True)
+            self.highlight_current_instruction()
+
+            messagebox.showinfo("Reset", "Programa reiniciado com sucesso.")
+        except Exception as e:
+            messagebox.showerror("Erro ao resetar", str(e))
 
     # =========================
     # JANELA DE ENTRADA PARA RD
@@ -329,6 +367,6 @@ class MVDApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.geometry("1100x650")
+    root.geometry("1100x700")  # um pouquinho mais alto pra caber o reset tranquilo
     app = MVDApp(root)
     root.mainloop()

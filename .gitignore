@@ -1,0 +1,21 @@
+# Ignorar diretórios temporários do Python
+__pycache__/
+*.pyc
+
+# Ignorar arquivos temporários
+*.log
+
+# Ignorar pasta do PyInstaller (não subir!)
+build/
+
+# Ignorar arquivo de configuração do PyInstaller
+*.spec
+
+# Ignorar cache editor/pylint
+.mypy_cache/
+.pytest_cache/
+.vscode/
+.idea/
+
+# NÃO IGNORAR dist/ pois contém o .exe
+# dist/   <- NÃO coloque isso
