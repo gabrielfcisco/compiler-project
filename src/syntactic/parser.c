@@ -2,6 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#ifdef _WIN32
+  #include <direct.h>  // _mkdir
+  #define MKDIR(p) _mkdir(p)
+#else
+  #define MKDIR(p) mkdir(p, 0755)
+#endif
 #include "../../include/parser/parser.h"
 #include "../../include/lexical/lexer.h"
 #include "../../include/semantic/semantic.h"
@@ -964,13 +972,20 @@ int main(int argc, char **argv){
     lexer_init(p.file);
 
     // --- Criação do arquivo de saída ---
+    struct stat st;
+    if (stat("output", &st) != 0) {
+        MKDIR("output");
+    }
+    if (stat("output/tokens", &st) != 0) {
+        MKDIR("output/tokens");
+    }
+
+    /* agora safe fopen */
     p.out = fopen("output/tokens/tabela_tokens.txt", "w");
     if (!p.out) {
-        report_error(ERR_INFO, 2, NULL, "Erro ao criar arquivo da tabela de tokens!");
+        fprintf(stderr,"Erro ao criar arquivo da tabela de tokens!\n");
         fclose(p.file);
         exit(1);
-    } else {
-        fprintf(stderr,"Arquivo tabela_tokens criado com sucesso!\n");
     }
 
     fprintf(p.out, "Tabela de Tokens:\n");
