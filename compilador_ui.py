@@ -22,7 +22,7 @@ ROOT.geometry("1100x760")
 top_frame = ttk.Frame(ROOT)
 top_frame.pack(fill="x", padx=8, pady=6)
 
-exe_var = tk.StringVar(value="./parser")
+exe_var = tk.StringVar(value="./parser.exe")
 ttk.Label(top_frame, text="Executável:").pack(side="left")
 exe_entry = ttk.Entry(top_frame, textvariable=exe_var, width=36)
 exe_entry.pack(side="left", padx=(4,10))
@@ -653,7 +653,7 @@ def compile_current():
         rc = None
         tmp_path = None
         try:
-            exe = exe_var.get().strip() or "./parser"
+            exe = exe_var.get().strip() or "./parser.exe"
             if not os.path.isabs(exe) and shutil.which(exe):
                 exe = shutil.which(exe)
             if not os.path.exists(exe):
@@ -738,7 +738,7 @@ def compile_current():
                 message_var.set("Sucesso")
                 # try to find the generated assembly file and insert clickable link
                 # common filename used by seu gerador: 'codigo_maquina_virtual.txt'
-                exe = exe_var.get().strip() or "./parser"
+                exe = exe_var.get().strip() or "./parser.exe"
                 search_dirs = []
                 if os.path.isabs(exe) and os.path.exists(exe):
                     search_dirs.append(os.path.dirname(exe))
