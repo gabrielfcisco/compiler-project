@@ -132,7 +132,7 @@ token *pos_fixa (token *in_fixa, int pos, int *posf) {
                    strcmp(t.simbolo, "smaior") == 0   || strcmp(t.simbolo, "smenor") == 0   ||
                    strcmp(t.simbolo, "smaiorig") == 0 || strcmp(t.simbolo, "smenorig") == 0 ||
                    strcmp(t.simbolo, "sdif") == 0     || strcmp(t.simbolo, "snao") == 0     || 
-                   strcmp(t.simbolo, "sinv") == 0 ){
+                   strcmp(t.simbolo, "sinv") == 0     || strcmp(t.simbolo, "sig") == 0) {
 
             while (topo != -1 && strcmp(pilha[topo].simbolo, "sabre_parenteses") != 0 && precedencia(pilha[topo]) >= precedencia(t)) {
                 out[(*posf)++] = pilha[topo--];
@@ -621,7 +621,7 @@ token analisa_leia(parser *p) {
                     exit(1);
                 }
             } else {
-                report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "identificado nao encontrado");
+                report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "identificador nao encontrado");
                 exit(1);
             }
         } else {
