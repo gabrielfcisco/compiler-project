@@ -68,13 +68,15 @@ int convert_string_to_integer(const char *input) {
 }
 
 void new_program_code(){
-    FILE *arquivo = fopen("./output/codigo_maquina_virtual.txt", "w");
+    FILE *arquivo = fopen("output", "w");
+    FILE *arquivo1 = fopen("output/codigo_maquina_virtual.txt", "w");
 
-    if (arquivo == NULL) {
+    if (arquivo1 == NULL) {
         report_error(ERR_CODEGEN, 3, NULL, "Erro ao criar o arquivo do codigo do programa programa");
         exit(1);
     }
 
     fclose(arquivo);
+    fclose(arquivo1);
     printf("Arquivo 'codigo_maquina_virtual.txt' criado com sucesso em './output' .\n");
 }
