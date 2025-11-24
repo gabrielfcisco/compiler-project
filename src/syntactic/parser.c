@@ -609,7 +609,7 @@ token analisa_leia(parser *p) {
         if (strcmp(p->t.simbolo, "sidentificador") == 0) {
             Tabsimb *sp_aux;
             if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1) {
-                if (verifica_tipo(p->t) != 0){
+                if (verifica_tipo(p->t) != 0 || strcmp(sp_aux->tipo, "funcao inteiro") == 0){
                     report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipo da variavel incompativel com instrucao leia");
                     exit(1);
                 }
@@ -656,7 +656,7 @@ token analisa_escreva(parser *p) {
         if (strcmp(p->t.simbolo, "sidentificador") == 0) {
             Tabsimb *sp_aux;
             if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1) {
-                if (verifica_tipo(p->t) != 0){
+                if (verifica_tipo(p->t) != 0 || strcmp(sp_aux->tipo, "funcao inteiro") == 0){
                     report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipo da variavel incompativel com instrucao escreva");
                     exit(1);
                 }

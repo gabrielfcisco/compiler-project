@@ -23,7 +23,7 @@ void Gera(char* rotulo, char *instrucao, char *operando1, char *operando2){
 int gera_comando(generator_struct g){
     FILE *arquivo;
 
-    arquivo = fopen("./output/codigo_maquina_virtual.txt", "a");
+    arquivo = fopen("./output/codigo_maquina_virtual.obj", "a");
 
     if (arquivo == NULL) {
         perror("Nao foi possivel criar o arquivo");
@@ -69,7 +69,7 @@ int convert_string_to_integer(const char *input) {
 
 void new_program_code(){
     FILE *arquivo = fopen("output", "w");
-    FILE *arquivo1 = fopen("output/codigo_maquina_virtual.txt", "w");
+    FILE *arquivo1 = fopen("output/codigo_maquina_virtual.obj", "w");
 
     if (arquivo1 == NULL) {
         report_error(ERR_CODEGEN, 3, NULL, "Erro ao criar o arquivo do codigo do programa programa");
@@ -78,5 +78,5 @@ void new_program_code(){
 
     fclose(arquivo);
     fclose(arquivo1);
-    printf("Arquivo 'codigo_maquina_virtual.txt' criado com sucesso em './output' .\n");
+    printf("Arquivo 'codigo_maquina_virtual.obj' criado com sucesso em './output' .\n");
 }

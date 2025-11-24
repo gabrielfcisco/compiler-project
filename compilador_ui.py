@@ -616,7 +616,7 @@ def open_file_with_default(path):
 
 # counter for unique tags
 _link_counter = 0
-def insert_clickable_link(file_path, link_text="./output/codigo_maquina_virtual.txt", prefix_text="Código assembly gerado em "):
+def insert_clickable_link(file_path, link_text="./output/codigo_maquina_virtual.obj", prefix_text="Código assembly gerado em "):
     global _link_counter
     if not os.path.exists(file_path):
         append_log(f"Arquivo de assembly não encontrado: {file_path}")
@@ -737,7 +737,7 @@ def compile_current():
                 append_log("Sucesso")
                 message_var.set("Sucesso")
                 # try to find the generated assembly file and insert clickable link
-                # common filename used by seu gerador: 'codigo_maquina_virtual.txt'
+                # common filename used by seu gerador: 'codigo_maquina_virtual.obj'
                 exe = exe_var.get().strip() or "./parser.exe"
                 search_dirs = []
                 if os.path.isabs(exe) and os.path.exists(exe):
@@ -748,7 +748,7 @@ def compile_current():
                 if provided_path:
                     search_dirs.append(os.path.dirname(os.path.abspath(provided_path)))
                 found = None
-                target_name = "./output/codigo_maquina_virtual.txt"
+                target_name = "./output/codigo_maquina_virtual.obj"
                 for d in search_dirs:
                     if not d:
                         continue
@@ -765,7 +765,7 @@ def compile_current():
                 if found:
                     append_log(f"Arquivo de código de máquina encontrado: {found}")
                     # insert clickable LINK into the log
-                    insert_clickable_link(found, link_text="./output/codigo_maquina_virtual.txt", prefix_text="Código assembly gerado em ")
+                    insert_clickable_link(found, link_text="./output/codigo_maquina_virtual.obj", prefix_text="Código assembly gerado em ")
                 else:
                     append_log(f"Atenção: compilação teve sucesso mas arquivo '{target_name}' não encontrado.")
             else:
