@@ -194,7 +194,7 @@ int verify_if_is_aritmetic(char *operando){
         }
 
         if (strcmp(operando,"div") == 0){
-            Gera("","DIV","","");
+            Gera("","DIVI","","");
             return 1;
         }
 
