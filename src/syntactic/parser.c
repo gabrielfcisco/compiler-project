@@ -1,12 +1,46 @@
+/**********************************************
+ * Arquivo: parser.c
+ * Autores: Enzo, Gabriel, Guilherme, Samuel
+ * 
+ *
+ * Descrição:
+ *    Implementa a sintatico do compilador,
+ *    Responsável por vericar a sintaxe, a sequencia dos lexemas, 
+ *    realizar chamadas ao lexico, ao semantico e ao gerador de codigo.
+ *    Alem disso, e a rotina principal do compilador (main).
+ *    
+ *
+ * Dependências:
+ *    - parser.h
+ *    - lexer.h
+ *    - semantic.h
+ *    - generator.h
+ *    - instruction.h
+ *    - error.h
+ *
+ * Como compilar:
+ *    make
+ *    OU
+ *    gcc src/syntactic/parser.c src/lexical/lexer.c src/semantic/semantic.c src/code_generator/generator.c src/code_generator/instructions.c ./src/error_UI/error.c -o parser
+ *
+ * Como executar:
+ *    ./parser
+ **********************************************/
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include "../../include/parser/parser.h"
 #include "../../include/lexical/lexer.h"
 #include "../../include/semantic/semantic.h"
 #include "../../include/code_generator/generator.h"
 #include "../../include/code_generator/instructions.h"
+#include "../../include/error_UI/error.h"
 
 Tabsimb** sp_parser;
 int rotulo = 1;
@@ -43,21 +77,58 @@ void atualiza_in_fixa(token *in_fixa, int *pos, token t) {
     (*pos)++;
 }
 
-void print_in_and_pos_fixa(token *vetor_tokens, int pos, int fixa) {
-    if(fixa == 0){
-        printf("Expressão em notação infixa: ");
-        for (int i = 0; i < pos; i++) {
-            printf("%s ", vetor_tokens[i].lexema);
-            
+int pf_id_counter = 0;
+void print_in_and_pos_fixa(token *vetor_tokens, int pos, int fixa, const char *origem) {
+    // buffers locais para montar as strings
+    char buffer_tmp[2048];
+    buffer_tmp[0] = '\0';
+
+    for (int i = 0; i < pos; ++i) {
+        // protege contra lexemas nulos
+        if (vetor_tokens[i].lexema && vetor_tokens[i].lexema[0]) {
+            // concat com segurança (usando strncat)
+            strncat(buffer_tmp, vetor_tokens[i].lexema, sizeof(buffer_tmp) - strlen(buffer_tmp) - 1);
+            if (i + 1 < pos) {
+                strncat(buffer_tmp, " ", sizeof(buffer_tmp) - strlen(buffer_tmp) - 1);
+            }
         }
-        printf("\n");
     }
-    else {
-        printf("Expressão em notação posfixa: ");
-        for (int i = 0; i < pos; i++) {
-            printf("%s ", vetor_tokens[i].lexema);
+
+    #define LAST_INFIX_MAX 4096
+    static char last_infix[LAST_INFIX_MAX] = {0};
+    static char last_origem[128] = {0};
+
+    if (fixa == 0) {
+        // armazenar infixa para combinar depois
+        strncpy(last_infix, buffer_tmp, LAST_INFIX_MAX - 1);
+        last_infix[LAST_INFIX_MAX - 1] = '\0';
+
+        if (origem) {
+            strncpy(last_origem, origem, sizeof(last_origem) - 1);
+            last_origem[sizeof(last_origem) - 1] = '\0';
+        } else {
+            last_origem[0] = '\0';
         }
-        printf("\n");
+
+        // imprimir para compatibilidade/depuração
+        // printf("Expressão em notação infixa: %s\n", last_infix);
+        fflush(stdout);
+    } else {
+        // posfixa: buffer_tmp contém a posfixa
+        // printf("Expressão em notação posfixa: %s\n", buffer_tmp);
+        fflush(stdout);
+
+        // combine com a infixa armazenada (se houver) e reporte
+        const char *use_infix = last_infix[0] ? last_infix : "";
+        const char *use_origem = last_origem[0] ? last_origem : (origem ? origem : "-");
+
+        int id = ++pf_id_counter;
+        // chama report_posfix com infixa e posfixa
+        report_posfix(id, use_origem, use_infix, buffer_tmp);
+
+        // opcional: limpar last_infix para evitar reuso indevido
+        last_infix[0] = '\0';
+        last_origem[0] = '\0';
     }
 }
 
@@ -94,7 +165,7 @@ token *pos_fixa (token *in_fixa, int pos, int *posf) {
                    strcmp(t.simbolo, "smaior") == 0   || strcmp(t.simbolo, "smenor") == 0   ||
                    strcmp(t.simbolo, "smaiorig") == 0 || strcmp(t.simbolo, "smenorig") == 0 ||
                    strcmp(t.simbolo, "sdif") == 0     || strcmp(t.simbolo, "snao") == 0     || 
-                   strcmp(t.simbolo, "sinv") == 0 ){
+                   strcmp(t.simbolo, "sinv") == 0     || strcmp(t.simbolo, "sig") == 0) {
 
             while (topo != -1 && strcmp(pilha[topo].simbolo, "sabre_parenteses") != 0 && precedencia(pilha[topo]) >= precedencia(t)) {
                 out[(*posf)++] = pilha[topo--];
@@ -128,7 +199,7 @@ token *pos_fixa (token *in_fixa, int pos, int *posf) {
 token analisa_tipo(parser *p) {
 
     if(strcmp(p->t.simbolo, "sinteiro") != 0 && strcmp(p->t.simbolo, "sbooleano") != 0){
-        printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+        report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
         token_free(&p->t);
         exit(1);
     }else{
@@ -154,20 +225,20 @@ token analisa_variaveis(parser *p, int *counter_var){
                         token_free(&p->t);
                         p->t = lexer(p->file, p->out);
                         if(strcmp(p->t.simbolo, "sdoispontos") == 0){
-                            printf("\nERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
+                            report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
                             exit(1);
                         }
                     }
                 }else{
-                    printf("\nERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
+                    report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
                     exit(1);
                 }
             }else{
-                printf("\nERRO semantico: linha %d, token: %s", p->t.linha, p->t.lexema);
+                report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "variavel duplicada ou não declarada");
                 exit(1);
             }
         }else{
-            printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+            report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
             exit(1);
         }
     }
@@ -189,12 +260,12 @@ token analisa_et_variaveis(parser *p,int *counter_var){
                     token_free(&p->t);
                     p->t = lexer(p->file, p->out);
                 } else {
-                    printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+                    report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
                     exit(1);
                 }
             }
         }else{
-            printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+            report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
             exit(1);
         }
     }
@@ -225,15 +296,15 @@ token analisa_declaracao_procedimento(parser *p){
                 p->t = analisa_bloco(p);
 
             }else{
-                printf("ERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
+                report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
                 exit(1);
             }
         }else{
-            printf("ERRO semantico: linha %d, token: %s", p->t.linha, p->t.lexema);
+            report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "procedimento duplicado ou nao declarado");
             exit(1);
         }
     }else{
-        printf("ERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
+        report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
         exit(1);
     }
     desempilha_ou_voltanivel();
@@ -272,19 +343,19 @@ token analisa_declaracao_funcao(parser *p){
                         p->t = analisa_bloco(p);
                     }
                 } else {
-                    printf("ERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
+                    report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
                     exit(1);
                 }
             }else{
-                printf("\nERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
+                report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
                 exit(1);
             }
         }else{
-            printf("\nERRO semantico: linha %d, token: %s", p->t.linha, p->t.lexema);
+            report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "funcao duplicada ou nao declarado");
             exit(1);
         }
     }else{
-        printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+        report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
         exit(1);
     }
 
@@ -323,7 +394,7 @@ token analisa_subrotinas(parser *p){
             token_free(&p->t);
             p->t = lexer(p->file, p->out);
         }else{
-            printf("ERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+            report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
             exit(1);
         }
     }
@@ -358,19 +429,24 @@ token analisa_comandos_simples(parser *p) {
 token analisa_atrib_chprocedimento(parser *p) {
     
     token left_side = token_create(p->t.lexema, p->t.simbolo, p->t.linha); // guardando o token da esquerda para gerar o codigo depois de analisar a expressao da direita
+    Tabsimb *sp_aux;
     token_free(&p->t);
     p->t = lexer(p->file, p->out);
 
     if (strcmp(p->t.simbolo, "satribuicao") == 0) {
-        p->t = analisa_atribuicao(p, left_side);
-
+        if(pesquisa_tabela(left_side.lexema, &sp_aux) == 1){
+            p->t = analisa_atribuicao(p, left_side);
+        }
+        else{
+            report_error(ERR_SEMANTIC, p->t.linha, left_side.lexema, "Variavel nao declarada");
+            exit(1);
+        }
     } else {
-        Tabsimb *sp_aux;
 
         if(pesquisa_tabela(left_side.lexema, &sp_aux) == 1){
             p->t = analisa_chamada_procedimento(p, sp_aux->end);
         }else{
-            printf("ERRO proc '%s' nao encontrada: linha %d",left_side.lexema ,p->t.linha);
+            report_error(ERR_SEMANTIC, p->t.linha, left_side.lexema, "Procedimento nao encontrado");
             exit(1);
         }
     }
@@ -397,16 +473,17 @@ token analisa_se(parser *p) {
     p->t = analisa_expressao(p, in_fixa, &pos);
     
     vetor_pos_fixa = pos_fixa(in_fixa, pos, &posf);
-    // print_in_and_pos_fixa(in_fixa, pos, 0);
-    // print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
 
     tipo_pos_fixa = verifica_tipo_pos_fixa(vetor_pos_fixa, posf);
 
     if (tipo_pos_fixa == -1){
-        printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
+        report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipos incompativeis");
         exit(1);
     }
     
+    print_in_and_pos_fixa(in_fixa, pos, 0, "se");
+    print_in_and_pos_fixa(vetor_pos_fixa, posf, 1, "se");
+
     ins_expressao(vetor_pos_fixa, posf);   // gera as instrucoes conforme pos_fixa
 
     auxrot = rotulo;
@@ -455,7 +532,7 @@ token analisa_se(parser *p) {
             free(endereco);
         }
     } else {
-        printf("\nERRO entao: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+        report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "Entao");
         exit(1);
     }
 
@@ -493,16 +570,16 @@ token analisa_enquanto(parser *p) {
     p->t = analisa_expressao(p, in_fixa, &pos);
     
     vetor_pos_fixa = pos_fixa(in_fixa, pos, &posf);
-    // print_in_and_pos_fixa(in_fixa, pos, 0);
-    // print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
 
     tipo_pos_fixa = verifica_tipo_pos_fixa(vetor_pos_fixa, posf);
     
     if (tipo_pos_fixa == -1){
-        printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
+        report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipos incompativeis");
         exit(1);
     }
 
+    print_in_and_pos_fixa(in_fixa, pos, 0, "enquanto");
+    print_in_and_pos_fixa(vetor_pos_fixa, posf, 1, "enquanto");
 
     ins_expressao(vetor_pos_fixa, posf);      // gera as instrucoes conforme pos_fixa
 
@@ -537,7 +614,7 @@ token analisa_enquanto(parser *p) {
         free(endereco);
 
     } else {
-        printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+        report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
         exit(1);
     }
     return p->t;
@@ -557,8 +634,8 @@ token analisa_leia(parser *p) {
         if (strcmp(p->t.simbolo, "sidentificador") == 0) {
             Tabsimb *sp_aux;
             if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1) {
-                if (verifica_tipo(p->t) != 0){
-                    printf("\nERRO: Tipo da variavel incompativel com instrucao leia, na linha %d\n", p->t.linha);
+                if (verifica_tipo(p->t) != 0 || strcmp(sp_aux->tipo, "funcao inteiro") == 0){
+                    report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipo da variavel incompativel com instrucao leia");
                     exit(1);
                 }
                 token_free(&p->t);
@@ -573,19 +650,19 @@ token analisa_leia(parser *p) {
                     free(endereco);
 
                 } else {
-                    printf("\nERRO: linha %d, token: %s", p->t.linha, p->t.lexema);
+                    report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
                     exit(1);
                 }
             } else {
-                printf("\nERRO semantico: linha %d, token: %s", p->t.linha, p->t.lexema);
+                report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "identificador nao encontrado");
                 exit(1);
             }
         } else {
-            printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+            report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
             exit(1);
         }
     } else {
-        printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+        report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
         exit(1);
     }
 
@@ -604,8 +681,8 @@ token analisa_escreva(parser *p) {
         if (strcmp(p->t.simbolo, "sidentificador") == 0) {
             Tabsimb *sp_aux;
             if (pesquisa_tabela(p->t.lexema, &sp_aux) == 1) {
-                if (verifica_tipo(p->t) != 0){
-                    printf("\nERRO: Tipo da variavel incompativel com instrucao escreva, na linha %d\n", p->t.linha);
+                if (verifica_tipo(p->t) != 0 || strcmp(sp_aux->tipo, "funcao inteiro") == 0){
+                    report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipo da variavel incompativel com instrucao escreva");
                     exit(1);
                 }
                 token_free(&p->t);
@@ -619,21 +696,19 @@ token analisa_escreva(parser *p) {
                     instrucao("escreva", endereco, ""); 
                     free(endereco);
                 } else {
-                    printf("\nERRO: token sfecha_parenteses esperado\nLinha %d, Token: %s",
-                           p->t.linha, p->t.lexema);
+                    report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token sfecha_parenteses esperado");
                     exit(1);
                 }
             } else {
-                printf("\nERRO semantico: Linha %d, token: %s", p->t.linha, p->t.lexema);
+                report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "identificador nao encontrado");
                 exit(1);
             }
         } else {
-            printf("\nERRO: token sidentificador esperado\nLinha %d, token: %s",
-                   p->t.linha, p->t.lexema);
+            report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token sidentificador esperado");
             exit(1);
         }
     } else {
-        printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+        report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
         exit(1);
     }
 
@@ -658,18 +733,18 @@ token analisa_atribuicao(parser *p, token left_side) {
         p->t = analisa_expressao(p, in_fixa, &pos);
         
         vetor_pos_fixa = pos_fixa(in_fixa, pos, &posf);
-        print_in_and_pos_fixa(in_fixa, pos, 0);
-        print_in_and_pos_fixa(vetor_pos_fixa, posf, 1);
+        print_in_and_pos_fixa(in_fixa, pos, 0, "atribuicao");
+        print_in_and_pos_fixa(vetor_pos_fixa, posf, 1, "atribuicao");
 
         tipo_pos_fixa = verifica_tipo_pos_fixa(vetor_pos_fixa, posf);
 
         if (tipo_pos_fixa == -1){
-            printf("\nERRO: tipos incompativeis na linha %d\n", p->t.linha);
+            report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipos incompativeis");
             exit(1);
         }
         
         if (verifica_tipo(left_side) != tipo_pos_fixa){
-            printf("\nERRO: Tipo da expressao incompativel com atribuicao na linha %d\n", p->t.linha);
+            report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipo da expressao incompativel com atribuicao");
             exit(1);
         }
         
@@ -687,7 +762,7 @@ token analisa_atribuicao(parser *p, token left_side) {
 
 
     } else {
-        printf("\nERRO: linha %d, token: %s\n", p->t.linha, p->t.lexema);
+        report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token inesperado");
         exit(1);
     }
     return p->t;
@@ -709,8 +784,7 @@ token analisa_comandos(parser *p) {
                     p->t = analisa_comandos_simples(p);
                 }
             } else {
-                printf("\nERRO: token sponto_virgula esperado\nLinha %d, Token: %s\n",
-                       p->t.linha, p->t.lexema);
+                report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token sponto_virgula esperado");
                 exit(1);
             }
         }
@@ -718,7 +792,7 @@ token analisa_comandos(parser *p) {
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
     } else {
-        printf("\nERRO: token sinicio esperado\nLinha %d, Token: %s\n", p->t.linha, p->t.lexema);
+        report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "token sinicio esperado");
         exit(1);
     }
     return p->t;
@@ -800,7 +874,7 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
                 p->t = lexer(p->file, p->out);
             }
         }else{
-            printf("\nERRO semantico, identificador nao encontrado:  Linha %d, Token: %s", p->t.linha, p->t.lexema);
+            report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "identificador nao encontrado");
             exit(1);
         }
      } else if (strcmp(p->t.simbolo, "snumero") == 0) {
@@ -823,8 +897,7 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
             token_free(&p->t);
             p->t = lexer(p->file, p->out);
         } else {
-            printf("\nERRO: esperado fecha parênteses\nLinha %d, Token: %s\n",
-                   p->t.linha, p->t.lexema);
+            report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "esperado fecha parenteses");
             exit(1);
         }
     } else if (strcmp(p->t.lexema, "verdadeiro") == 0 ||
@@ -833,7 +906,7 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
         token_free(&p->t);
         p->t = lexer(p->file, p->out);
     } else {
-        printf("\nERRO: fator inválido\nLinha %d, Token: %s\n", p->t.linha, p->t.lexema);
+        report_error(ERR_SYNTACTIC, p->t.linha, p->t.lexema, "fator invalido");
         exit(1);
     }
 
@@ -892,35 +965,52 @@ token analisa_bloco(parser *p) {
     return p->t;
 }
 
-int main(){
+int main(int argc, char **argv){
 
     sp_parser = initialize_stack();
     parser p; // Nova struct para o parser (melhor organizacao e clareza do codigo)
     new_program_code();
 
-    char file_name[100];
-    printf("Digite o nome do arquivo a ser analisado: ");
-    scanf("%s", file_name);
+    char file_name[512];
+
+    if (argc > 1) {
+        // usar argumento passado pela linha de comando
+        strncpy(file_name, argv[1], sizeof(file_name)-1);
+        file_name[sizeof(file_name)-1] = '\0';
+    } else {
+        printf("Digite o nome do arquivo a ser analisado: ");
+        if (scanf("%511s", file_name) != 1) {
+            report_error(ERR_INFO, 0, 0, "nome de arquivo invalido na entrada padrao.");
+            return 1;
+        }
+    }
 
     // --- Abertura do arquivo fonte ---
     p.file = fopen(file_name, "r");
     if (p.file) {
-        printf("Arquivo aberto com sucesso!\n");
+        fprintf(stderr, "Arquivo aberto com sucesso: %s\n", file_name);
     } else {
-        fprintf(stderr, "Erro ao abrir arquivo!\n");
+        report_error(ERR_INFO, 1, NULL, "Erro ao abrir arquivo");
         exit(1);
     }
 
     lexer_init(p.file);
 
     // --- Criação do arquivo de saída ---
+    struct stat st;
+    if (stat("output", &st) != 0) {
+        MKDIR("output");
+    }
+    if (stat("output/tokens", &st) != 0) {
+        MKDIR("output/tokens");
+    }
+
+    /* agora safe fopen */
     p.out = fopen("output/tokens/tabela_tokens.txt", "w");
     if (!p.out) {
-        printf("Erro ao criar arquivo da tabela de tokens!\n");
+        fprintf(stderr,"Erro ao criar arquivo da tabela de tokens!\n");
         fclose(p.file);
         exit(1);
-    } else {
-        printf("Arquivo tabela_tokens criado com sucesso!\n");
     }
 
     fprintf(p.out, "Tabela de Tokens:\n");
@@ -953,27 +1043,27 @@ int main(){
                     p.t = lexer(p.file, p.out);
                     char ch = fgetc(p.file);
                     if (ch == EOF) {
-                        imprimir_tabela_simbolos();     // apenas para testes
-                        printf("\nSucesso\n");
+                        // imprimir_tabela_simbolos();     // apenas para testes
+                        // fprintf(stderr,"\nSucesso\n");
                     } else {
-                        printf("\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
+                        report_error(ERR_SYNTACTIC, p.t.linha, p.t.lexema, "token inesperado");
                         exit(1);
                     }
                     token_free(&p.t);
                 } else {
-                    printf("\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
+                    report_error(ERR_SYNTACTIC, p.t.linha, p.t.lexema, "token inesperado");
                     exit(1);
                 }
             } else {
-                printf("\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
+                report_error(ERR_SYNTACTIC, p.t.linha, p.t.lexema, "token inesperado");
                 exit(1);
             }
         } else {
-            printf("\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
+            report_error(ERR_SYNTACTIC, p.t.linha, p.t.lexema, "token inesperado");
             exit(1);
         }
     } else {
-        printf("\nERRO: linha %d, token: %s\n", p.t.linha, p.t.lexema);
+        report_error(ERR_SYNTACTIC, p.t.linha, p.t.lexema, "token inesperado");
         exit(1);
     }
 

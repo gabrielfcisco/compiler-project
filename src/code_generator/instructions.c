@@ -5,6 +5,7 @@
 #include "../../include/code_generator/instructions.h"
 #include "../../include/lexical/token.h"
 #include "../../include/semantic/semantic.h"
+#include "../../include/error_UI/error.h"
 
 int verify_if_is_aritmetic(char *operando);
 int verify_if_is_relational(char *operando);
@@ -131,8 +132,7 @@ void instrucao(char *instrucao, char *operando1, char *operando2) {
         }
     }
     
-
-    printf(" Instrucao desconhecida: %s\n", instrucao);
+    report_error(ERR_CODEGEN, 11, instrucao, "Instrucao desconhecida");
 }
 
 void ins_expressao(token *vetor_pos_fixa, int posf){

@@ -3,7 +3,8 @@
 #include <string.h>
 #include <ctype.h>
 #include "../../include/lexical/token.h"
-char ch;
+#include "../../include/error_UI/error.h"
+int ch;
 int line;
 
 token token_create(char* lexema, char* simbolo, int linha) {
@@ -23,7 +24,8 @@ token token_create_error(int linha) {
     token t;
     t.lexema = malloc(50);
     if (t.lexema != NULL) {
-        sprintf(t.lexema, "Erro lexical: linha %d", linha);
+        // sprintf(t.lexema, "Erro lexical: linha %d", linha);
+        report_error(ERR_LEXICAL, linha, NULL, "Erro ao criar token '%c'", ch);
     }
     strcpy(t.simbolo, "serro");
     t.linha = linha;
@@ -265,11 +267,11 @@ token lexer(FILE* file, FILE* out) {
 
     while (1) {
 
-        if (ch == ' ' || ch == '\t' || ch == '\b' || ch == 10) {
+        if (ch == ' ' || ch == '\t' || ch == '\b') {
             ch = fgetc(file); 
             continue;
 
-        } else if (ch == '\r' || ch == 13) { 
+        } else if (ch == '\r') { 
             ch = fgetc(file);
             if (ch == '\n') {
                 ch = fgetc(file);
