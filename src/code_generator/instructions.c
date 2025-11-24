@@ -7,9 +7,6 @@
 #include "../../include/semantic/semantic.h"
 #include "../../include/error_UI/error.h"
 
-int verify_if_is_aritmetic(char *operando);
-int verify_if_is_relational(char *operando);
-
 void instrucao(char *instrucao, char *operando1, char *operando2) {
 
     // printf("\n Instrucao '%s': \n", instrucao);

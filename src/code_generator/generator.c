@@ -6,8 +6,7 @@
 #include "../../include/code_generator/generator.h"
 #include "../../include/error_UI/error.h"
 
-int gera_comando(generator_struct g);
-void print_if_not_empty(FILE *arquivo, char *string);
+
 
 void Gera(char* rotulo, char *instrucao, char *operando1, char *operando2){
     generator_struct g;

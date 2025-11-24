@@ -21,7 +21,8 @@ typedef struct{
 // void generator_close(void);
 
 // Prototype
-
+int gera_comando(generator_struct g);
+void print_if_not_empty(FILE *arquivo, char *string);
 void Gera(char *rotulo, char *instrucao, char *operando1, char *operando2);
 char *convert_integer_to_string(int input);
 int convert_string_to_integer(const char *input);
