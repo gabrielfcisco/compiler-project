@@ -23,14 +23,19 @@ void Gera(char* rotulo, char *instrucao, char *operando1, char *operando2){
 int gera_comando(generator_struct g){
     FILE *arquivo;
 
-    arquivo = fopen("codigo_maquina_virtual.txt", "a");
+    arquivo = fopen("./output/codigo_maquina_virtual.obj", "a");
 
     if (arquivo == NULL) {
         perror("Nao foi possivel criar o arquivo");
         return 1;
     }
 
-    print_if_not_empty(arquivo,g.rotulo);
+    if (strcmp(g.instrucao,"NULL") == 0) {
+        fprintf(arquivo, "%s\t", g.rotulo);
+    } else {
+        // Se não tem rótulo → imprime TAB no começo
+        fprintf(arquivo, "\t");
+    }
     print_if_not_empty(arquivo,g.instrucao);
     print_if_not_empty(arquivo,g.operando1);
     print_if_not_empty(arquivo,g.operando2);
@@ -63,13 +68,15 @@ int convert_string_to_integer(const char *input) {
 }
 
 void new_program_code(){
-    FILE *arquivo = fopen("codigo_maquina_virtual.txt", "w");
+    FILE *arquivo = fopen("output", "w");
+    FILE *arquivo1 = fopen("output/codigo_maquina_virtual.obj", "w");
 
-    if (arquivo == NULL) {
+    if (arquivo1 == NULL) {
         report_error(ERR_CODEGEN, 3, NULL, "Erro ao criar o arquivo do codigo do programa programa");
         exit(1);
     }
 
     fclose(arquivo);
-    printf("Arquivo 'codigo_maquina_virtual.txt' criado com sucesso.\n");
+    fclose(arquivo1);
+    printf("Arquivo 'codigo_maquina_virtual.obj' criado com sucesso em './output' .\n");
 }

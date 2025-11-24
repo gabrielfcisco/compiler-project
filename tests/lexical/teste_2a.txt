@@ -1,7 +1,28 @@
 programa teste2;
 var x:inteiro;
+
+       funcao retorno:inteiro;
+              var aux: inteiro;
+              inicio
+                     aux:= 10;
+                     aux := 10+20;
+                     retorno := aux;
+              fim;
+
+       procedimento analisa;
+       var x,y : inteiro;
+       inicio
+              leia(x);
+              leia(y);
+              x := x+y;
+              escreva(x);
+
+       fim;
+
 inicio
-  
-       x= 1;
+       leia(retorno)
+       x := 1;
+       x := retorno;
+       escreva(x);
 fim.
 

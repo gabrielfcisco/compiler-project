@@ -13,6 +13,7 @@ output/symbols/*
 output/code/*
 output/ast/*
 codigo_maquina_virtual.txt
+codigo_maquina_virtual.obj
 
 # IDEs
 .vscode/

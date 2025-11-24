@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include "../../include/lexical/token.h"
 #include "../../include/error_UI/error.h"
-char ch;
+int ch;
 int line;
 
 token token_create(char* lexema, char* simbolo, int linha) {
@@ -267,11 +267,11 @@ token lexer(FILE* file, FILE* out) {
 
     while (1) {
 
-        if (ch == ' ' || ch == '\t' || ch == '\b' || ch == 10) {
+        if (ch == ' ' || ch == '\t' || ch == '\b') {
             ch = fgetc(file); 
             continue;
 
-        } else if (ch == '\r' || ch == 13) { 
+        } else if (ch == '\r') { 
             ch = fgetc(file);
             if (ch == '\n') {
                 ch = fgetc(file);
