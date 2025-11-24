@@ -1,3 +1,33 @@
+/**********************************************
+ * Arquivo: parser.c
+ * Autores: Enzo, Gabriel, Guilherme, Samuel
+ * 
+ *
+ * Descrição:
+ *    Implementa a sintatico do compilador,
+ *    Responsável por vericar a sintaxe, a sequencia dos lexemas, 
+ *    realizar chamadas ao lexico, ao semantico e ao gerador de codigo.
+ *    Alem disso, e a rotina principal do compilador (main).
+ *    
+ *
+ * Dependências:
+ *    - parser.h
+ *    - lexer.h
+ *    - semantic.h
+ *    - generator.h
+ *    - instruction.h
+ *    - error.h
+ *
+ * Como compilar:
+ *    make
+ *    OU
+ *    gcc src/syntactic/parser.c src/lexical/lexer.c src/semantic/semantic.c src/code_generator/generator.c src/code_generator/instructions.c ./src/error_UI/error.c -o parser
+ *
+ * Como executar:
+ *    ./parser
+ **********************************************/
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -34,3 +34,6 @@ parser.dSYM/
 # Vagrant
 Vagrantfile
 .vagrant
+
+#Outros
+test_f.txt

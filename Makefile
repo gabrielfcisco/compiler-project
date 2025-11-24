@@ -1,35 +1,21 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -g -Iinclude
-SRC_DIR = src
-BUILD_DIR = bin
-OUTPUT_DIR = output
+CFLAGS = -Wall -Wextra -g
 
-SOURCES = $(SRC_DIR)/main.c \
-	$(SRC_DIR)/lexical/lexer.c \
-	$(SRC_DIR)/syntactic/parser.c \
-	$(SRC_DIR)/semantic/semantic.c \
-	$(SRC_DIR)/codegen/codegen.c \
-	$(SRC_DIR)/utils/error.c
+SRC = src/syntactic/parser.c \
+		src/lexical/lexer.c \
+		src/semantic/semantic.c \
+		src/code_generator/generator.c \
+		src/code_generator/instructions.c \
+		src/error_UI/error.c
 
-TARGET = $(BUILD_DIR)/compilador
+TARGET = parser
 
 all: $(TARGET)
 
-$(TARGET): $(SOURCES)
-	@mkdir -p $(BUILD_DIR)
-	@mkdir -p $(OUTPUT_DIR)/tokens
-	@mkdir -p $(OUTPUT_DIR)/symbols
-	@mkdir -p $(OUTPUT_DIR)/code
-	$(CC) $(CFLAGS) $(SOURCES) -o $(TARGET)
+$(TARGET): $(SRC)
+	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
 
 clean:
-	rm -rf $(BUILD_DIR) $(OUTPUT_DIR)/*
+	rm -f $(TARGET)
 
-test-lexical:
-	./$(TARGET) --lexical tests/lexical/teste_1.txt
-
-test-all:
-	@for test in tests/lexical/*.txt; do \
-		echo "Testando $$test..."; \
-		./$(TARGET) $$test; \
-	done
+.PHONY: all clean
