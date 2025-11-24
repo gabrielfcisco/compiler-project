@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <time.h>
 
+// Retorna uma string representando o tipo de erro informado.
 static const char *type_str(ErrorType t) {
     switch(t){
         case ERR_LEXICAL: return "LEXICAL";
@@ -14,6 +15,7 @@ static const char *type_str(ErrorType t) {
     }
 }
 
+// Reporta um erro formatado na saída padrão de erro, com timestamp, tipo, linha e token.
 void report_error(ErrorType type, int linha, const char *token, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
@@ -35,6 +37,7 @@ void report_error(ErrorType type, int linha, const char *token, const char *fmt,
     va_end(ap);
 }
 
+// Reporta uma expressão em notação infixa e pós-fixa para depuração/análise, com timestamp.
 void report_posfix(int id, const char *origem, const char *infixa, const char *posfixa) {
     time_t now = time(NULL);
     struct tm *tm = localtime(&now);

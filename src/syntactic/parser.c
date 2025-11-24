@@ -46,6 +46,7 @@ Tabsimb** sp_parser;
 int rotulo = 1;
 int endereco_var = 1;
 
+// Imprime as informações de um token para depuração.
 void imprimir_token(token t) {
 
     printf("--- Conteúdo do Token ---\n");
@@ -56,6 +57,7 @@ void imprimir_token(token t) {
     printf("-------------------------\n\n");
 }
 
+// Atualiza o vetor de tokens infixa, tratando operadores unários e binários.
 void atualiza_in_fixa(token *in_fixa, int *pos, token t) {
 
     if (t.unario == 1) {
@@ -78,6 +80,8 @@ void atualiza_in_fixa(token *in_fixa, int *pos, token t) {
 }
 
 int pf_id_counter = 0;
+
+// Imprime a expressão em notação infixa ou posfixa, e chama report_posfix para depuração.
 void print_in_and_pos_fixa(token *vetor_tokens, int pos, int fixa, const char *origem) {
     // buffers locais para montar as strings
     char buffer_tmp[2048];
@@ -132,6 +136,7 @@ void print_in_and_pos_fixa(token *vetor_tokens, int pos, int fixa, const char *o
     }
 }
 
+// Retorna a precedência de um token operador.
 int precedencia(token t) {
 
     if (t.unario == 1) return 6; // maior prioridade para operadores unários   
@@ -146,6 +151,7 @@ int precedencia(token t) {
 
 }
 
+// Converte um vetor de tokens em notação infixa para posfixa (Shunting Yard).
 token *pos_fixa (token *in_fixa, int pos, int *posf) {
     // Implementação do algoritmo Shunting Yard para converter infixa para posfixa
     token *pilha = (token *)malloc(pos * sizeof(token));
@@ -196,6 +202,7 @@ token *pos_fixa (token *in_fixa, int pos, int *posf) {
     return out;
 }
 
+// Analisa e valida o tipo de um token (só aceita inteiro ou booleano).
 token analisa_tipo(parser *p) {
 
     if(strcmp(p->t.simbolo, "sinteiro") != 0 && strcmp(p->t.simbolo, "sbooleano") != 0){
@@ -210,6 +217,7 @@ token analisa_tipo(parser *p) {
     return p->t;
 }
 
+// Analisa declaração de variáveis, verifica duplicidade e insere na tabela de símbolos.
 token analisa_variaveis(parser *p, int *counter_var){
 
     while(strcmp(p->t.simbolo, "sdoispontos") != 0){
@@ -247,6 +255,7 @@ token analisa_variaveis(parser *p, int *counter_var){
     return analisa_tipo(p);
 }
 
+// Analisa o bloco de declaração de variáveis.
 token analisa_et_variaveis(parser *p,int *counter_var){
 
     if(strcmp(p->t.simbolo, "svar") == 0){
@@ -272,7 +281,7 @@ token analisa_et_variaveis(parser *p,int *counter_var){
     return p->t;
 }
 
-
+// Analisa declaração de procedimento, insere na tabela e gera rótulo.
 token analisa_declaracao_procedimento(parser *p){
 
     token_free(&p->t);
@@ -314,6 +323,7 @@ token analisa_declaracao_procedimento(parser *p){
     return p->t;
 }
 
+// Analisa declaração de função, insere na tabela, gera rótulo e tipo.
 token analisa_declaracao_funcao(parser *p){
 
     token_free(&p->t);
@@ -366,6 +376,7 @@ token analisa_declaracao_funcao(parser *p){
     return p->t;
 }
 
+// Analisa sub-rotinas (funções e procedimentos) e gera saltos para o bloco principal.
 token analisa_subrotinas(parser *p){
 
     int auxrot,flag;
@@ -408,6 +419,7 @@ token analisa_subrotinas(parser *p){
     return p->t;
 }
 
+// Analisa comandos simples (atribuição, chamada, controle, E/S).
 token analisa_comandos_simples(parser *p) {
     
     if (strcmp(p->t.simbolo, "sidentificador") == 0) {
@@ -426,6 +438,7 @@ token analisa_comandos_simples(parser *p) {
     return p->t;
 }
 
+// Analisa atribuição ou chamada de procedimento.
 token analisa_atrib_chprocedimento(parser *p) {
     
     token left_side = token_create(p->t.lexema, p->t.simbolo, p->t.linha); // guardando o token da esquerda para gerar o codigo depois de analisar a expressao da direita
@@ -454,8 +467,7 @@ token analisa_atrib_chprocedimento(parser *p) {
     return p->t;
 }
 
-
-
+// Analisa comando 'se', gera código para saltos e blocos 'então'/'senão'.
 token analisa_se(parser *p) {
 
     token in_fixa[1000];
@@ -546,7 +558,7 @@ token analisa_se(parser *p) {
     return p->t;
 }
 
-
+// Analisa comando 'enquanto', gera código para laço e saltos.
 token analisa_enquanto(parser *p) {
 
     char *endereco;
@@ -620,7 +632,7 @@ token analisa_enquanto(parser *p) {
     return p->t;
 }
 
-
+// Analisa comando 'leia', verifica tipo e gera código de leitura.
 token analisa_leia(parser *p) {
     
     token_free(&p->t);
@@ -669,6 +681,7 @@ token analisa_leia(parser *p) {
     return p->t;
 }
 
+// Analisa comando 'escreva', verifica tipo e gera código de escrita.
 token analisa_escreva(parser *p) {
 
     token_free(&p->t);
@@ -715,6 +728,7 @@ token analisa_escreva(parser *p) {
     return p->t;
 }
 
+// Analisa atribuição, verifica tipos e gera código para expressão e armazenamento.
 token analisa_atribuicao(parser *p, token left_side) {
 
 /// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -768,7 +782,7 @@ token analisa_atribuicao(parser *p, token left_side) {
     return p->t;
 }
 
-
+// Analisa bloco de comandos (início/fim) e comandos internos.
 token analisa_comandos(parser *p) {
 
     if (strcmp(p->t.simbolo, "sinicio") == 0) {
@@ -798,7 +812,7 @@ token analisa_comandos(parser *p) {
     return p->t;
 }
 
-
+// Analisa expressão relacional, lógica ou aritmética.
 token analisa_expressao(parser *p, token *in_fixa, int *pos) {
 
     p->t = analisa_expressao_simples(p, in_fixa, pos);
@@ -816,7 +830,7 @@ token analisa_expressao(parser *p, token *in_fixa, int *pos) {
     return p->t;
 }
 
-
+// Analisa expressão simples (soma, subtração, ou).
 token analisa_expressao_simples(parser *p, token *in_fixa, int *pos) {
 
     if (strcmp(p->t.simbolo, "smais") == 0 || strcmp(p->t.simbolo, "smenos") == 0) {
@@ -841,6 +855,7 @@ token analisa_expressao_simples(parser *p, token *in_fixa, int *pos) {
     return p->t;
 }
 
+// Analisa termo (multiplicação, divisão, e).
 token analisa_termo(parser *p, token *in_fixa, int *pos) {
 
     p->t = analisa_fator(p, in_fixa, pos);
@@ -859,7 +874,7 @@ token analisa_termo(parser *p, token *in_fixa, int *pos) {
     return p->t;
 }
 
-
+// Analisa fator (identificador, número, parênteses, unário, booleano).
 token analisa_fator(parser *p, token *in_fixa, int *pos) {
 
     if (strcmp(p->t.simbolo, "sidentificador") == 0) {
@@ -913,6 +928,7 @@ token analisa_fator(parser *p, token *in_fixa, int *pos) {
     return p->t;
 }
 
+// Analisa chamada de função.
 token analisa_chamada_funcao(parser *p) {
     if (strcmp(p->t.simbolo, "sidentificador") == 0) {
 
@@ -922,7 +938,7 @@ token analisa_chamada_funcao(parser *p) {
     return p->t;
 }
 
-
+// Analisa chamada de procedimento e gera código de chamada.
 token analisa_chamada_procedimento(parser *p, int end) {
 
     char *endereco = convert_integer_to_string(end);  //endereco aqui e rotulo
@@ -932,6 +948,7 @@ token analisa_chamada_procedimento(parser *p, int end) {
     return p->t;
 }
 
+// Analisa um bloco (variáveis, sub-rotinas, comandos) e gera código de alocação/desalocação.
 token analisa_bloco(parser *p) {
 
     char *endereco;
@@ -965,6 +982,7 @@ token analisa_bloco(parser *p) {
     return p->t;
 }
 
+// Função principal: inicializa, abre arquivos, executa análise sintática e gera código.
 int main(int argc, char **argv){
 
     sp_parser = initialize_stack();
@@ -1073,5 +1091,3 @@ int main(int argc, char **argv){
     instrucao("finaliza_prog","","");
     return 0;
 }
-// DETALHE A FUNÇÃO : "ANALISA_FATOR" TINHA UM TRATAMENTO DIFERENTE PARA PESQUISA_TABELA, ACHO QUE NAO TINHA NECESSIDADE ENTAO FIZ DIFERENTE,
-// MAS SERIA BOM CONFERIR

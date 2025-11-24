@@ -7,6 +7,7 @@
 #include "../../include/semantic/semantic.h"
 #include "../../include/error_UI/error.h"
 
+// Executa a instrução de código intermediário, gerando comandos para a máquina virtual conforme o tipo de instrução.
 void instrucao(char *instrucao, char *operando1, char *operando2) {
 
     // printf("\n Instrucao '%s': \n", instrucao);
@@ -132,6 +133,7 @@ void instrucao(char *instrucao, char *operando1, char *operando2) {
     report_error(ERR_CODEGEN, 11, instrucao, "Instrucao desconhecida");
 }
 
+// Gera o código correspondente a uma expressão em notação pós-fixa.
 void ins_expressao(token *vetor_pos_fixa, int posf){
     
     Tabsimb *sp_aux;   // endereco auxiliar para ver se o identificador encontrado e uma funcao
@@ -158,6 +160,7 @@ void ins_expressao(token *vetor_pos_fixa, int posf){
     }
 }
 
+// Gera o código de atribuição para o lexema informado.
 void ins_atr_expressao(char *lexema){
     Tabsimb *sp_aux;
     char *endereco;
@@ -173,6 +176,7 @@ void ins_atr_expressao(char *lexema){
     }
 }
 
+// Verifica se o operando é um operador aritmético e gera o comando correspondente.
 int verify_if_is_aritmetic(char *operando){
     if (strcmp(operando, "+") == 0){
             Gera("","ADD","","");
@@ -203,6 +207,7 @@ int verify_if_is_aritmetic(char *operando){
         return 0;
 }
 
+// Verifica se o operando é um operador relacional/lógico e gera o comando correspondente.
 int verify_if_is_relational(char *operando){
     if (strcmp(operando,"e") == 0){
             Gera("","AND","","");
@@ -272,6 +277,7 @@ int verify_if_is_relational(char *operando){
         return 1;
 }
 
+// Realiza uma cópia profunda de uma string (aloca nova memória).
 char* deep_copy(const char *orig) {
     char *copia = malloc(strlen(orig) + 1); // +1 para o '\0'
     if (copia == NULL) return NULL;

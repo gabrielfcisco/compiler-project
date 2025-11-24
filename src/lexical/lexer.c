@@ -7,6 +7,9 @@
 int ch;
 int line;
 
+// Cria e inicializa um token com o lexema, símbolo e linha informados.
+// Aloca memória para o lexema, copia os valores recebidos e zera os campos
+// de erro e unário.
 token token_create(char* lexema, char* simbolo, int linha) {
     token t;
     t.lexema = malloc(strlen(lexema) + 1);
@@ -33,6 +36,7 @@ token token_create_error(int linha) {
     return t;
 }
 
+// Libera a memória alocada para o lexema do token e zera o ponteiro.
 void token_free(token* t) {
     if (t && t->lexema) {
         free(t->lexema);
@@ -40,6 +44,7 @@ void token_free(token* t) {
     }
 }
 
+// Reconhece e retorna um token numérico (sequência de dígitos).
 token trata_digito(FILE* file){
     char buffer[256];
     int i = 0;
@@ -58,6 +63,7 @@ token trata_digito(FILE* file){
     return token_create(buffer, "snumero", linha_inicio);
 }
 
+// Reconhece identificadores e palavras reservadas, retornando o token apropriado.
 token trata_identificador(FILE* file){
     char buffer[256];
     int i = 0;
@@ -124,6 +130,7 @@ token trata_identificador(FILE* file){
     return token_create(buffer, simbolo, linha_inicio);
 }
 
+// Trata operadores aritméticos simples: +, -, * e retorna o token correspondente.
 token trata_aritmetico(FILE* file){
     char lexema[2];
     int linha_inicio = line;
@@ -148,6 +155,7 @@ token trata_aritmetico(FILE* file){
     return token_create(lexema, simbolo, linha_inicio);
 }
 
+// Trata operadores relacionais (=, !=, <, <=, >, >=) e devolve o token correspondente.
 token trata_relacional(FILE* file){
     char buffer[3];
     int linha_inicio = line;
@@ -186,6 +194,7 @@ token trata_relacional(FILE* file){
     return token_create(buffer, simbolo, linha_inicio);
 }
 
+// Trata ':' e ':=' (atribuição), retornando o token apropriado.
 token trata_atribuicao(FILE* file){
     int linha_inicio = line;
     ch = fgetc(file);
@@ -198,6 +207,7 @@ token trata_atribuicao(FILE* file){
     }
 }
 
+// Trata sinais de pontuação como '.', ';', ',', '(', ')' e retorna o token.
 token trata_pontuacao(FILE* file){
     char lexema[2];
     int linha_inicio = line;
@@ -226,6 +236,7 @@ token trata_pontuacao(FILE* file){
     return token_create(lexema, simbolo, linha_inicio);
 }
 
+// Decide qual função de tratamento chamar com base no caractere atual e retorna o token.
 token pega_token(FILE* file){
     int linha_inicio = line;
 
@@ -251,6 +262,7 @@ token pega_token(FILE* file){
     }
 }
 
+// Escreve o token na tabela de símbolos/arquivo de saída se o arquivo fornecido for válido.
 void salva_tabela_simbolos(FILE* out, token t) {
     if (!out) {
         return;
@@ -258,11 +270,13 @@ void salva_tabela_simbolos(FILE* out, token t) {
     fprintf(out, "%-21s | %-20s\n", t.lexema, t.simbolo);
 }
 
+// Inicializa o estado do lexer (lê o primeiro caractere e zera o contador de linhas).
 void lexer_init(FILE* file){
     ch = fgetc(file);
     line = 1;
 }
 
+// Função principal do lexer: ignora espaços e comentários, atualiza número de linha e retorna o próximo token válido.
 token lexer(FILE* file, FILE* out) {
 
     while (1) {
