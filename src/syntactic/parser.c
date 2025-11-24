@@ -4,12 +4,7 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#ifdef _WIN32
-  #include <direct.h>  // _mkdir
-  #define MKDIR(p) _mkdir(p)
-#else
-  #define MKDIR(p) mkdir(p, 0755)
-#endif
+
 #include "../../include/parser/parser.h"
 #include "../../include/lexical/lexer.h"
 #include "../../include/semantic/semantic.h"

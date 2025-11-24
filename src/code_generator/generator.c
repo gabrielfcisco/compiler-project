@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "../../include/code_generator/generator.h"
 #include "../../include/error_UI/error.h"
 
@@ -68,15 +70,21 @@ int convert_string_to_integer(const char *input) {
 }
 
 void new_program_code(){
-    FILE *arquivo = fopen("output", "w");
+    // Criar diretório "output" caso não exista
+    struct stat st;
+    if (stat("output", &st) != 0) {
+        MKDIR("output");
+    }
+
     FILE *arquivo1 = fopen("output/codigo_maquina_virtual.obj", "w");
 
     if (arquivo1 == NULL) {
-        report_error(ERR_CODEGEN, 3, NULL, "Erro ao criar o arquivo do codigo do programa programa");
+        report_error(ERR_CODEGEN, 3, NULL,
+                     "Erro ao criar o arquivo do código do programa");
         exit(1);
     }
 
-    fclose(arquivo);
     fclose(arquivo1);
-    printf("Arquivo 'codigo_maquina_virtual.obj' criado com sucesso em './output' .\n");
+
+    printf("Arquivo 'codigo_maquina_virtual.obj' criado com sucesso em './output'.\n");
 }

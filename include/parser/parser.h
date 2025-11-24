@@ -10,6 +10,13 @@ typedef struct {
     token t;
 } parser;
 
+#ifdef _WIN32
+  #include <direct.h>  // _mkdir
+  #define MKDIR(p) _mkdir(p)
+#else
+  #define MKDIR(p) mkdir(p, 0755)
+#endif
+
 // Prototype
 void atualiza_in_fixa(token *in_fixa, int *pos, token t);
 void print_in_and_pos_fixa(token *vetor_tokens, int pos, int fixa, const char *origem);

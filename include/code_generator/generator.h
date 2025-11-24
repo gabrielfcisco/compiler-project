@@ -9,6 +9,14 @@ typedef struct{
 } generator_struct;
 
 
+#ifdef _WIN32
+  #include <direct.h>  // _mkdir
+  #define MKDIR(p) _mkdir(p)
+#else
+  #define MKDIR(p) mkdir(p, 0755)
+#endif
+
+
 // int generator_open(const char* path, int truncate); // fazer aqui quando voltar
 // void generator_close(void);
 
