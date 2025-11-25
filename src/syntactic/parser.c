@@ -144,7 +144,7 @@ int precedencia(token t) {
     if (strcmp(t.simbolo, "smais")    == 0  || strcmp(t.simbolo, "smenos")   == 0) return 4;
     if (strcmp(t.simbolo, "smaior")   == 0  || strcmp(t.simbolo, "smenor")   == 0 ||
         strcmp(t.simbolo, "smaiorig") == 0  || strcmp(t.simbolo, "smenorig") == 0 ||
-        strcmp(t.simbolo, "sdif")     == 0) return 3; 
+        strcmp(t.simbolo, "sdif")     == 0  || strcmp(t.simbolo, "sig") == 0) return 3; 
     if (strcmp(t.simbolo, "se")   == 0) return 2;
     if (strcmp(t.simbolo, "sou")  == 0) return 1;
     return 0; // menor prioridade possível (ou token inválido)

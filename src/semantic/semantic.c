@@ -204,13 +204,19 @@ int verifica_tipo_pos_fixa (token *vetor_pos_fixa, int posf){
             strcmp(t.simbolo, "smenor")   == 0 ||
             strcmp(t.simbolo, "smaiorig") == 0 ||
             strcmp(t.simbolo, "smenorig") == 0 ||
-            strcmp(t.simbolo, "sig")      == 0 ||
-            strcmp(t.simbolo, "sdif")     == 0)
-        {
+            strcmp(t.simbolo, "sdif")     == 0){
             if (a != 0 || b != 0)   // relacionais so aceitam inteiros
                 return -1;
 
             pilha[++topo] = 1; // booleano
+            continue;
+        }
+        
+        if (strcmp(t.simbolo, "sig") == 0){
+
+            if (a != b)
+                return -1;
+            pilha[++topo] = 1;
             continue;
         }
 
