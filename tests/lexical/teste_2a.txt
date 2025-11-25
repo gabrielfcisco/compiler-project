@@ -1,11 +1,12 @@
 programa teste2;
 var x:inteiro;
+z:booleano;
 
        funcao retorno:inteiro;
               var aux: inteiro;
               inicio
                      aux:= 10;
-                     aux := 10+20;
+                     aux := -10+20;
                      retorno := aux;
               fim;
 
@@ -20,9 +21,10 @@ var x:inteiro;
        fim;
 
 inicio
-       leia(retorno)
-       x := 1;
-       x := retorno;
+       z := nao verdadeiro;
+       se z = verdadeiro
+       entao x := retorno
+       senao x := 1;
        escreva(x);
 fim.
 

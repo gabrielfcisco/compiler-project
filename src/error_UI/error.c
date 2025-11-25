@@ -1,8 +1,25 @@
-// src/error.c
+/**********************************************
+ * Arquivo: error.c
+ * Autores: Enzo, Gabriel, Guilherme, Samuel
+ * 
+ *
+ * Descrição:
+ *    Implementa o sistema de relatório de erros e depuração do compilador,
+ *    Responsável por exibir mensagens de erro formatadas com timestamp,
+ *    tipo de erro, linha e token, além de gerar relatórios de expressões
+ *    em notação infixa e pós-fixa para análise.
+ *    
+ *
+ * Dependências:
+ *    - error.h
+ *
+ **********************************************/
+
 #include "../../include/error_UI/error.h"
 #include <stdarg.h>
 #include <time.h>
 
+// Retorna uma string representando o tipo de erro informado.
 static const char *type_str(ErrorType t) {
     switch(t){
         case ERR_LEXICAL: return "LEXICAL";
@@ -14,6 +31,7 @@ static const char *type_str(ErrorType t) {
     }
 }
 
+// Reporta um erro formatado na saída padrão de erro, com timestamp, tipo, linha e token.
 void report_error(ErrorType type, int linha, const char *token, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
@@ -35,6 +53,7 @@ void report_error(ErrorType type, int linha, const char *token, const char *fmt,
     va_end(ap);
 }
 
+// Reporta uma expressão em notação infixa e pós-fixa para depuração/análise, com timestamp.
 void report_posfix(int id, const char *origem, const char *infixa, const char *posfixa) {
     time_t now = time(NULL);
     struct tm *tm = localtime(&now);

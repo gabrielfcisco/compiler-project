@@ -35,5 +35,9 @@ parser.dSYM/
 Vagrantfile
 .vagrant
 
+#Python
+__pycache__
+venv
+
 #Outros
 test_f.txt

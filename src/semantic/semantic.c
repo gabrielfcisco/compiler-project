@@ -1,3 +1,21 @@
+/**********************************************
+ * Arquivo: semantic.c
+ * Autores: Enzo, Gabriel, Guilherme, Samuel
+ * 
+ *
+ * Descrição:
+ *    Implementa a análise semântica do compilador,
+ *    Responsável por gerenciar a tabela de símbolos, verificar tipos,
+ *    validar declarações e garantir a semântica correta do programa.
+ *    
+ *
+ * Dependências:
+ *    - semantic.h
+ *    - parser.h
+ *    - lexer.h
+ *
+ **********************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +29,7 @@ Tabsimb symbol_table[1000];
 Tabsimb* sp;
 Tabsimb* init;
 
+// Imprime os dados de um símbolo da tabela de símbolos.
 void imprimir_simbolo(Tabsimb* sp) {
 
     printf("--- Conteúdo do Simbolo ---\n");
@@ -21,12 +40,14 @@ void imprimir_simbolo(Tabsimb* sp) {
     printf("-------------------------\n\n");
 }
 
+// Inicializa a pilha/tabela de símbolos e retorna ponteiro para o topo.
 Tabsimb** initialize_stack(){
     sp = symbol_table;
     init = sp;
     return &sp;
 }
 
+// Insere um novo símbolo na tabela de símbolos, com tipo, escopo e endereço.
 void insere_tabela(char *lexema, char *tipo_inicial, char escopo, int rotulo, int *endereco_var, int flag){
 
     Tabsimb aux;
@@ -53,10 +74,12 @@ void insere_tabela(char *lexema, char *tipo_inicial, char escopo, int rotulo, in
     // imprimir_simbolo(sp);
 }
 
+// Remove o símbolo do topo da tabela de símbolos.
 void remove_tabela(){
     pop(sp);
 }
 
+// Verifica se já existe uma variável com o mesmo nome declarada (duplicidade).
 int pesquisa_duplica_var_tabela(char *lexema){ //boolean
     Tabsimb* sp_aux = sp;
     while (sp_aux != init && sp_aux->escopo != 'L'){            // Agora o inicio nao possui nada, pois o push primeiro incrementa, depois atribui
@@ -68,6 +91,7 @@ int pesquisa_duplica_var_tabela(char *lexema){ //boolean
     return 0;
 }
 
+// Atribui o tipo correto às variáveis recém-inseridas na tabela de símbolos.
 void coloca_tipo_tabela(char *lexema){
     Tabsimb* sp_aux = sp;
      while (sp_aux != init){
@@ -79,6 +103,7 @@ void coloca_tipo_tabela(char *lexema){
      }
 }
 
+// Verifica duplicidade de declaração de procedimento.
 int pesquisa_declproc_dup_tabela(char *lexema){
 
     Tabsimb* sp_aux = sp;
@@ -91,6 +116,7 @@ int pesquisa_declproc_dup_tabela(char *lexema){
     return 0;
 }
 
+// Desempilha símbolos até encontrar o início do bloco local (escopo 'L').
 void desempilha_ou_voltanivel(){
     while(sp != init && sp->escopo != 'L'){
         remove_tabela();
@@ -98,6 +124,7 @@ void desempilha_ou_voltanivel(){
     sp->escopo = ' ';
 }
 
+// Procura um símbolo na tabela e retorna ponteiro via argumento se encontrado.
 int pesquisa_tabela(char *lexema, Tabsimb** sp_func){
 
     Tabsimb* sp_aux = sp;
@@ -113,6 +140,7 @@ int pesquisa_tabela(char *lexema, Tabsimb** sp_func){
 
 }
 
+// Verifica duplicidade de declaração de função.
 int pesquisa_declfunc_dup_tabela(char *lexema){
 
     Tabsimb* sp_aux = sp;
@@ -125,6 +153,7 @@ int pesquisa_declfunc_dup_tabela(char *lexema){
     return 0;
 }
 
+// Verifica o tipo resultante de uma expressão pós-fixa (0=int, 1=bool, -1=erro) e retorna o topo da pilha com o ultimo tipo valido.
 int verifica_tipo_pos_fixa (token *vetor_pos_fixa, int posf){
 
     int pilha[1000];
@@ -175,13 +204,19 @@ int verifica_tipo_pos_fixa (token *vetor_pos_fixa, int posf){
             strcmp(t.simbolo, "smenor")   == 0 ||
             strcmp(t.simbolo, "smaiorig") == 0 ||
             strcmp(t.simbolo, "smenorig") == 0 ||
-            strcmp(t.simbolo, "sig")      == 0 ||
-            strcmp(t.simbolo, "sdif")     == 0)
-        {
+            strcmp(t.simbolo, "sdif")     == 0){
             if (a != 0 || b != 0)   // relacionais so aceitam inteiros
                 return -1;
 
             pilha[++topo] = 1; // booleano
+            continue;
+        }
+        
+        if (strcmp(t.simbolo, "sig") == 0){
+
+            if (a != b)
+                return -1;
+            pilha[++topo] = 1;
             continue;
         }
 
@@ -222,6 +257,7 @@ int verifica_tipo_pos_fixa (token *vetor_pos_fixa, int posf){
     }
 }
 
+// Retorna o tipo de um token (0=int, 1=bool, -1=inválido).
 int verifica_tipo (token t){
 
     Tabsimb *sp_aux;
@@ -245,6 +281,7 @@ int verifica_tipo (token t){
    
 }
 
+// Retorna 1 se o token for operador, 0 caso contrário.
 int is_operator(token t) {
 
     if (strcmp(t.simbolo, "smaior") == 0   || strcmp(t.simbolo, "smaiorig") == 0 ||
@@ -263,7 +300,7 @@ int is_operator(token t) {
  
 }
 
-
+// Imprime toda a tabela de símbolos atual.
 void imprimir_tabela_simbolos(){
     Tabsimb* sp_aux = init + 1; //pula o primeiro que é vazio
     printf("\n--- Tabela de Simbolos ---\n");
