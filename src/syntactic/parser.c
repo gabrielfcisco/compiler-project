@@ -488,7 +488,7 @@ token analisa_se(parser *p) {
 
     tipo_pos_fixa = verifica_tipo_pos_fixa(vetor_pos_fixa, posf);
 
-    if (tipo_pos_fixa == -1){
+    if (tipo_pos_fixa != 1){
         report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipos incompativeis");
         exit(1);
     }
@@ -585,7 +585,7 @@ token analisa_enquanto(parser *p) {
 
     tipo_pos_fixa = verifica_tipo_pos_fixa(vetor_pos_fixa, posf);
     
-    if (tipo_pos_fixa == -1){
+    if (tipo_pos_fixa != 1){
         report_error(ERR_SEMANTIC, p->t.linha, p->t.lexema, "Tipos incompativeis");
         exit(1);
     }
