@@ -1,3 +1,23 @@
+/**********************************************
+ * Arquivo: instructions.c
+ * Autores: Enzo, Gabriel, Guilherme, Samuel
+ * 
+ *
+ * Descrição:
+ *    Implementa a geração de instruções de código intermediário do compilador,
+ *    Responsável por converter operações semânticas em comandos para a máquina virtual,
+ *    gerando instruções para aritmética, lógica, atribuição, chamadas e controle de fluxo.
+ *    
+ *
+ * Dependências:
+ *    - generator.h
+ *    - instructions.h
+ *    - token.h
+ *    - semantic.h
+ *    - error.h
+ *
+ **********************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

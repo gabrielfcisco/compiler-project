@@ -1,4 +1,33 @@
-# gui_compiler.py
+################################################################################
+# Arquivo: compilador_ui.py
+# Autores: Enzo, Gabriel, Guilherme, Samuel
+# 
+#
+# Descrição:
+#    Implementa a interface gráfica (GUI) do compilador,
+#    Responsável por fornecer um editor de código com numeração de linhas,
+#    gerenciar a compilação e exibir erros categorizados (léxicos, sintáticos,
+#    semânticos e de geração de código), além de visualizar expressões em
+#    notação infixa e pós-fixa.
+#    
+#
+# Dependências:
+#    - tkinter
+#    - subprocess
+#    - threading
+#    - re (regex)
+#    - os
+#    - shutil
+#    - datetime
+#    - tempfile
+#    - sys
+#    - traceback
+#
+# Como executar:
+#    python3 compilador_ui.py
+#
+################################################################################
+
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from tkinter.scrolledtext import ScrolledText

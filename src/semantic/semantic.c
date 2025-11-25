@@ -1,3 +1,21 @@
+/**********************************************
+ * Arquivo: semantic.c
+ * Autores: Enzo, Gabriel, Guilherme, Samuel
+ * 
+ *
+ * Descrição:
+ *    Implementa a análise semântica do compilador,
+ *    Responsável por gerenciar a tabela de símbolos, verificar tipos,
+ *    validar declarações e garantir a semântica correta do programa.
+ *    
+ *
+ * Dependências:
+ *    - semantic.h
+ *    - parser.h
+ *    - lexer.h
+ *
+ **********************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

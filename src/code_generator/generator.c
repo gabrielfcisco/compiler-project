@@ -1,3 +1,20 @@
+/**********************************************
+ * Arquivo: generator.c
+ * Autores: Enzo, Gabriel, Guilherme, Samuel
+ * 
+ *
+ * Descrição:
+ *    Implementa o gerador de código de máquina virtual do compilador,
+ *    Responsável por escrever instruções formatadas no arquivo de saída,
+ *    gerenciar rótulos, operandos e gerar o código intermediário executável.
+ *    
+ *
+ * Dependências:
+ *    - generator.h
+ *    - error.h
+ *
+ **********************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
